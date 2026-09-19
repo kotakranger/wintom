@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beautiful Spaces Better Living | Wintom Curtain</title>
+  <meta name="description" content="Wintom Curtain — Spesialis gorden premium, roller blind, dan motorized smart system untuk hunian dan komersial di Jabodetabek." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'playfair': ['"Playfair Display"', 'serif'],
+            'jakarta': ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            'brand': { DEFAULT: '#741122', dark: '#5a0d1a' },
+            'dark': '#222220',
+            'muted': '#686561',
+            'cream': '#faf8f5',
+            'cream-dark': '#f4f1ea',
+            'border': '#ece8e1',
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { background-color: #faf8f5; }
+    html { scroll-behavior: smooth; }
+    #main-nav { transition: box-shadow 0.3s ease; }
+    #main-nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
+  </style>
+</head>
+<body class="font-jakarta text-dark antialiased">
+
+<!-- ===== STICKY HEADER ===== -->
+<header id="main-nav" class="fixed top-0 left-0 right-0 z-50 backdrop-blur-[6px] bg-[rgba(250,248,245,0.9)] border-b border-[rgba(236,232,225,0.7)]">
+  <div class="h-[80px] max-w-[1280px] mx-auto w-full px-12 flex items-center justify-between">
+    <!-- Brand Logo -->
+    <a href="#" class="flex flex-col items-start shrink-0 no-underline">
+      <span class="font-playfair font-bold text-[#741122] text-[24px] leading-[32px] tracking-[-0.6px] whitespace-nowrap">wintom</span>
+      <span class="font-jakarta font-semibold text-[#222220] text-[9px] tracking-[3.15px] uppercase leading-[13.5px] whitespace-nowrap">CURTAIN</span>
+    </a>
+    <!-- Primary Navigation -->
+    <nav class="flex items-center gap-0">
+      <a href="#" class="font-semibold text-[11px] tracking-[1.65px] uppercase whitespace-nowrap pl-0 text-[#741122]">HOME</a>
+      <a href="products.php" class="font-semibold text-[11px] tracking-[1.65px] uppercase whitespace-nowrap pl-10 text-[#222220] hover:text-[#741122] transition-colors duration-200">PRODUCTS</a>
+      <a href="gallery.php" class="font-semibold text-[11px] tracking-[1.65px] uppercase whitespace-nowrap pl-10 text-[#222220] hover:text-[#741122] transition-colors duration-200">GALLERY</a>
+      <a href="about.php" class="font-semibold text-[11px] tracking-[1.65px] uppercase whitespace-nowrap pl-10 text-[#222220] hover:text-[#741122] transition-colors duration-200">ABOUT</a>
+      <a href="about.php#contact" class="font-semibold text-[11px] tracking-[1.65px] uppercase whitespace-nowrap pl-10 text-[#222220] hover:text-[#741122] transition-colors duration-200">CONTACT</a>
+    </nav>
+    <!-- CTA Button -->
+    <a href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+ingin+konsultasi+gorden" target="_blank" rel="noopener"
+       class="bg-[#741122] text-white font-semibold text-[12px] tracking-[1.8px] uppercase px-5 py-[10px] rounded-[3px] shadow-sm hover:bg-[#5a0d1a] transition-colors duration-200 whitespace-nowrap">
+      GET A QUOTE
+    </a>
+  </div>
+</header>
+<div class="h-[81px]"></div>
+
+<!-- ===== HERO SECTION ===== -->
+<section class="relative bg-[#222220] min-h-[720px] flex items-center justify-center overflow-hidden py-[55.5px]">
+  <!-- Background image -->
+  <div class="absolute inset-0 overflow-hidden">
+    <img
+      src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=85&fit=crop"
+      alt="Sunlit minimalist luxury living room with sheer curtains"
+      class="absolute top-0 w-full h-full object-cover object-center"
+    />
+  </div>
+  <!-- Dual scrim overlay -->
+  <div class="absolute inset-0 bg-gradient-to-r from-[rgba(23,22,21,0.85)] via-[rgba(27,26,24,0.6)] to-[rgba(0,0,0,0.25)]"></div>
+  <div class="absolute inset-0 bg-[rgba(255,255,255,0.1)]"></div>
+
+  <!-- Content -->
+  <div class="relative flex-1 max-w-[1280px] min-w-0 px-12 py-[112px] w-full">
+    <div class="grid grid-cols-12 gap-8 items-center" style="min-height:385px;">
+
+      <!-- Left: Editorial Content (8 cols) -->
+      <div class="col-span-8 flex flex-col items-start justify-center">
+        <!-- Eyebrow label -->
+        <div class="flex items-center pb-4 w-full">
+          <div class="bg-[rgba(255,255,255,0.6)] h-px w-6 shrink-0"></div>
+          <span class="font-jakarta font-semibold text-[12px] text-[rgba(255,255,255,0.8)] tracking-[2.64px] uppercase leading-[16px] pl-3 whitespace-nowrap">
+            WINDOW DRESSING &amp; MOTORIZED BLIND
+          </span>
+        </div>
+        <!-- Main heading -->
+        <div class="drop-shadow-[0px_1px_0.5px_rgba(0,0,0,0.05)]">
+          <h1 class="font-playfair font-normal text-white text-[62px] tracking-[-1.55px] leading-[62px] whitespace-nowrap m-0">
+            BEAUTIFUL<br>SPACES<br>BETTER LIVING
+          </h1>
+        </div>
+        <!-- Red divider -->
+        <div class="bg-[#741122] h-[2px] w-14 my-6"></div>
+        <!-- Subtitle -->
+        <div class="max-w-[512px]">
+          <p class="font-jakarta font-semibold text-[12px] text-[rgba(255,255,255,0.8)] tracking-[1.8px] uppercase leading-[19.5px] m-0">
+            CURTAIN · ROLLER BLIND<br>TAILORED FOR YOUR LIFESTYLE
+          </p>
+        </div>
+        <!-- CTA Buttons -->
+        <div class="flex items-center gap-4 pt-8">
+          <a href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+ingin+konsultasi+gorden"
+             target="_blank" rel="noopener"
+             class="bg-[#741122] text-white font-jakarta font-medium text-[12px] tracking-[1.8px] uppercase leading-[16px] px-8 py-[14px] rounded-[3px] hover:bg-[#5a0d1a] transition-colors duration-200 shadow-lg whitespace-nowrap">
+            CONSULTATION
+          </a>
+          <a href="products.php"
+             class="backdrop-blur-[2px] bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.6)] text-white font-jakarta font-medium text-[12px] tracking-[1.8px] uppercase leading-[16px] px-[33px] py-[15px] rounded-[3px] shadow-sm hover:bg-[rgba(255,255,255,0.2)] transition-colors duration-200 whitespace-nowrap">
+            VIEW COLLECTION
+          </a>
+        </div>
+      </div>
+
+      <!-- Right: Floating Manifesto Badge (4 cols) -->
+      <div class="col-span-4 flex items-center justify-end">
+        <div class="backdrop-blur-[6px] bg-[rgba(255,255,255,0.85)] border border-[rgba(255,255,255,0.7)] rounded-[2px] shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)] px-[25px] py-[29px] w-[210px]">
+          <div class="flex flex-col items-end gap-[6px]">
+            <span class="font-jakarta font-semibold text-[#222220] text-[9px] tracking-[1.98px] uppercase leading-[11.25px]">LIGHT</span>
+            <span class="font-jakarta font-semibold text-[#222220] text-[9px] tracking-[1.98px] uppercase leading-[11.25px]">PRIVACY</span>
+            <span class="font-jakarta font-semibold text-[#222220] text-[9px] tracking-[1.98px] uppercase leading-[11.25px]">COMFORT</span>
+            <div class="bg-[#741122] h-[1.5px] w-7 self-end mt-1"></div>
+            <div class="text-right">
+              <span class="font-jakarta font-bold text-[#741122] text-[9px] tracking-[1.98px] uppercase leading-[11.25px] block">A BRIGHTER</span>
+              <span class="font-jakarta font-bold text-[#741122] text-[9px] tracking-[1.98px] uppercase leading-[11.25px] block">TOMORROW</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== DUAL CATEGORY SPLIT CARDS ===== -->
+<section class="bg-[rgba(244,241,234,0.6)] border-t border-[#ece8e1] pt-[81px] pb-[80px] px-12">
+  <div class="max-w-[1280px] mx-auto flex gap-10">
+    <!-- Card 1: Curtain -->
+    <div class="bg-white border border-[rgba(236,232,225,0.8)] rounded-[2px] overflow-hidden flex-1 flex flex-col p-px">
+      <div class="bg-[#ece8e1] h-[420px] relative overflow-hidden z-[2]">
+        <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80&fit=crop"
+             alt="Curtain" class="absolute top-0 left-0 w-full h-full object-cover" />
+      </div>
+      <div class="bg-white z-[1] relative">
+        <div class="flex items-center justify-between p-8">
+          <div class="flex flex-col gap-[3px]">
+            <h2 class="font-playfair font-normal text-[#222220] text-[30px] uppercase leading-[36px] m-0">CURTAIN</h2>
+            <span class="font-jakarta font-medium text-[#686561] text-[11px] tracking-[1.65px] uppercase leading-[16.5px]">ELEVATE YOUR EVERY SPACE</span>
+          </div>
+          <a href="products.php?category=curtain"
+             class="border border-[rgba(34,34,32,0.2)] rounded-full flex items-center justify-center size-[44px] hover:border-[#741122] hover:bg-[#741122] group transition-all duration-200">
+            <svg class="size-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3.333 8h9.334M9 4.667 12.333 8 9 11.333" stroke="#222220" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+    <!-- Card 2: Roller Blind -->
+    <div class="bg-white border border-[rgba(236,232,225,0.8)] rounded-[2px] overflow-hidden flex-1 flex flex-col p-px">
+      <div class="bg-[#ece8e1] h-[420px] relative overflow-hidden z-[2]">
+        <img src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&q=80&fit=crop"
+             alt="Roller Blind" class="absolute top-0 left-0 w-full h-full object-cover" />
+      </div>
+      <div class="bg-white z-[1] relative">
+        <div class="flex items-center justify-between p-8">
+          <div class="flex flex-col gap-[3px]">
+            <h2 class="font-playfair font-normal text-[#222220] text-[30px] uppercase leading-[36px] m-0">ROLLER BLIND</h2>
+            <span class="font-jakarta font-medium text-[#686561] text-[11px] tracking-[1.65px] uppercase leading-[16.5px]">SIMPLE CONTROL MAXIMUM COMFORT</span>
+          </div>
+          <a href="products.php?category=roller-blind"
+             class="border border-[rgba(34,34,32,0.2)] rounded-full flex items-center justify-center size-[44px] hover:border-[#741122] hover:bg-[#741122] group transition-all duration-200">
+            <svg class="size-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3.333 8h9.334M9 4.667 12.333 8 9 11.333" stroke="#222220" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== QUALITY IN EVERY DETAIL ===== -->
+<section class="bg-[#faf8f5] border-b border-[rgba(236,232,225,0.6)] pt-[80px] pb-[81px]">
+  <div class="max-w-[1280px] mx-auto px-12 flex flex-col gap-16">
+    <div class="grid grid-cols-12 gap-8 items-center">
+      <div class="col-span-3 flex flex-col gap-4 items-start">
+        <h2 class="font-playfair font-normal text-[#222220] text-[30px] uppercase leading-[36px] m-0">QUALITY<br>IN EVERY DETAIL</h2>
+        <div class="bg-[#741122] h-[2px] w-10"></div>
+      </div>
+      <div class="col-span-9 flex gap-4 h-[208px] items-center">
+        <div class="bg-[#ece8e1] flex-1 h-[208px] overflow-hidden rounded-[2px] relative min-w-0">
+          <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80&fit=crop" alt="Sheer fabric" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-[rgba(0,0,0,0.1)]"></div>
+        </div>
+        <div class="bg-[#ece8e1] flex-1 h-[208px] overflow-hidden rounded-[2px] relative min-w-0">
+          <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80&fit=crop" alt="Drapery weave" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-[rgba(0,0,0,0.1)]"></div>
+        </div>
+        <div class="bg-[#ece8e1] flex-1 h-[208px] overflow-hidden rounded-[2px] relative min-w-0">
+          <img src="https://images.unsplash.com/photo-1540932239986-30128078f3c5?w=400&q=80&fit=crop" alt="Luxury textiles" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-[rgba(0,0,0,0.1)]"></div>
+        </div>
+        <div class="bg-[#ece8e1] flex-1 h-[208px] overflow-hidden rounded-[2px] relative min-w-0">
+          <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80&fit=crop" alt="Hardware" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-[rgba(0,0,0,0.1)]"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Value Pillars -->
+    <div class="flex gap-8 items-start border-t border-[#ece8e1] pt-[33px]">
+      <div class="flex-1 text-center p-2">
+        <div class="flex justify-center mb-4"><svg class="size-7" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="#222220" stroke-width="1.25"/><circle cx="10" cy="10" r="3.5" stroke="#222220" stroke-width="1.25"/></svg></div>
+        <p class="font-jakarta font-bold text-[#222220] text-[12px] tracking-[2.64px] uppercase leading-[16px] m-0">PREMIUM<br>MATERIAL</p>
+      </div>
+      <div class="flex-1 text-center p-2">
+        <div class="flex justify-center mb-4"><svg class="size-7" viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="1" stroke="#222220" stroke-width="1.25"/><path d="M7 3v14M13 3v14M3 7h14M3 13h14" stroke="#222220" stroke-width="1.25"/></svg></div>
+        <p class="font-jakarta font-bold text-[#222220] text-[12px] tracking-[2.64px] uppercase leading-[16px] m-0">CUSTOM<br>MADE</p>
+      </div>
+      <div class="flex-1 text-center p-2">
+        <div class="flex justify-center mb-4"><svg class="size-7" viewBox="0 0 20 20" fill="none"><path d="M10 1.667 12.575 6.883l5.758.837-4.167 4.062.984 5.735L10 14.917l-5.15 2.6.984-5.735L1.667 7.72l5.758-.837L10 1.667Z" stroke="#222220" stroke-width="1.25" stroke-linejoin="round"/></svg></div>
+        <p class="font-jakarta font-bold text-[#222220] text-[12px] tracking-[2.64px] uppercase leading-[16px] m-0">MODERN<br>DESIGN</p>
+      </div>
+      <div class="flex-1 text-center p-2">
+        <div class="flex justify-center mb-4"><svg class="size-7" viewBox="0 0 20 20" fill="none"><path d="M2.5 15.833h15M5 15.833V5.833a2.5 2.5 0 0 1 2.5-2.5h5A2.5 2.5 0 0 1 15 5.833v10M8.333 8.333h3.334" stroke="#222220" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <p class="font-jakarta font-bold text-[#222220] text-[12px] tracking-[2.64px] uppercase leading-[16px] m-0">SUITABLE FOR<br>HOME &amp; COMMERCIAL</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="bg-[#faf8f5] py-24">
+  <div class="max-w-[1280px] mx-auto px-12 flex flex-col gap-14">
+    <div class="flex flex-col gap-3 items-center">
+      <h2 class="font-playfair font-normal text-[#222220] text-[36px] tracking-[1.8px] uppercase text-center leading-[40px] m-0">HOW IT WORKS</h2>
+      <div class="bg-[#741122] h-[2px] w-12"></div>
+    </div>
+    <div class="flex gap-6 items-start">
+      <!-- Step 01 -->
+      <div class="flex-1 min-w-0">
+        <div class="bg-[#ece8e1] h-[240px] overflow-hidden rounded-[2px] relative mb-4">
+          <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80&fit=crop" alt="Consultation" class="w-full h-full object-cover"/>
+        </div>
+        <span class="font-playfair font-semibold text-[#222220] text-[24px] leading-[32px] block">01</span>
+        <h3 class="font-jakarta font-bold text-[#222220] text-[12px] tracking-[1.8px] uppercase leading-[16px] mt-1 mb-1">CONSULTATION</h3>
+        <p class="font-jakarta font-normal text-[#686561] text-[11px] leading-[17.88px] m-0">Explore fabric collections, textures, and shading needs with our design advisor.</p>
+      </div>
+      <!-- Step 02 -->
+      <div class="flex-1 min-w-0">
+        <div class="bg-[#ece8e1] h-[240px] overflow-hidden rounded-[2px] relative mb-4">
+          <img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&q=80&fit=crop" alt="Measurement" class="w-full h-full object-cover"/>
+        </div>
+        <span class="font-playfair font-semibold text-[#222220] text-[24px] leading-[32px] block">02</span>
+        <h3 class="font-jakarta font-bold text-[#222220] text-[12px] tracking-[1.8px] uppercase leading-[16px] mt-1 mb-1">MEASUREMENT</h3>
+        <p class="font-jakarta font-normal text-[#686561] text-[11px] leading-[17.88px] m-0">On-site professional window surveying to guarantee millimetric precision.</p>
+      </div>
+      <!-- Step 03 -->
+      <div class="flex-1 min-w-0">
+        <div class="bg-[#ece8e1] h-[240px] overflow-hidden rounded-[2px] relative mb-4">
+          <img src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&q=80&fit=crop" alt="Quotation" class="w-full h-full object-cover"/>
+        </div>
+        <span class="font-playfair font-semibold text-[#222220] text-[24px] leading-[32px] block">03</span>
+        <h3 class="font-jakarta font-bold text-[#222220] text-[12px] tracking-[1.8px] uppercase leading-[16px] mt-1 mb-1">QUOTATION</h3>
+        <p class="font-jakarta font-normal text-[#686561] text-[11px] leading-[17.88px] m-0">Transparent, itemized pricing breakdown with zero hidden fees.</p>
+      </div>
+      <!-- Step 04 -->
+      <div class="flex-1 min-w-0">
+        <div class="bg-[#ece8e1] h-[240px] overflow-hidden rounded-[2px] relative mb-4">
+          <img src="https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=600&q=80&fit=crop" alt="Installation" class="w-full h-full object-cover"/>
+        </div>
+        <span class="font-playfair font-semibold text-[#222220] text-[24px] leading-[32px] block">04</span>
+        <h3 class="font-jakarta font-bold text-[#222220] text-[12px] tracking-[1.8px] uppercase leading-[16px] mt-1 mb-1">INSTALLATION</h3>
+        <p class="font-jakarta font-normal text-[#686561] text-[11px] leading-[17.88px] m-0">Clean, quiet setup by certified technicians followed by complete steaming.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== FAST QUOTE & WHATSAPP CTA BANNER ===== -->
+<section class="bg-[#ece8df] border-t border-b border-[#ece8e1] px-12 py-[49px]">
+  <div class="max-w-[1280px] mx-auto">
+    <div class="flex items-center gap-8">
+      <!-- 3 feature cols -->
+      <div class="flex gap-6 items-start flex-[2]">
+        <div class="flex flex-col flex-1 min-w-0">
+          <svg class="size-7 mb-2" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="5" width="15" height="10" rx="0.5" stroke="#222220" stroke-width="1.25"/><path d="M6.667 5v10M13.333 5v10M2.5 10h15" stroke="#222220" stroke-width="1.25"/></svg>
+          <span class="font-jakarta font-bold text-[#222220] text-[12px] tracking-[1.8px] uppercase leading-[16px]">SIZE</span>
+          <span class="font-jakarta font-normal text-[#686561] text-[11px] leading-[15.13px] mt-1 whitespace-nowrap">Custom size to fit your window perfectly</span>
+        </div>
+        <div class="border-l border-[rgba(34,34,32,0.15)] flex flex-col flex-1 min-w-0 pl-6">
+          <svg class="size-7 mb-2" viewBox="0 0 20 20" fill="none"><path d="M10 1.667v16.666M6.667 5h5a1.667 1.667 0 0 1 0 3.333H8.333A1.667 1.667 0 0 0 8.333 11.667h6.25" stroke="#222220" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="font-jakarta font-bold text-[#222220] text-[12px] tracking-[1.8px] uppercase leading-[16px]">PRICE</span>
+          <span class="font-jakarta font-normal text-[#686561] text-[11px] leading-[15.13px] mt-1 whitespace-nowrap">Get the best price for your project</span>
+        </div>
+        <div class="border-l border-[rgba(34,34,32,0.15)] flex flex-col flex-1 min-w-0 pl-6">
+          <svg class="size-7 mb-2" viewBox="0 0 20 20" fill="none"><path d="M4.167 2.5h11.666a.833.833 0 0 1 .834.833v13.334a.833.833 0 0 1-.834.833H4.167a.833.833 0 0 1-.834-.833V3.333a.833.833 0 0 1 .834-.833Z" stroke="#222220" stroke-width="1.25" stroke-linejoin="round"/><path d="M6.667 6.667h6.666M6.667 10h6.666M6.667 13.333h4.166" stroke="#222220" stroke-width="1.25" stroke-linecap="round"/></svg>
+          <span class="font-jakarta font-bold text-[#222220] text-[12px] tracking-[1.8px] uppercase leading-[16px]">QUOTE</span>
+          <span class="font-jakarta font-normal text-[#686561] text-[11px] leading-[15.13px] mt-1 whitespace-nowrap">Fast and professional quotation</span>
+        </div>
+      </div>
+      <!-- Buttons -->
+      <div class="flex flex-col items-end gap-3 shrink-0">
+        <a href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+ingin+mendapatkan+penawaran+harga+gorden"
+           target="_blank"
+           class="flex items-center justify-center gap-2 bg-[#741122] text-white font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase leading-[16px] px-6 py-[14px] rounded-[2px] w-64 hover:bg-[#5a0d1a] transition-colors duration-200">
+          GET A QUOTE →
+        </a>
+        <a href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+ingin+konsultasi"
+           target="_blank"
+           class="flex items-center justify-center gap-2 w-64 px-4 py-[10px]">
+          <svg class="size-5" viewBox="0 0 20 20" fill="#25D366"><path d="M10 1.667A8.333 8.333 0 0 0 2.92 13.742L1.667 18.333l4.725-1.237A8.333 8.333 0 1 0 10 1.667Z"/><path d="M7.5 6.667c.167-.417.625-.834 1.25-.834.5 0 .833.25 1.042.5l1.041 1.667c.208.417.042.833-.208 1.083l-.417.417c.417.75 1.125 1.458 1.875 1.875l.417-.417c.25-.25.667-.417 1.083-.208l1.667 1.041c.25.209.5.542.5 1.042 0 .625-.417 1.083-.833 1.25C13.75 14.167 11.25 14.583 8.333 11.667 5.417 8.75 5.833 6.25 6.25 5.417Z" fill="white"/></svg>
+          <span class="font-jakarta font-medium text-[#222220] text-[12px] leading-[16px]">Consult Now via WhatsApp</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== TESTIMONIALS ===== -->
+<section class="bg-[#faf8f5] py-24">
+  <div class="max-w-[1280px] mx-auto px-12 flex flex-col gap-16">
+    <div class="flex flex-col gap-3 items-center">
+      <h2 class="font-playfair font-normal text-[#222220] text-[36px] tracking-[1.8px] uppercase text-center leading-[40px] m-0">WHAT OUR CUSTOMERS SAY</h2>
+      <div class="bg-[#741122] h-[2px] w-12"></div>
+    </div>
+    <div class="flex gap-8 items-stretch">
+      <!-- Testimonial 1 -->
+      <div class="bg-white border border-[#ece8e1] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] flex flex-col justify-between p-[25px] flex-1">
+        <div class="flex flex-col gap-[7.3px]">
+          <div class="bg-[#ece8e1] h-[176px] overflow-hidden rounded-[2px] w-full relative">
+            <img src="https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600&q=80&fit=crop" alt="Living room" class="w-full h-full object-cover"/>
+          </div>
+          <div class="pt-[16.7px]"><span class="font-playfair font-normal text-[#741122] text-[36px] leading-[36px]">"</span></div>
+          <p class="font-jakarta font-normal text-[#222220] text-[14px] leading-[22.75px] m-0">Hasilnya sangat rapi dan sesuai ekspektasi. Timnya profesional, mulai dari pengukuran hingga pemasangan tepat waktu.</p>
+        </div>
+        <div class="pt-6">
+          <div class="border-t border-[#ece8e1] pt-[17px] flex flex-col gap-[7px]">
+            <span class="text-[#f59e0b] text-[12px]">★★★★★</span>
+            <span class="font-jakarta font-semibold text-[#686561] text-[11px] tracking-[1.65px] uppercase leading-[16.5px]">— RUMAH TINGGAL, JAKARTA</span>
+          </div>
+        </div>
+      </div>
+      <!-- Testimonial 2 -->
+      <div class="bg-white border border-[#ece8e1] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] flex flex-col justify-between p-[25px] flex-1">
+        <div class="flex flex-col gap-[7.3px]">
+          <div class="bg-[#ece8e1] h-[176px] overflow-hidden rounded-[2px] w-full relative">
+            <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80&fit=crop" alt="Office" class="w-full h-full object-cover"/>
+          </div>
+          <div class="pt-[16.7px]"><span class="font-playfair font-normal text-[#741122] text-[36px] leading-[36px]">"</span></div>
+          <p class="font-jakarta font-normal text-[#222220] text-[14px] leading-[22.75px] m-0">Kualitas bagus, pemasangan cepat, layanan sangat baik. Roller blind motorized-nya bekerja sangat smooth dan hening.</p>
+        </div>
+        <div class="pt-6">
+          <div class="border-t border-[#ece8e1] pt-[17px] flex flex-col gap-[7px]">
+            <span class="text-[#f59e0b] text-[12px]">★★★★★</span>
+            <span class="font-jakarta font-semibold text-[#686561] text-[11px] tracking-[1.65px] uppercase leading-[16.5px]">— OFFICE, TANGERANG</span>
+          </div>
+        </div>
+      </div>
+      <!-- Testimonial 3 -->
+      <div class="bg-white border border-[#ece8e1] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] flex flex-col justify-between p-[25px] flex-1">
+        <div class="flex flex-col gap-[7.3px]">
+          <div class="bg-[#ece8e1] h-[176px] overflow-hidden rounded-[2px] w-full relative">
+            <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80&fit=crop" alt="Bedroom" class="w-full h-full object-cover"/>
+          </div>
+          <div class="pt-[16.7px]"><span class="font-playfair font-normal text-[#741122] text-[36px] leading-[36px]">"</span></div>
+          <p class="font-jakarta font-normal text-[#222220] text-[14px] leading-[22.75px] m-0">Bahannya premium dan terlihat sangat elegan. Benar-benar 100% blackout untuk kamar tidur kami. Sangat puas!</p>
+        </div>
+        <div class="pt-6">
+          <div class="border-t border-[#ece8e1] pt-[17px] flex flex-col gap-[7px]">
+            <span class="text-[#f59e0b] text-[12px]">★★★★★</span>
+            <span class="font-jakarta font-semibold text-[#686561] text-[11px] tracking-[1.65px] uppercase leading-[16.5px]">— APARTEMEN, JAKARTA</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== PRE-FOOTER CONTACT BANNER ===== -->
+<section class="bg-[#ebe7df] border-t border-[#ece8e1] pt-[65px] pb-[64px]">
+  <div class="max-w-[1280px] mx-auto px-12">
+    <div class="flex items-center justify-between pb-[49px] border-b border-[rgba(34,34,32,0.15)]">
+      <div class="flex items-center gap-6">
+        <div class="flex flex-col items-start shrink-0">
+          <span class="font-playfair font-bold text-[#741122] text-[30px] leading-[36px] tracking-[-0.75px]">wintom</span>
+          <span class="font-jakarta font-semibold text-[#222220] text-[10px] tracking-[3.5px] uppercase leading-[15px]">CURTAIN</span>
+        </div>
+        <div class="w-px h-[40px] bg-[rgba(34,34,32,0.2)]"></div>
+        <div>
+          <p class="font-jakarta font-semibold text-[#686561] text-[11px] tracking-[2.42px] uppercase leading-[16.5px] m-0">LET'S CREATE A MORE</p>
+          <p class="font-playfair font-normal text-[#222220] text-[24px] uppercase leading-[32px] m-0">BEAUTIFUL SPACE TOGETHER</p>
+        </div>
+      </div>
+      <a href="about.php#contact"
+         class="flex items-center gap-2 bg-[#741122] text-white font-semibold text-[12px] tracking-[1.8px] uppercase px-8 py-[14px] rounded-[2px] hover:bg-[#5a0d1a] transition-colors duration-200 whitespace-nowrap">
+        CONTACT US →
+      </a>
+    </div>
+    <div class="flex items-start justify-between pt-10 gap-8">
+      <a href="https://wa.me/6289602052229" target="_blank" class="flex items-center flex-1 group">
+        <div class="border border-[rgba(34,34,32,0.2)] rounded-full flex items-center justify-center size-[40px] shrink-0 group-hover:border-[#741122] transition-colors">
+          <svg class="size-5" viewBox="0 0 20 20" fill="#25D366"><path d="M10 1.667A8.333 8.333 0 0 0 2.92 13.742L1.667 18.333l4.725-1.237A8.333 8.333 0 1 0 10 1.667Z"/><path d="M7.5 6.667c.167-.417.625-.834 1.25-.834.5 0 .833.25 1.042.5l1.041 1.667c.208.417.042.833-.208 1.083l-.417.417c.417.75 1.125 1.458 1.875 1.875l.417-.417c.25-.25.667-.417 1.083-.208l1.667 1.041c.25.209.5.542.5 1.042 0 .625-.417 1.083-.833 1.25C13.75 14.167 11.25 14.583 8.333 11.667 5.417 8.75 5.833 6.25 6.25 5.417Z" fill="white"/></svg>
+        </div>
+        <div class="flex flex-col gap-[5.5px] pl-3">
+          <span class="font-jakarta font-semibold text-[#686561] text-[10px] tracking-[1.5px] uppercase leading-[15px]">WHATSAPP</span>
+          <span class="font-jakarta font-medium text-[#222220] text-[12px] leading-[16px]">089-602-052-229</span>
+        </div>
+      </a>
+      <div class="flex items-center flex-1">
+        <div class="border border-[rgba(34,34,32,0.2)] rounded-full flex items-center justify-center size-[40px] shrink-0">
+          <svg class="size-5" viewBox="0 0 20 20" fill="none"><path d="M18.308 14.792c0 .316-.069.624-.215.924a3.57 3.57 0 0 1-.59.855c-.393.43-.823.647-1.28.655-.326 0-.68-.083-1.06-.256a10.526 10.526 0 0 1-1.06-.59c-.376-.247-.77-.53-1.18-.855a17.3 17.3 0 0 1-1.171-1.163 16.98 16.98 0 0 1-.847-1.171 10.59 10.59 0 0 1-.59-1.052c-.17-.376-.256-.735-.256-1.06 0-.317.077-.625.23-.907a3.6 3.6 0 0 1 .623-.846c.359-.352.752-.53 1.163-.53.162 0 .325.034.47.103.154.068.29.17.393.316l1.368 1.924c.102.145.18.282.23.41.051.12.077.24.077.35 0 .137-.034.273-.102.402a1.57 1.57 0 0 1-.282.41l-.376.393a.252.252 0 0 0-.076.188c0 .034.008.077.025.12.026.043.051.077.069.111.103.188.282.42.538.693.265.273.53.538.812.795.29.256.563.478.845.674.273.196.47.316.667.376a.4.4 0 0 0 .12.034c.06 0 .12-.025.18-.077l.376-.368c.12-.12.248-.222.376-.282a.92.92 0 0 1 .4-.102.9.9 0 0 1 .35.068c.128.05.264.12.41.214l1.949 1.385c.145.102.248.222.316.367.06.146.094.299.094.47Z" fill="#222220"/></svg>
+        </div>
+        <div class="flex flex-col gap-[5.5px] pl-3">
+          <span class="font-jakarta font-semibold text-[#686561] text-[10px] tracking-[1.5px] uppercase leading-[15px]">CALL US</span>
+          <span class="font-jakarta font-medium text-[#222220] text-[12px] leading-[16px]">089-602-052-229</span>
+        </div>
+      </div>
+      <div class="flex items-center flex-1">
+        <div class="border border-[rgba(34,34,32,0.2)] rounded-full flex items-center justify-center size-[40px] shrink-0">
+          <svg class="size-5" viewBox="0 0 20 20" fill="none"><path d="M1.667 5.833A2.5 2.5 0 0 1 4.167 3.333h11.666a2.5 2.5 0 0 1 2.5 2.5v8.334a2.5 2.5 0 0 1-2.5 2.5H4.167a2.5 2.5 0 0 1-2.5-2.5V5.833Z" stroke="#222220" stroke-width="1.25" stroke-linejoin="round"/><path d="m1.667 5.833 7.024 5.185a2.5 2.5 0 0 0 2.952 0l7.024-5.185" stroke="#222220" stroke-width="1.25" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="flex flex-col gap-[5.5px] pl-3">
+          <span class="font-jakarta font-semibold text-[#686561] text-[10px] tracking-[1.5px] uppercase leading-[15px]">EMAIL</span>
+          <span class="font-jakarta font-medium text-[#222220] text-[12px] leading-[16px]">info@wintom.co.id</span>
+        </div>
+      </div>
+      <div class="flex items-center flex-1">
+        <div class="border border-[rgba(34,34,32,0.2)] rounded-full flex items-center justify-center size-[40px] shrink-0">
+          <svg class="size-5" viewBox="0 0 20 20" fill="none"><path d="M10 1.667a6.25 6.25 0 0 0-6.25 6.25c0 4.688 6.25 10.416 6.25 10.416s6.25-5.728 6.25-10.417A6.25 6.25 0 0 0 10 1.667Z" stroke="#222220" stroke-width="1.25" stroke-linejoin="round"/><circle cx="10" cy="7.917" r="2.083" stroke="#222220" stroke-width="1.25"/></svg>
+        </div>
+        <div class="flex flex-col gap-[5.5px] pl-3">
+          <span class="font-jakarta font-semibold text-[#686561] text-[10px] tracking-[1.5px] uppercase leading-[15px]">VISIT OUR SHOWROOM</span>
+          <span class="font-jakarta font-medium text-[#222220] text-[12px] leading-[16px]">PIK 2, Jakarta Utara</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== MINIMALIST FOOTER ===== -->
+<footer class="bg-[#e4dfd5] border-t border-[rgba(34,34,32,0.1)] py-[25px]">
+  <div class="max-w-[1280px] mx-auto px-12 flex items-center justify-between">
+    <span class="font-jakarta font-normal text-[#686561] text-[10px] tracking-[1.5px] uppercase leading-[15px]">
+      © 2024 WINTOM CURTAIN. ALL RIGHTS RESERVED.
+    </span>
+    <div class="flex items-center gap-3 font-jakarta font-normal text-[#686561] text-[10px] tracking-[1.5px] uppercase leading-[15px]">
+      <span>CURTAIN</span><span>·</span><span>ROLLER BLIND</span><span>·</span><span>A BRIGHTER TOMORROW</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Floating WhatsApp -->
+<a href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+ingin+konsultasi+gorden"
+   target="_blank" rel="noopener"
+   class="fixed bottom-6 right-6 z-50 bg-[#25d366] rounded-full p-[14px] shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200">
+  <svg class="size-6" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.946 9.946 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2Z"/><path d="M8.94 7.8c.2-.5.75-1 1.5-1 .6 0 1 .3 1.25.6l1.25 2c.25.5.05 1-.25 1.3l-.5.5c.5.9 1.35 1.75 2.25 2.25l.5-.5c.3-.3.8-.5 1.3-.25l2 1.25c.3.25.6.65.6 1.25 0 .75-.5 1.3-1 1.5C17.25 17 14.75 17.5 12 14.75c-2.75-2.75-2.25-5.25-1.8-6.08C10.4 8.42 9.24 8 8.94 7.8Z" fill="white" opacity="0.9"/></svg>
+</a>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const nav = document.getElementById('main-nav');
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+  });
+</script>
+
+</body>
+</html>
