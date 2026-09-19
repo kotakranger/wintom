@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Katalog Koleksi Gorden & Blinds | Wintom Curtain</title>
+  <meta name="description" content="Koleksi kurasi gorden mewah, roller blind, vitrase sheer, dan motorized system arsitektural Wintom." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'playfair': ['"Playfair Display"', 'serif'],
+            'jakarta': ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            'brand': {
+              DEFAULT: '#741122',
+              dark: '#5a0d1a',
+            },
+            'dark': '#222220',
+            'muted': '#686561',
+            'cream': '#faf8f5',
+            'cream-dark': '#f4f1ea',
+            'border': '#ece8e1',
+          },
+          letterSpacing: {
+            'widest-2': '1.65px',
+            'widest-3': '1.8px',
+            'widest-4': '2.64px',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { background-color: #faf8f5; }
+    html { scroll-behavior: smooth; }
+    #main-nav { transition: box-shadow 0.3s ease; }
+    #main-nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="font-jakarta text-dark antialiased">
+
+<!-- ===== STICKY HEADER / NAVIGATION ===== -->
+<header id="main-nav" class="fixed top-0 left-0 right-0 z-50 backdrop-blur-[6px] bg-[rgba(250,248,245,0.9)] border-b border-[rgba(236,232,225,0.7)]">
+  <div class="h-[80px] max-w-[1280px] mx-auto w-full px-6 md:px-12 flex items-center justify-between">
+
+    <!-- Brand Logo -->
+    <a href="index.html" class="flex flex-col items-start shrink-0 no-underline">
+      <span class="font-playfair font-bold text-brand text-[24px] leading-[32px] tracking-[-0.6px] whitespace-nowrap">wintom</span>
+      <span class="font-jakarta font-semibold text-dark text-[9px] tracking-[3.15px] uppercase leading-[13.5px] whitespace-nowrap">CURTAIN</span>
+    </a>
+
+    <!-- Primary Navigation -->
+    <nav class="hidden md:flex items-center gap-0">
+      <a href="index.html" class="font-semibold text-[11px] tracking-[1.65px] uppercase whitespace-nowrap pl-10 text-dark hover:text-brand transition-colors duration-200">
+        HOME
+      </a>
+      <a href="products.html" class="font-semibold text-[11px] tracking-[1.65px] uppercase whitespace-nowrap pl-10 text-brand transition-colors duration-200">
+        PRODUCTS
+      </a>
+      <a href="#" class="font-semibold text-[11px] tracking-[1.65px] uppercase whitespace-nowrap pl-10 text-dark hover:text-brand transition-colors duration-200">
+        GALLERY
+      </a>
+      <a href="#" class="font-semibold text-[11px] tracking-[1.65px] uppercase whitespace-nowrap pl-10 text-dark hover:text-brand transition-colors duration-200">
+        ABOUT
+      </a>
+      <a href="#" class="font-semibold text-[11px] tracking-[1.65px] uppercase whitespace-nowrap pl-10 text-dark hover:text-brand transition-colors duration-200">
+        CONTACT
+      </a>
+    </nav>
+
+    <!-- CTA Button -->
+    <a href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+ingin+konsultasi+gorden" target="_blank" rel="noopener"
+       class="bg-brand text-white font-semibold text-[12px] tracking-[1.8px] uppercase px-5 py-[10px] rounded-[3px] shadow-sm hover:bg-[#5a0d1a] transition-colors duration-200 whitespace-nowrap">
+      GET A QUOTE
+    </a>
+  </div>
+</header>
+
+<!-- Spacer untuk fixed header -->
+<div class="h-[81px]"></div>
+
+<!-- ===== HERO HEADER KATALOG ===== -->
+<section class="relative bg-cream-dark/60 border-b border-border py-16 md:py-20">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12">
+    <div class="max-w-3xl">
+      <!-- Eyebrow -->
+      <div class="flex items-center gap-3 mb-4">
+        <span class="w-6 h-[1.5px] bg-brand"></span>
+        <span class="font-jakarta font-semibold text-[11px] tracking-widest-4 uppercase text-brand">
+          KATALOG EKSKLUSIF WINTOM
+        </span>
+      </div>
+
+      <!-- Main Heading -->
+      <h1 class="font-playfair text-3xl md:text-5xl font-bold text-dark leading-tight mb-5">
+        Kurasi Tirai & Blinds Arsitektural
+      </h1>
+
+      <!-- Description -->
+      <p class="font-jakarta text-[15px] md:text-[16px] text-muted leading-relaxed mb-8">
+        Kombinasi material berstandar internasional, presisi hemming atelier, dan sistem rel silent mekanik bergaransi. Sempurna untuk hunian residensial mewah, apartemen, maupun ruang komersial.
+      </p>
+
+      <!-- Search & Sort Filter Bar -->
+      <div class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Cari kain linen, blackout, motorized, kode seri..."
+            class="w-full bg-white border border-border rounded-[3px] px-4 py-3 pl-11 text-[13px] font-jakarta focus:outline-none focus:border-brand transition-colors text-dark"
+          />
+          <div class="absolute left-4 top-1/2 -translate-y-1/2 text-muted">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <select
+            id="sortSelect"
+            class="bg-white border border-border rounded-[3px] px-4 py-3 text-[13px] font-jakarta focus:outline-none focus:border-brand text-dark cursor-pointer"
+          >
+            <option value="newest">Koleksi Terbaru</option>
+            <option value="price_asc">Harga: Terendah</option>
+            <option value="price_desc">Harga: Tertinggi</option>
+          </select>
+
+          <button
+            type="button"
+            class="bg-dark hover:bg-brand text-white px-5 py-3 rounded-[3px] font-jakarta text-[12px] font-semibold tracking-wider uppercase transition-colors shrink-0"
+          >
+            CARI
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CATEGORY FILTER TABS ===== -->
+<section class="bg-cream sticky top-[80px] z-30 border-b border-border shadow-sm">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12">
+    <div class="flex items-center gap-2 md:gap-3 overflow-x-auto py-3.5 no-scrollbar">
+      <button class="cat-pill active whitespace-nowrap px-4 py-2 rounded-[3px] text-[12px] font-semibold tracking-wider uppercase transition-all duration-200 bg-brand text-white shadow-sm" data-cat="all">
+        Semua Koleksi
+      </button>
+      <button class="cat-pill whitespace-nowrap px-4 py-2 rounded-[3px] text-[12px] font-semibold tracking-wider uppercase transition-all duration-200 bg-white text-dark hover:text-brand border border-border" data-cat="Curtain">
+        Curtain
+      </button>
+      <button class="cat-pill whitespace-nowrap px-4 py-2 rounded-[3px] text-[12px] font-semibold tracking-wider uppercase transition-all duration-200 bg-white text-dark hover:text-brand border border-border" data-cat="Vitrase & Sheer">
+        Vitrase & Sheer
+      </button>
+      <button class="cat-pill whitespace-nowrap px-4 py-2 rounded-[3px] text-[12px] font-semibold tracking-wider uppercase transition-all duration-200 bg-white text-dark hover:text-brand border border-border" data-cat="Roller Blind">
+        Roller Blind
+      </button>
+      <button class="cat-pill whitespace-nowrap px-4 py-2 rounded-[3px] text-[12px] font-semibold tracking-wider uppercase transition-all duration-200 bg-white text-dark hover:text-brand border border-border" data-cat="Motorized Smart System">
+        Motorized Smart System
+      </button>
+      <button class="cat-pill whitespace-nowrap px-4 py-2 rounded-[3px] text-[12px] font-semibold tracking-wider uppercase transition-all duration-200 bg-white text-dark hover:text-brand border border-border" data-cat="Wood & Bamboo Blind">
+        Wood & Bamboo Blind
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRODUCT LISTING GRID ===== -->
+<section class="py-16 md:py-24 bg-cream">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12">
+
+    <!-- Active Filters Summary -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-8 mb-8 border-b border-border">
+      <div class="text-[13px] text-muted">
+        Menampilkan <span class="font-bold text-dark" id="productCount">6</span> koleksi eksklusif Wintom
+      </div>
+      <div class="flex items-center gap-2 text-[12px] text-muted">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        Semua sampel swatch fisik siap dibawa saat survei lokasi
+      </div>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="productGrid">
+
+      <!-- Product 1: Curtain Linen -->
+      <div class="product-item group bg-white border border-border rounded-[4px] overflow-hidden flex flex-col hover:border-brand/40 hover:shadow-xl transition-all duration-300" data-cat="Curtain" data-price="385000">
+        <a href="product-detail.html" class="relative aspect-[3/4] overflow-hidden bg-cream block">
+          <img
+            src="https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&q=85"
+            alt="Aura Drape — French Linen Blend"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            loading="lazy"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-black/10 opacity-60 group-hover:opacity-80 transition-opacity"></div>
+          <div class="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
+            <span class="bg-white/95 backdrop-blur-[4px] text-dark font-jakarta font-semibold text-[10px] tracking-[1.2px] uppercase px-2.5 py-1 rounded-[2px] shadow-sm">
+              Curtain
+            </span>
+            <span class="bg-brand text-white font-jakarta font-semibold text-[9px] tracking-[1.2px] uppercase px-2 py-0.5 rounded-[2px] shadow-sm">
+              Curator Choice
+            </span>
+          </div>
+          <div class="absolute top-3.5 right-3.5">
+            <span class="bg-dark/90 text-white font-jakarta font-bold text-[10px] tracking-wider px-2 py-1 rounded-[2px] shadow-sm">
+              HEMAT 14%
+            </span>
+          </div>
+          <div class="absolute bottom-3.5 left-3.5 right-3.5 flex items-center justify-between text-white/90 text-[11px] font-mono">
+            <span class="bg-dark/70 backdrop-blur-sm px-2 py-0.5 rounded-[2px]">REF: WNT-CR-01</span>
+            <span class="flex items-center gap-1 text-[10px] uppercase font-jakarta tracking-wider font-semibold opacity-0 group-hover:opacity-100 transition-opacity text-white">
+              Detail &rarr;
+            </span>
+          </div>
+        </a>
+        <div class="p-6 flex-1 flex flex-col justify-between">
+          <div>
+            <h3 class="font-playfair text-[19px] md:text-[20px] font-bold text-dark leading-snug mb-2 group-hover:text-brand transition-colors">
+              <a href="product-detail.html">Aura Drape — French Linen Blend</a>
+            </h3>
+            <p class="font-jakarta text-[13px] text-muted leading-relaxed line-clamp-2 mb-4">
+              Tirai drapery mewah berbahan perpaduan linen Belgia dengan tenunan berpola rapat yang jatuh dengan anggun. Memberikan nuansa hangat dan redaman akustik ruangan.
+            </p>
+            <div class="space-y-1.5 mb-5 pb-5 border-b border-border/70">
+              <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
+                <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                <span>Material 65% Belgian Linen, 35% Poly-Loom</span>
+              </div>
+              <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
+                <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                <span>S-Fold Wave / Ripple Fold Hemming Presisi</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="mb-4">
+              <div class="text-[11px] font-jakarta tracking-wider uppercase text-muted mb-0.5">Estimasi Material Mulai</div>
+              <div class="flex items-baseline gap-2">
+                <span class="font-playfair font-bold text-2xl text-brand">Rp 385.000</span>
+                <span class="text-[11px] font-jakarta text-muted">/ meter</span>
+                <span class="text-[12px] font-jakarta text-muted line-through ml-auto">Rp 450.000</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <a href="product-detail.html" class="w-full text-center py-2.5 border border-dark/30 hover:border-brand hover:text-brand text-dark font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors">
+                DETAIL
+              </a>
+              <a href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+tertarik+dengan+Aura+Drape+French+Linen" target="_blank" rel="noopener" class="w-full text-center py-2.5 bg-brand hover:bg-[#5a0d1a] text-white font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors">
+                KONSULTASI
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 2: Velour Noir Blackout -->
+      <div class="product-item group bg-white border border-border rounded-[4px] overflow-hidden flex flex-col hover:border-brand/40 hover:shadow-xl transition-all duration-300" data-cat="Curtain" data-price="495000">
+        <a href="product-detail.html" class="relative aspect-[3/4] overflow-hidden bg-cream block">
+          <img
+            src="https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=1200&q=85"
+            alt="Velour Noir — 100% Total Blackout"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            loading="lazy"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-black/10 opacity-60 group-hover:opacity-80 transition-opacity"></div>
+          <div class="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
+            <span class="bg-white/95 backdrop-blur-[4px] text-dark font-jakarta font-semibold text-[10px] tracking-[1.2px] uppercase px-2.5 py-1 rounded-[2px] shadow-sm">
+              Curtain
+            </span>
+            <span class="bg-brand text-white font-jakarta font-semibold text-[9px] tracking-[1.2px] uppercase px-2 py-0.5 rounded-[2px] shadow-sm">
+              100% Blackout
+            </span>
+          </div>
+          <div class="absolute top-3.5 right-3.5">
+            <span class="bg-dark/90 text-white font-jakarta font-bold text-[10px] tracking-wider px-2 py-1 rounded-[2px] shadow-sm">
+              HEMAT 15%
+            </span>
+          </div>
+          <div class="absolute bottom-3.5 left-3.5 right-3.5 flex items-center justify-between text-white/90 text-[11px] font-mono">
+            <span class="bg-dark/70 backdrop-blur-sm px-2 py-0.5 rounded-[2px]">REF: WNT-CR-02</span>
+            <span class="flex items-center gap-1 text-[10px] uppercase font-jakarta tracking-wider font-semibold opacity-0 group-hover:opacity-100 transition-opacity text-white">
+              Detail &rarr;
+            </span>
+          </div>
+        </a>
+        <div class="p-6 flex-1 flex flex-col justify-between">
+          <div>
+            <h3 class="font-playfair text-[19px] md:text-[20px] font-bold text-dark leading-snug mb-2 group-hover:text-brand transition-colors">
+              <a href="product-detail.html">Velour Noir — 100% Total Blackout</a>
+            </h3>
+            <p class="font-jakarta text-[13px] text-muted leading-relaxed line-clamp-2 mb-4">
+              Solusi kegelapan total mutlak untuk master bedroom dan private home cinema. Dilapisi 3-pass acrylic thermal layer yang meredam suhu panas matahari.
+            </p>
+            <div class="space-y-1.5 mb-5 pb-5 border-b border-border/70">
+              <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
+                <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                <span>100% Zero-Light Transmittance Tested</span>
+              </div>
+              <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
+                <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                <span>Thermal Barrier (Redam panas hingga 4°C)</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="mb-4">
+              <div class="text-[11px] font-jakarta tracking-wider uppercase text-muted mb-0.5">Estimasi Material Mulai</div>
+              <div class="flex items-baseline gap-2">
+                <span class="font-playfair font-bold text-2xl text-brand">Rp 495.000</span>
+                <span class="text-[11px] font-jakarta text-muted">/ meter</span>
+                <span class="text-[12px] font-jakarta text-muted line-through ml-auto">Rp 580.000</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <a href="product-detail.html" class="w-full text-center py-2.5 border border-dark/30 hover:border-brand hover:text-brand text-dark font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors">
+                DETAIL
+              </a>
+              <a href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+tertarik+dengan+Velour+Noir+Blackout" target="_blank" rel="noopener" class="w-full text-center py-2.5 bg-brand hover:bg-[#5a0d1a] text-white font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors">
+                KONSULTASI
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 3: Vitrase Lumiere Sheer -->
+      <div class="product-item group bg-white border border-border rounded-[4px] overflow-hidden flex flex-col hover:border-brand/40 hover:shadow-xl transition-all duration-300" data-cat="Vitrase & Sheer" data-price="265000">
+        <a href="product-detail.html" class="relative aspect-[3/4] overflow-hidden bg-cream block">
+          <img
+            src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1200&q=85"
+            alt="Lumière Sheer — Swiss Voile Vitrase"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            loading="lazy"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-black/10 opacity-60 group-hover:opacity-80 transition-opacity"></div>
+          <div class="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
+            <span class="bg-white/95 backdrop-blur-[4px] text-dark font-jakarta font-semibold text-[10px] tracking-[1.2px] uppercase px-2.5 py-1 rounded-[2px] shadow-sm">
+              Vitrase & Sheer
+            </span>
+            <span class="bg-brand text-white font-jakarta font-semibold text-[9px] tracking-[1.2px] uppercase px-2 py-0.5 rounded-[2px] shadow-sm">
+              Bestseller
+            </span>
+          </div>
+          <div class="absolute bottom-3.5 left-3.5 right-3.5 flex items-center justify-between text-white/90 text-[11px] font-mono">
+            <span class="bg-dark/70 backdrop-blur-sm px-2 py-0.5 rounded-[2px]">REF: WNT-SH-01</span>
+            <span class="flex items-center gap-1 text-[10px] uppercase font-jakarta tracking-wider font-semibold opacity-0 group-hover:opacity-100 transition-opacity text-white">
+              Detail &rarr;
+            </span>
+          </div>
+        </a>
+        <div class="p-6 flex-1 flex flex-col justify-between">
+          <div>
+            <h3 class="font-playfair text-[19px] md:text-[20px] font-bold text-dark leading-snug mb-2 group-hover:text-brand transition-colors">
+              <a href="product-detail.html">Lumière Sheer — Swiss Voile Vitrase</a>
+            </h3>
+            <p class="font-jakarta text-[13px] text-muted leading-relaxed line-clamp-2 mb-4">
+              Vitrase voile tenun halus asal Swiss yang meneruskan cahaya lembut alami tanpa menyilaukan mata, sekaligus menjaga privasi ruang keluarga di siang hari.
+            </p>
+            <div class="space-y-1.5 mb-5 pb-5 border-b border-border/70">
+              <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
+                <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                <span>Ultra-Light Swiss Weave Micro-fiber</span>
+              </div>
+              <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
+                <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                <span>Gelombang Lipatan Ripple Fold Simetris</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="mb-4">
+              <div class="text-[11px] font-jakarta tracking-wider uppercase text-muted mb-0.5">Estimasi Material Mulai</div>
+              <div class="flex items-baseline gap-2">
+                <span class="font-playfair font-bold text-2xl text-brand">Rp 265.000</span>
+                <span class="text-[11px] font-jakarta text-muted">/ meter</span>
+                <span class="text-[12px] font-jakarta text-muted line-through ml-auto">Rp 310.000</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <a href="product-detail.html" class="w-full text-center py-2.5 border border-dark/30 hover:border-brand hover:text-brand text-dark font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors">
+                DETAIL
+              </a>
+              <a href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+tertarik+dengan+Lumiere+Sheer+Vitrase" target="_blank" rel="noopener" class="w-full text-center py-2.5 bg-brand hover:bg-[#5a0d1a] text-white font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors">
+                KONSULTASI
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 4: Aero Roller Blind -->
+      <div class="product-item group bg-white border border-border rounded-[4px] overflow-hidden flex flex-col hover:border-brand/40 hover:shadow-xl transition-all duration-300" data-cat="Roller Blind" data-price="320000">
+        <a href="product-detail.html" class="relative aspect-[3/4] overflow-hidden bg-cream block">
+          <img
+            src="https://images.unsplash.com/photo-1540518614846-7ede433c4b4f?w=1200&q=85"
+            alt="Aero Blind — Minimalist Sunscreen 5%"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            loading="lazy"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-black/10 opacity-60 group-hover:opacity-80 transition-opacity"></div>
+          <div class="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
+            <span class="bg-white/95 backdrop-blur-[4px] text-dark font-jakarta font-semibold text-[10px] tracking-[1.2px] uppercase px-2.5 py-1 rounded-[2px] shadow-sm">
+              Roller Blind
+            </span>
+            <span class="bg-brand text-white font-jakarta font-semibold text-[9px] tracking-[1.2px] uppercase px-2 py-0.5 rounded-[2px] shadow-sm">
+              Modern Minimalist
+            </span>
+          </div>
+          <div class="absolute bottom-3.5 left-3.5 right-3.5 flex items-center justify-between text-white/90 text-[11px] font-mono">
+            <span class="bg-dark/70 backdrop-blur-sm px-2 py-0.5 rounded-[2px]">REF: WNT-RB-01</span>
+            <span class="flex items-center gap-1 text-[10px] uppercase font-jakarta tracking-wider font-semibold opacity-0 group-hover:opacity-100 transition-opacity text-white">
+              Detail &rarr;
+            </span>
+          </div>
+        </a>
+        <div class="p-6 flex-1 flex flex-col justify-between">
+          <div>
+            <h3 class="font-playfair text-[19px] md:text-[20px] font-bold text-dark leading-snug mb-2 group-hover:text-brand transition-colors">
+              <a href="product-detail.html">Aero Blind — Minimalist Sunscreen 5%</a>
+            </h3>
+            <p class="font-jakarta text-[13px] text-muted leading-relaxed line-clamp-2 mb-4">
+              Roller blind berestetika arsitektural bersih dengan keterbukaan tenun 5%. Menghalau silau dan 95% radiasi UV berbahaya sembari tetap mempertahankan view kaca.
+            </p>
+            <div class="space-y-1.5 mb-5 pb-5 border-b border-border/70">
+              <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
+                <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                <span>95% UV Rejection & Glare Filter</span>
+              </div>
+              <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
+                <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                <span>Tube Aluminium 38mm Heavy-Duty Spring</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="mb-4">
+              <div class="text-[11px] font-jakarta tracking-wider uppercase text-muted mb-0.5">Estimasi Material Mulai</div>
+              <div class="flex items-baseline gap-2">
+                <span class="font-playfair font-bold text-2xl text-brand">Rp 320.000</span>
+                <span class="text-[11px] font-jakarta text-muted">/ m²</span>
+                <span class="text-[12px] font-jakarta text-muted line-through ml-auto">Rp 380.000</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <a href="product-detail.html" class="w-full text-center py-2.5 border border-dark/30 hover:border-brand hover:text-brand text-dark font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors">
+                DETAIL
+              </a>
+              <a href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+tertarik+dengan+Aero+Roller+Blind" target="_blank" rel="noopener" class="w-full text-center py-2.5 bg-brand hover:bg-[#5a0d1a] text-white font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors">
+                KONSULTASI
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 5: Motorized Smart System -->
+      <div class="product-item group bg-white border border-border rounded-[4px] overflow-hidden flex flex-col hover:border-brand/40 hover:shadow-xl transition-all duration-300" data-cat="Motorized Smart System" data-price="2750000">
+        <a href="product-detail.html" class="relative aspect-[3/4] overflow-hidden bg-cream block">
+          <img
+            src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200&q=85"
+            alt="Zenith Smart Motorized Curtain System"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            loading="lazy"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-black/10 opacity-60 group-hover:opacity-80 transition-opacity"></div>
+          <div class="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
+            <span class="bg-white/95 backdrop-blur-[4px] text-dark font-jakarta font-semibold text-[10px] tracking-[1.2px] uppercase px-2.5 py-1 rounded-[2px] shadow-sm">
+              Motorized Smart System
+            </span>
+            <span class="bg-brand text-white font-jakarta font-semibold text-[9px] tracking-[1.2px] uppercase px-2 py-0.5 rounded-[2px] shadow-sm">
+              Smart Home Ready
+            </span>
+          </div>
+          <div class="absolute bottom-3.5 left-3.5 right-3.5 flex items-center justify-between text-white/90 text-[11px] font-mono">
+            <span class="bg-dark/70 backdrop-blur-sm px-2 py-0.5 rounded-[2px]">REF: WNT-SM-01</span>
+            <span class="flex items-center gap-1 text-[10px] uppercase font-jakarta tracking-wider font-semibold opacity-0 group-hover:opacity-100 transition-opacity text-white">
+              Detail &rarr;
+            </span>
+          </div>
+        </a>
+        <div class="p-6 flex-1 flex flex-col justify-between">
+          <div>
+            <h3 class="font-playfair text-[19px] md:text-[20px] font-bold text-dark leading-snug mb-2 group-hover:text-brand transition-colors">
+              <a href="product-detail.html">Zenith Smart Motorized System</a>
+            </h3>
+            <p class="font-jakarta text-[13px] text-muted leading-relaxed line-clamp-2 mb-4">
+              Sistem motorisasi tirai bertenaga Somfy / Tuya Ultra-Quiet Motor (< 30dB). Terintegrasi Apple HomeKit, Google Home, remote & sensor matahari.
+            </p>
+            <div class="space-y-1.5 mb-5 pb-5 border-b border-border/70">
+              <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
+                <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                <span>Motor Whisper-Quiet (<30dB) Soft-Start</span>
+              </div>
+              <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
+                <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                <span>Kompatibel Apple HomeKit, Google & Tuya</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="mb-4">
+              <div class="text-[11px] font-jakarta tracking-wider uppercase text-muted mb-0.5">Estimasi Paket Motor</div>
+              <div class="flex items-baseline gap-2">
+                <span class="font-playfair font-bold text-2xl text-brand">Rp 2.750.000</span>
+                <span class="text-[11px] font-jakarta text-muted">/ set track</span>
+                <span class="text-[12px] font-jakarta text-muted line-through ml-auto">Rp 3.200.000</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <a href="product-detail.html" class="w-full text-center py-2.5 border border-dark/30 hover:border-brand hover:text-brand text-dark font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors">
+                DETAIL
+              </a>
+              <a href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+tertarik+dengan+Motorized+Curtain+System" target="_blank" rel="noopener" class="w-full text-center py-2.5 bg-brand hover:bg-[#5a0d1a] text-white font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors">
+                KONSULTASI
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product 6: Wood Blind -->
+      <div class="product-item group bg-white border border-border rounded-[4px] overflow-hidden flex flex-col hover:border-brand/40 hover:shadow-xl transition-all duration-300" data-cat="Wood & Bamboo Blind" data-price="540000">
+        <a href="product-detail.html" class="relative aspect-[3/4] overflow-hidden bg-cream block">
+          <img
+            src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=85"
+            alt="Komorebi Natural Paulownia Wood Blind"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            loading="lazy"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-black/10 opacity-60 group-hover:opacity-80 transition-opacity"></div>
+          <div class="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
+            <span class="bg-white/95 backdrop-blur-[4px] text-dark font-jakarta font-semibold text-[10px] tracking-[1.2px] uppercase px-2.5 py-1 rounded-[2px] shadow-sm">
+              Wood & Bamboo Blind
+            </span>
+            <span class="bg-brand text-white font-jakarta font-semibold text-[9px] tracking-[1.2px] uppercase px-2 py-0.5 rounded-[2px] shadow-sm">
+              Eco-Natural Wood
+            </span>
+          </div>
+          <div class="absolute bottom-3.5 left-3.5 right-3.5 flex items-center justify-between text-white/90 text-[11px] font-mono">
+            <span class="bg-dark/70 backdrop-blur-sm px-2 py-0.5 rounded-[2px]">REF: WNT-WB-01</span>
+            <span class="flex items-center gap-1 text-[10px] uppercase font-jakarta tracking-wider font-semibold opacity-0 group-hover:opacity-100 transition-opacity text-white">
+              Detail &rarr;
+            </span>
+          </div>
+        </a>
+        <div class="p-6 flex-1 flex flex-col justify-between">
+          <div>
+            <h3 class="font-playfair text-[19px] md:text-[20px] font-bold text-dark leading-snug mb-2 group-hover:text-brand transition-colors">
+              <a href="product-detail.html">Komorebi Paulownia Wood Blind</a>
+            </h3>
+            <p class="font-jakarta text-[13px] text-muted leading-relaxed line-clamp-2 mb-4">
+              Bilah kayu solid Paulownia 50mm yang ringan dan tidak membebani konstruksi jendela. Memberikan bayangan matahari geometris khas resort bintang lima.
+            </p>
+            <div class="space-y-1.5 mb-5 pb-5 border-b border-border/70">
+              <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
+                <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                <span>Kayu Solid Paulownia 50mm Anti-Melengkung</span>
+              </div>
+              <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
+                <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                <span>Pernis UV 5-Layer Tahan Lembab Tropis</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="mb-4">
+              <div class="text-[11px] font-jakarta tracking-wider uppercase text-muted mb-0.5">Estimasi Material Mulai</div>
+              <div class="flex items-baseline gap-2">
+                <span class="font-playfair font-bold text-2xl text-brand">Rp 540.000</span>
+                <span class="text-[11px] font-jakarta text-muted">/ m²</span>
+                <span class="text-[12px] font-jakarta text-muted line-through ml-auto">Rp 620.000</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <a href="product-detail.html" class="w-full text-center py-2.5 border border-dark/30 hover:border-brand hover:text-brand text-dark font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors">
+                DETAIL
+              </a>
+              <a href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+tertarik+dengan+Komorebi+Wood+Blind" target="_blank" rel="noopener" class="w-full text-center py-2.5 bg-brand hover:bg-[#5a0d1a] text-white font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors">
+                KONSULTASI
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== ARCHITECTURAL ON-SITE SURVEY BANNER ===== -->
+<section class="bg-dark text-white py-16 md:py-20 relative overflow-hidden">
+  <div class="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px]"></div>
+
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12 relative z-10">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+      <div class="lg:col-span-8">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="w-6 h-[1.5px] bg-brand"></span>
+          <span class="font-jakarta font-semibold text-[11px] tracking-widest-4 uppercase text-cream-dark">
+            LAYANAN ATELIER LANGSUNG KE LOKASI
+          </span>
+        </div>
+        <h2 class="font-playfair text-2xl md:text-4xl font-bold leading-tight mb-4">
+          Bingung Menentukan Material & Ukuran Jendela?
+        </h2>
+        <p class="font-jakarta text-[14px] md:text-[15px] text-gray-300 leading-relaxed max-w-2xl">
+          Tim spesialis Wintom siap datang ke hunian atau kantor Anda dengan membawa ratusan katalog swatch kain fisik asli. Kami melakukan pengukuran presisi laser millimeter dan memberikan estimasi transparan di tempat — 100% Bebas Biaya Survei Jabodetabek.
+        </p>
+      </div>
+
+      <div class="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-3.5">
+        <a
+          href="https://wa.me/6289602052229?text=Halo+Wintom%2C+saya+ingin+reservasi+jadwal+survei+lokasi+dan+cek+sampel+kain+ke+alamat+saya"
+          target="_blank"
+          rel="noopener"
+          class="inline-flex items-center justify-center gap-2.5 bg-brand hover:bg-[#5a0d1a] text-white font-jakarta font-semibold text-[12px] tracking-widest-3 uppercase px-8 py-4 rounded-[3px] shadow-lg transition-all duration-200 text-center"
+        >
+          RESERVASI SURVEI GRATIS
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="bg-dark text-white pt-16 pb-12 border-t border-white/10">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-white/10">
+      <div class="md:col-span-4">
+        <span class="font-playfair font-bold text-white text-2xl block mb-1">wintom</span>
+        <span class="font-jakarta font-semibold text-[9px] tracking-[3px] uppercase text-gray-400 block mb-4">CURTAIN</span>
+        <p class="font-jakarta text-[13px] text-gray-400 leading-relaxed max-w-sm">
+          Atelier tirai dan sistem shading jendela premium dengan standar jahitan presisi Eropa dan garansi mekanisme hingga 5 tahun.
+        </p>
+      </div>
+      <div class="md:col-span-3">
+        <h4 class="font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase text-white mb-4">KOLEKSI</h4>
+        <ul class="space-y-2 text-[13px] text-gray-400">
+          <li><a href="#" class="hover:text-white transition-colors">Drapery & Curtain</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Vitrase & Swiss Sheer</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Roller Blind Sunscreen</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Motorized Smart Somfy</a></li>
+          <li><a href="#" class="hover:text-white transition-colors">Natural Wood Blind</a></li>
+        </ul>
+      </div>
+      <div class="md:col-span-5">
+        <h4 class="font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase text-white mb-4">SHOWROOM & ATELIER</h4>
+        <p class="font-jakarta text-[13px] text-gray-400 leading-relaxed mb-3">
+          Jakarta & Tangerang — Melayani survei onsite dan pemasangan ke seluruh area Jabodetabek.
+        </p>
+        <p class="font-jakarta text-[13px] text-brand font-semibold">
+          WhatsApp Konsultasi: 0896-0205-2229
+        </p>
+      </div>
+    </div>
+    <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px] text-gray-500">
+      <div>&copy; 2026 Wintom Curtain. All rights reserved.</div>
+      <div>Designed with Architectural Elegance.</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Tab filter logic
+  const pills = document.querySelectorAll('.cat-pill');
+  const items = document.querySelectorAll('.product-item');
+  const countEl = document.getElementById('productCount');
+
+  pills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      pills.forEach(p => {
+        p.classList.remove('bg-brand', 'text-white', 'shadow-sm');
+        p.classList.add('bg-white', 'text-dark', 'border', 'border-border');
+      });
+      pill.classList.remove('bg-white', 'text-dark', 'border', 'border-border');
+      pill.classList.add('bg-brand', 'text-white', 'shadow-sm');
+
+      const targetCat = pill.getAttribute('data-cat');
+      let visible = 0;
+      items.forEach(it => {
+        const itemCat = it.getAttribute('data-cat');
+        if (targetCat === 'all' || itemCat === targetCat) {
+          it.style.display = 'flex';
+          visible++;
+        } else {
+          it.style.display = 'none';
+        }
+      });
+      countEl.textContent = visible;
+    });
+  });
+</script>
+
+</body>
+</html>
