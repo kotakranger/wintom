@@ -239,18 +239,18 @@ wintom/
 ### MVP Scope
 | # | Fitur | Status |
 |---|---|---|
-| 1 | Setup folder & database init | 🔲 Belum |
-| 2 | `includes/` (db, auth, header, footer) | 🔲 Belum |
-| 3 | Homepage (`index.php`) | 🔲 Belum |
-| 4 | Katalog Produk (`products.php`) | 🔲 Belum |
-| 5 | Detail Produk (`product-detail.php`) | 🔲 Belum |
+| 1 | Setup folder & database init | ✅ Selesai |
+| 2 | `includes/` (db, auth, header, footer) | ✅ Selesai |
+| 3 | Homepage (`index.php`) | ✅ Selesai |
+| 4 | Katalog Produk (`products.php`) | ✅ Selesai |
+| 5 | Detail Produk (`product-detail.php`) | ✅ Selesai |
 | 6 | Galeri Portofolio (`gallery.php`) | 🔲 Belum |
 | 7 | Tentang & Kontak (`about.php`) | 🔲 Belum |
 | 8 | Admin Login (`admin/login.php`) | 🔲 Belum |
 | 9 | Admin Produk CRUD (`admin/products.php`) | 🔲 Belum |
 | 10 | Admin Galeri CRUD (`admin/gallery.php`) | 🔲 Belum |
-| 11 | WhatsApp CTA dinamis (semua halaman) | 🔲 Belum |
-| 12 | Filter kategori JS (produk & galeri) | 🔲 Belum |
+| 11 | WhatsApp CTA dinamis (semua halaman) | ✅ Selesai |
+| 12 | Filter kategori dinamis (produk) | ✅ Selesai |
 
 ### Legend Status
 `🔲 Belum` | `🔄 In Progress` | `✅ Selesai` | `⏸ Hold` | `❌ Batal`
@@ -262,6 +262,8 @@ wintom/
 | Tanggal | Versi | Perubahan | Oleh |
 |---|---|---|---|
 | 2026-09-19 | v0.1 | Inisialisasi PRD, konversi ke format SSoT | AI + Tim |
+| 2026-09-19 | v0.2 | Selesai Phase 1 Foundation, Homepage, Katalog Produk & Detail Produk | AI + Tim |
+
 
 ---
 
