@@ -1,406 +1,402 @@
 <?php
-// product-detail.php — Halaman Detail Produk & Spesifikasi Material Wintom
-require_once __DIR__ . '/includes/config.php';
+// product-detail.php — Detail Produk Wintom Curtain
+// Sliced from Figma node-id=1:757 via Figma Dev Mode MCP
 require_once __DIR__ . '/includes/db.php';
 
-$slug = trim($_GET['slug'] ?? '');
-$id   = (int)($_GET['id'] ?? 0);
+$slug = $_GET['slug'] ?? '';
+if (!$slug) { header('Location: /products.php'); exit; }
 
-$product = null;
-$gallery_images = [];
-$related_products = [];
+$db = get_db();
+$stmt = $db->prepare("SELECT * FROM products WHERE slug = ?");
+$stmt->execute([$slug]);
+$product = $stmt->fetch();
+if (!$product) { header('Location: /products.php'); exit; }
 
-try {
-    $pdo = get_db();
+// Fetch images separately (SQLite GROUP_CONCAT doesn't support ORDER BY)
+$img_stmt = $db->prepare("SELECT image_url FROM product_images WHERE product_id = ? ORDER BY sort_order ASC");
+$img_stmt->execute([$product['id']]);
+$gallery_rows = $img_stmt->fetchAll();
+$gallery_urls = !empty($gallery_rows) ? array_column($gallery_rows, 'image_url') : [$product['cover_image']];
+$options = $product['options_json'] ? json_decode($product['options_json'], true) : [];
+$features = $product['features'] ? explode('|', $product['features']) : [];
+$colors = $options['colors'] ?? [];
+$stitch_options = $options['stitch'] ?? [];
 
-    if (!empty($slug)) {
-        $stmt = $pdo->prepare("SELECT * FROM products WHERE slug = ? LIMIT 1");
-        $stmt->execute([$slug]);
-        $product = $stmt->fetch();
-    } elseif ($id > 0) {
-        $stmt = $pdo->prepare("SELECT * FROM products WHERE id = ? LIMIT 1");
-        $stmt->execute([$id]);
-        $product = $stmt->fetch();
-    }
+// Related products (same category, excluding current)
+$related_stmt = $db->prepare("SELECT * FROM products WHERE category = ? AND slug != ? LIMIT 3");
+$related_stmt->execute([$product['category'], $slug]);
+$related = $related_stmt->fetchAll();
 
-    if ($product) {
-        // Ambil galeri foto tambahan
-        $stmt_img = $pdo->prepare("SELECT image_url FROM product_images WHERE product_id = ? ORDER BY sort_order ASC, id ASC");
-        $stmt_img->execute([$product['id']]);
-        $gallery_images = $stmt_img->fetchAll(PDO::FETCH_COLUMN);
-
-        // Jika galeri kosong, masukkan cover_image sebagai item pertama
-        if (empty($gallery_images)) {
-            $gallery_images = [$product['cover_image']];
-        } else {
-            // Pastikan cover image ada di urutan pertama jika belum
-            if (!in_array($product['cover_image'], $gallery_images)) {
-                array_unshift($gallery_images, $product['cover_image']);
-            }
-        }
-
-        // Ambil 3 produk terkait dari kategori sama
-        $stmt_rel = $pdo->prepare("SELECT * FROM products WHERE id != ? ORDER BY (category = ?) DESC, id DESC LIMIT 3");
-        $stmt_rel->execute([$product['id'], $product['category']]);
-        $related_products = $stmt_rel->fetchAll();
-    }
-} catch (Exception $e) {
-    // Fail-safe handling
-}
-
-// Jika produk tidak ditemukan
-if (!$product) {
-    $page_title = 'Produk Tidak Ditemukan';
-    include_once __DIR__ . '/includes/header.php';
-    ?>
-    <section class="py-24 bg-cream min-h-[60vh] flex items-center justify-center">
-      <div class="max-w-md mx-auto px-6 text-center">
-        <h1 class="font-playfair text-3xl font-bold text-dark mb-3">Produk Tidak Ditemukan</h1>
-        <p class="font-jakarta text-muted text-[14px] mb-8 leading-relaxed">
-          Koleksi yang Anda cari mungkin telah diperbarui kodenya atau belum tersedia dalam katalog saat ini.
-        </p>
-        <a href="<?= BASE_URL ?>/products.php" class="inline-block bg-brand hover:bg-[#5a0d1a] text-white px-8 py-3 rounded-[3px] font-jakarta text-[12px] font-semibold tracking-wider uppercase transition-colors">
-          Kembali ke Katalog
-        </a>
-      </div>
-    </section>
-    <?php
-    include_once __DIR__ . '/includes/footer.php';
-    exit;
-}
+// WhatsApp message
+$wa_msg = rawurlencode("Halo Wintom, saya tertarik dengan produk *{$product['name']}* (REF: {$product['ref_code']}). Boleh minta info lebih lanjut dan estimasi biaya?");
 
 $page_title = $product['name'];
-$active_nav = 'products';
-
-// Parse options (warna, jahitan, sistem motor)
-$options = [];
-if (!empty($product['options_json'])) {
-    $options = json_decode($product['options_json'], true) ?: [];
-}
-
-// Parse features
-$feature_items = [];
-if (!empty($product['features'])) {
-    $feature_items = explode('|', $product['features']);
-}
-
-// WhatsApp URL Generator
-$wa_custom_msg = urlencode("Halo Wintom Curtain, saya tertarik memesan/berkonsultasi mengenai koleksi {$product['name']} (Kode: {$product['ref_code']}). Boleh dibantu info estimasi dan penjadwalan survei lokasi?");
-$product_wa_link = WA_URL . "?text=" . $wa_custom_msg;
-
-// Diskon
-$has_discount = (!empty($product['original_price']) && $product['original_price'] > $product['price']);
-$discount_pct = $has_discount ? round((($product['original_price'] - $product['price']) / $product['original_price']) * 100) : 0;
+$active_nav  = 'products';
 
 include_once __DIR__ . '/includes/header.php';
+
+function fmt_price(int $price): string {
+    return 'Rp ' . number_format($price, 0, ',', '.');
+}
+$discount_pct = 0;
+if ($product['original_price'] && $product['original_price'] > $product['price']) {
+    $discount_pct = round((1 - $product['price'] / $product['original_price']) * 100);
+}
 ?>
 
 <!-- ===== BREADCRUMB ===== -->
-<div class="bg-cream-dark/40 border-b border-border py-4">
-  <div class="max-w-[1280px] mx-auto px-6 md:px-12 flex items-center gap-2 text-[12px] font-jakarta text-muted">
-    <a href="<?= BASE_URL ?>/" class="hover:text-brand transition-colors">Home</a>
-    <span>/</span>
-    <a href="<?= BASE_URL ?>/products.php" class="hover:text-brand transition-colors">Katalog Koleksi</a>
-    <span>/</span>
-    <a href="<?= BASE_URL ?>/products.php?category=<?= urlencode($product['category']) ?>" class="hover:text-brand transition-colors">
-      <?= htmlspecialchars($product['category']) ?>
-    </a>
-    <span>/</span>
-    <span class="text-dark font-medium truncate max-w-[200px] md:max-w-none"><?= htmlspecialchars($product['name']) ?></span>
+<div class="bg-[#f5f3f0] border-b border-[#e2ddd5] px-12 py-[12px]">
+  <div class="max-w-[1280px] mx-auto flex items-center gap-2 text-[11px] tracking-[0.44px] text-[#5f5e5a] font-jakarta">
+    <a href="/" class="hover:text-[#731924] transition-colors">Home</a>
+    <svg class="size-[5px] shrink-0" viewBox="0 0 4 7" fill="none"><path d="M1 1l2.5 2.5L1 6" stroke="#5f5e5a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <a href="/products.php" class="hover:text-[#731924] transition-colors">Products</a>
+    <svg class="size-[5px] shrink-0" viewBox="0 0 4 7" fill="none"><path d="M1 1l2.5 2.5L1 6" stroke="#5f5e5a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <a href="/products.php?cat=<?= urlencode($product['category']) ?>" class="hover:text-[#731924] transition-colors"><?= htmlspecialchars($product['category']) ?></a>
+    <svg class="size-[5px] shrink-0" viewBox="0 0 4 7" fill="none"><path d="M1 1l2.5 2.5L1 6" stroke="#5f5e5a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span class="font-semibold text-[#1e1e1e]"><?= htmlspecialchars($product['name']) ?></span>
   </div>
 </div>
 
-<!-- ===== PRODUCT DETAIL HERO SECTION ===== -->
-<section class="py-12 md:py-16 bg-cream">
-  <div class="max-w-[1280px] mx-auto px-6 md:px-12">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+<!-- ===== MAIN PRODUCT SPLIT (50:50) ===== -->
+<section class="bg-[#fbf9f6] px-12 py-10">
+  <div class="max-w-[1280px] mx-auto grid grid-cols-12 gap-x-12 gap-y-12">
 
-      <!-- LEFT: PHOTO GALLERY (INTERACTIVE) -->
-      <div class="lg:col-span-6 space-y-4">
-        <!-- Main Large Photo -->
-        <div class="relative aspect-[4/5] bg-white border border-border rounded-[4px] overflow-hidden shadow-sm">
-          <img
-            id="main-product-img"
-            src="<?= htmlspecialchars($gallery_images[0] ?? $product['cover_image']) ?>"
-            alt="<?= htmlspecialchars($product['name']) ?>"
-            class="w-full h-full object-cover transition-all duration-300"
-          />
+    <!-- ===== LEFT: MEDIA GALLERY (6 cols) ===== -->
+    <div class="col-span-12 lg:col-span-6 flex flex-col gap-4">
 
-          <!-- Badge Kiri Atas -->
-          <div class="absolute top-4 left-4 flex flex-col gap-1.5 items-start">
-            <span class="bg-white/95 backdrop-blur-[4px] text-dark font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase px-3 py-1 rounded-[2px] shadow-sm">
-              <?= htmlspecialchars($product['category']) ?>
-            </span>
-            <?php if (!empty($product['badge'])): ?>
-              <span class="bg-brand text-white font-jakarta font-semibold text-[10px] tracking-widest-2 uppercase px-2.5 py-0.5 rounded-[2px] shadow-sm">
-                <?= htmlspecialchars($product['badge']) ?>
-              </span>
-            <?php endif; ?>
-          </div>
+      <!-- Main Viewport -->
+      <div class="bg-[#efeeeb] border border-[#e2ddd5] rounded-[2px] overflow-hidden relative" id="main-viewport">
+        <img id="main-img"
+             src="<?= htmlspecialchars($gallery_urls[0]) ?>"
+             alt="<?= htmlspecialchars($product['name']) ?>"
+             class="w-full aspect-[3/4] object-cover transition-opacity duration-300" />
 
-          <?php if ($has_discount): ?>
-            <div class="absolute top-4 right-4">
-              <span class="bg-dark/95 text-white font-jakarta font-bold text-[11px] tracking-wider px-3 py-1 rounded-[2px] shadow-sm">
-                HEMAT <?= $discount_pct ?>%
-              </span>
-            </div>
-          <?php endif; ?>
+        <!-- OEKO Badge -->
+        <div class="absolute top-4 left-4 backdrop-blur-[6px] bg-[rgba(251,249,246,0.9)] border border-[#e2ddd5] rounded-[2px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center gap-2 px-[13px] py-[7px]">
+          <div class="size-2 rounded-full bg-[#731924] shrink-0"></div>
+          <span class="font-jakarta font-semibold text-[#1e1e1e] text-[11px] tracking-[1.1px] uppercase whitespace-nowrap">OEKO-TEX® CERTIFIED · 100% PREMIUM WEAVE</span>
         </div>
 
-        <!-- Thumbnails Row (Jika ada lebih dari 1 foto) -->
-        <?php if (count($gallery_images) > 1): ?>
-          <div class="grid grid-cols-4 gap-3">
-            <?php foreach ($gallery_images as $idx => $img_url): ?>
-              <button
-                type="button"
-                onclick="changeProductImage('<?= htmlspecialchars($img_url) ?>', this)"
-                class="thumb-btn relative aspect-square rounded-[3px] overflow-hidden border-2 <?= $idx === 0 ? 'border-brand' : 'border-border' ?> hover:border-brand/70 transition-all"
-              >
-                <img src="<?= htmlspecialchars($img_url) ?>" alt="Thumbnail <?= $idx+1 ?>" class="w-full h-full object-cover" />
-              </button>
-            <?php endforeach; ?>
-          </div>
-        <?php endif; ?>
-
-        <!-- Guarantee Value Badges -->
-        <div class="grid grid-cols-3 gap-3 pt-4 border-t border-border/70 text-center">
-          <div class="p-3 bg-white border border-border rounded-[3px]">
-            <span class="block font-jakarta font-bold text-[11px] uppercase tracking-wider text-dark mb-0.5">Garansi 5 Tahun</span>
-            <span class="text-[10px] text-muted">Komponen & Mekanisme</span>
-          </div>
-          <div class="p-3 bg-white border border-border rounded-[3px]">
-            <span class="block font-jakarta font-bold text-[11px] uppercase tracking-wider text-dark mb-0.5">Survei Gratis</span>
-            <span class="text-[10px] text-muted">Area Jabodetabek</span>
-          </div>
-          <div class="p-3 bg-white border border-border rounded-[3px]">
-            <span class="block font-jakarta font-bold text-[11px] uppercase tracking-wider text-dark mb-0.5">Memory Hemming</span>
-            <span class="text-[10px] text-muted">Jahitan Selalu Rapi</span>
-          </div>
+        <!-- Zoom indicator -->
+        <div class="absolute bottom-4 right-4 bg-[rgba(30,30,30,0.8)] backdrop-blur-[2px] rounded-[2px] flex items-center gap-1.5 px-3 py-1">
+          <svg class="size-[11px] text-white" fill="none" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3.5"/><path d="M8 8l2.5 2.5" stroke-linecap="round"/></svg>
+          <span class="font-jakarta text-white text-[11px] tracking-[0.44px]">10x Macro Weave Inspection</span>
         </div>
       </div>
 
-      <!-- RIGHT: PRODUCT EDITORIAL & ORDER SPECS -->
-      <div class="lg:col-span-6 space-y-6">
+      <!-- Thumbnail Strip -->
+      <div class="flex gap-3">
+        <?php foreach ($gallery_urls as $i => $url): ?>
+        <button onclick="switchImg('<?= htmlspecialchars($url) ?>', this)"
+                class="thumbnail-btn shrink-0 bg-[#efeeeb] border rounded-[2px] overflow-hidden p-[3px] transition-all duration-200 <?= $i === 0 ? 'border-2 border-[#731924]' : 'border border-[#e2ddd5]' ?>"
+                style="width: calc(25% - 9px)">
+          <img src="<?= htmlspecialchars($url) ?>" alt="Photo <?= $i+1 ?>" class="w-full aspect-square object-cover rounded-[2px]" />
+        </button>
+        <?php endforeach; ?>
+      </div>
 
-        <!-- Header Info -->
-        <div>
-          <div class="flex items-center gap-3 mb-2.5">
-            <span class="font-mono text-[11px] tracking-wider text-muted bg-white border border-border px-2.5 py-0.5 rounded-[2px]">
-              KODE REF: <?= htmlspecialchars($product['ref_code'] ?? 'WNT-SERIES') ?>
-            </span>
-            <span class="w-1.5 h-1.5 rounded-full bg-brand"></span>
-            <span class="text-[11px] font-jakarta tracking-widest-2 uppercase text-brand font-semibold">
-              Koleksi Atelier
-            </span>
+      <!-- Micro Atelier Guarantee Strip -->
+      <div class="bg-[#f5f3f0] border border-[#e2ddd5] rounded-[2px] flex items-center justify-between px-[13px] py-[13px] mt-1">
+        <div class="flex items-center gap-1.5">
+          <svg class="size-3 text-[#5f5e5a] shrink-0" fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M2 7l3.5 3.5L12 3.5"/></svg>
+          <div class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.44px] leading-[16px]">
+            <p>Jahitan Khusus Double</p><p>Blindstitch</p>
           </div>
+        </div>
+        <div class="w-px h-3 bg-[#e2ddd5] shrink-0"></div>
+        <div class="flex items-center gap-1.5">
+          <svg class="size-3 text-[#5f5e5a] shrink-0" fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M7 1v6M7 7l3.5 3.5"/><circle cx="7" cy="10" r="3"/></svg>
+          <div class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.44px] leading-[16px]">
+            <p>Akurasi Laser</p><p>1mm</p>
+          </div>
+        </div>
+        <div class="w-px h-3 bg-[#e2ddd5] shrink-0"></div>
+        <div class="flex items-center gap-1.5">
+          <svg class="size-3 text-[#5f5e5a] shrink-0" fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M2 2h10v8H2z"/><path stroke-linecap="round" d="M5 10v2M9 10v2M3 12h8"/></svg>
+          <div class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.44px] leading-[16px]">
+            <p>Pengantaran &amp; Pasang Tim</p><p>Internal</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-          <h1 class="font-playfair text-3xl md:text-4xl font-bold text-dark leading-tight mb-4">
-            <?= htmlspecialchars($product['name']) ?>
-          </h1>
+    <!-- ===== RIGHT: PRODUCT INFO + CTA (6 cols) ===== -->
+    <div class="col-span-12 lg:col-span-6 flex flex-col gap-6">
 
-          <!-- Price Box -->
-          <div class="p-4 bg-white border border-border rounded-[4px] flex items-baseline justify-between">
+      <!-- Header & Title Block -->
+      <div class="flex flex-col gap-1.5">
+        <!-- Category + REF row -->
+        <div class="flex items-center gap-2">
+          <span class="font-jakarta font-semibold text-[#731924] text-[11px] tracking-[1.1px] uppercase">CUSTOM ARCHITECTURAL DRAPERY</span>
+          <div class="size-[6px] rounded-full bg-[#e2ddd5] shrink-0"></div>
+          <span class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.44px] uppercase">REF. #<?= htmlspecialchars($product['ref_code']) ?></span>
+        </div>
+        <!-- Product Name H1 -->
+        <h1 class="font-playfair font-medium text-[#1e1e1e] text-[36px] leading-[44px] tracking-[-0.9px]">
+          <?= htmlspecialchars(strtoupper($product['name'])) ?>
+        </h1>
+        <!-- Estimasi Harga -->
+        <div class="flex items-baseline gap-2 pt-1">
+          <span class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.44px] uppercase">ESTIMASI BAHAN MULAI:</span>
+          <span class="font-playfair font-semibold text-[#540011] text-[18px] tracking-[1.08px]"><?= fmt_price($product['price']) ?></span>
+          <span class="font-jakarta text-[#564242] text-[12px] tracking-[0.24px]"><?= htmlspecialchars($product['price_unit']) ?> (termasuk ongkos jahit atelier)</span>
+        </div>
+      </div>
+
+      <!-- Description Editorial -->
+      <div class="font-jakarta text-[#564242] text-[14px] leading-[22.75px] tracking-[0.14px]">
+        <?= nl2br(htmlspecialchars($product['description'])) ?>
+      </div>
+
+      <!-- Color + Size + Stitch Selector Box -->
+      <div class="bg-white border border-[#e2ddd5] rounded-[8px] drop-shadow-[0px_1px_1px_rgba(0,0,0,0.05)] flex flex-col gap-3 p-[17px]">
+
+        <?php if (!empty($colors)): ?>
+        <!-- VAR WARNA -->
+        <div class="flex items-center justify-between py-1">
+          <div>
+            <p class="font-jakarta font-medium text-[#5f5e5a] text-[12px] tracking-[0.6px] uppercase leading-[22px]">VAR WARNA</p>
+            <p class="font-playfair font-semibold text-[#1e1e1e] text-[16px] tracking-[0.16px] leading-[26px]" id="selected-color"><?= htmlspecialchars($colors[0]) ?></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <?php foreach ($colors as $idx => $color): ?>
+            <button onclick="selectColor(this, '<?= htmlspecialchars($color) ?>')"
+                    title="<?= htmlspecialchars($color) ?>"
+                    class="color-swatch size-5 rounded-full border border-[#e2ddd5] transition-all duration-200 <?= $idx === 0 ? 'ring-2 ring-[#731924] ring-offset-1' : '' ?>"
+                    style="background-color: <?= match($color) {
+                        'Oatmeal Cream', 'Ivory Cashmere', 'Warm Alabaster', 'Champagne Tint', 'Natural Oak', 'Nordic White', 'Mono White' => '#e6dfd5',
+                        'Warm Sand', 'Soft Greige', 'Sand Dune', 'Warm Teak' => '#c4a882',
+                        'Slate Charcoal', 'Anthracite Dark Grey', 'Dark Bronze Charcoal', 'Ebony Charcoal', 'Ash Grey' => '#5a5a58',
+                        'Muted Olive' => '#8a8a6a',
+                        'Midnight Navy' => '#1a1a3a',
+                        'Deep Espresso' => '#3a1a1a',
+                        'Pure Snow White' => '#f8f8f8',
+                        default => '#c4a882'
+                    } ?>">
+            </button>
+            <?php endforeach; ?>
+            <svg class="size-[10px] text-[#5f5e5a]" fill="none" viewBox="0 0 10 6.2"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="h-px bg-[#e2ddd5]"></div>
+        <?php endif; ?>
+
+        <!-- UKURAN -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between py-1">
             <div>
-              <span class="text-[11px] uppercase tracking-wider font-jakarta text-muted block mb-1">Estimasi Biaya Material</span>
-              <div class="flex items-baseline gap-2">
-                <span class="font-playfair font-bold text-3xl md:text-4xl text-brand">
-                  Rp <?= number_format($product['price'], 0, ',', '.') ?>
-                </span>
-                <span class="text-[13px] font-jakarta text-muted">
-                  <?= htmlspecialchars($product['price_unit'] ?? '/ meter') ?>
-                </span>
-              </div>
+              <p class="font-jakarta font-medium text-[#5f5e5a] text-[12px] tracking-[0.6px] uppercase leading-[22px]">UKURAN</p>
+              <p class="font-playfair font-semibold text-[#1e1e1e] text-[16px] tracking-[0.16px] leading-[26px]" id="selected-size">Custom (diskusikan via WA)</p>
             </div>
-            <?php if ($has_discount): ?>
-              <div class="text-right">
-                <span class="text-[11px] uppercase tracking-wider text-muted block mb-0.5">Harga Normal</span>
-                <span class="text-[14px] font-jakarta text-muted line-through">
-                  Rp <?= number_format($product['original_price'], 0, ',', '.') ?>
-                </span>
-              </div>
-            <?php endif; ?>
+            <svg class="size-[10px] text-[#5f5e5a]" fill="none" viewBox="0 0 10 6.2"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-        </div>
-
-        <!-- Description -->
-        <div>
-          <h3 class="font-jakarta font-semibold text-[13px] uppercase tracking-widest-2 text-dark mb-2">
-            DESKRIPSI MATERIAL & KARAKTERISTIK
-          </h3>
-          <p class="font-jakarta text-[14px] text-muted leading-relaxed">
-            <?= nl2br(htmlspecialchars($product['description'])) ?>
-          </p>
-        </div>
-
-        <!-- Features Checklist -->
-        <?php if (!empty($feature_items)): ?>
-          <div class="bg-white border border-border rounded-[4px] p-5">
-            <h3 class="font-jakarta font-semibold text-[12px] uppercase tracking-widest-2 text-dark mb-3">
-              FITUR & SPESIFIKASI TEKNIS
-            </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <?php foreach ($feature_items as $feat): ?>
-                <div class="flex items-start gap-2.5 text-[12px] font-jakarta text-dark">
-                  <svg class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                  <span><?= htmlspecialchars(trim($feat)) ?></span>
-                </div>
+          <!-- Dimension Grid -->
+          <div class="bg-[rgba(245,243,240,0.5)] border-t border-[rgba(226,221,213,0.6)] rounded-[2px] py-[9px] px-[10px] flex flex-col gap-1.5">
+            <p class="font-jakarta font-semibold text-[#5f5e5a] text-[11px] tracking-[0.44px] uppercase leading-[16px]">PILIHAN DIMENSI TIRAI:</p>
+            <div class="grid grid-cols-2 gap-1.5">
+              <?php
+              $size_options = ['120×160cm','120×240cm','150×160cm','150×240cm','60×160cm'];
+              foreach ($size_options as $i => $sz):
+                $is_active = ($i === count($size_options)-1);
+              ?>
+              <button onclick="selectSize(this, '<?= $sz ?>')"
+                      class="size-btn <?= $i === count($size_options)-1 ? 'col-span-2' : '' ?> h-[32px] border rounded-[2px] px-[11px] text-left font-jakarta text-[12px] tracking-[0.24px] transition-all duration-200
+                             <?= $is_active ? 'border-2 border-[#731924] text-[#731924] font-semibold bg-white' : 'border-[#e2ddd5] text-[#564242] bg-white hover:border-[#731924]/40' ?>">
+                <?= $is_active ? $sz . ' (Ukuran Terpilih)' : $sz ?>
+              </button>
               <?php endforeach; ?>
             </div>
           </div>
-        <?php endif; ?>
-
-        <!-- Options Variasi Swatch / Stitching jika ada -->
-        <?php if (!empty($options)): ?>
-          <div class="space-y-4 pt-2">
-            <?php foreach ($options as $opt_key => $opt_vals): ?>
-              <div>
-                <span class="block font-jakarta font-semibold text-[11px] uppercase tracking-wider text-dark mb-2">
-                  Pilihan <?= ucfirst(htmlspecialchars($opt_key)) ?>:
-                </span>
-                <div class="flex flex-wrap gap-2">
-                  <?php foreach ((array)$opt_vals as $v): ?>
-                    <span class="px-3 py-1.5 bg-white border border-border rounded-[3px] text-[11px] font-jakarta text-dark">
-                      <?= htmlspecialchars($v) ?>
-                    </span>
-                  <?php endforeach; ?>
-                </div>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        <?php endif; ?>
-
-        <!-- PRIMARY CTA BUTTONS -->
-        <div class="pt-4 space-y-3">
-          <a
-            href="<?= $product_wa_link ?>"
-            target="_blank"
-            rel="noopener"
-            class="w-full flex items-center justify-center gap-3 bg-brand hover:bg-[#5a0d1a] text-white font-jakarta font-semibold text-[13px] tracking-widest-3 uppercase py-4 px-6 rounded-[3px] shadow-md hover:shadow-lg transition-all"
-          >
-            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.299.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.353.101.173.448.74 0.96 1.196.659.587 1.215.769 1.388.856.173.086.274.072.375-.044.101-.116.433-.506.549-.679.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.203c.044.072.044.419-.1.824z"/>
-            </svg>
-            KONSULTASI & CEK ESTIMASI VIA WHATSAPP
-          </a>
-
-          <p class="text-center text-[11px] font-jakarta text-muted">
-            * Konsultasi langsung dengan konsultan arsitektural Wintom. Respon cepat 7 hari seminggu.
-          </p>
         </div>
 
+        <?php if (!empty($stitch_options)): ?>
+        <div class="h-px bg-[#e2ddd5]"></div>
+        <!-- MOTIF / GAYA JAHITAN -->
+        <div class="flex items-center justify-between py-1">
+          <div>
+            <p class="font-jakarta font-medium text-[#5f5e5a] text-[12px] tracking-[0.6px] uppercase leading-[22px]">MOTIF / GAYA JAHITAN</p>
+            <p class="font-playfair font-semibold text-[#1e1e1e] text-[16px] tracking-[0.16px] leading-[26px]" id="selected-stitch"><?= htmlspecialchars($stitch_options[0]) ?></p>
+          </div>
+          <svg class="size-[10px] text-[#5f5e5a]" fill="none" viewBox="0 0 10 6.2"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <?php endif; ?>
       </div>
-    </div>
+
+      <!-- ZERO-CART WHATSAPP CONVERSION BOX -->
+      <div class="bg-[rgba(229,226,220,0.4)] border border-[#e2ddd5] rounded-[2px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex flex-col gap-4 p-[25px]">
+
+        <!-- Badges row -->
+        <div class="flex items-center justify-between">
+          <div class="bg-[#731924] text-white font-jakarta font-semibold text-[11px] tracking-[0.55px] uppercase px-2 py-[2px] rounded-[2px]">PENAWARAN TERBATAS</div>
+          <?php if ($discount_pct > 0): ?>
+          <div class="bg-white border border-[#e2ddd5] flex items-center gap-1.5 px-[11px] py-[3px] rounded-[2px]">
+            <svg class="size-[11px] text-[#731924]" fill="none" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M1 6l5-5 5 5M6 1v10"/></svg>
+            <span class="font-jakarta font-semibold text-[#731924] text-[11px] tracking-[0.44px]">Hemat <?= $discount_pct ?>% (<?= fmt_price($product['original_price'] - $product['price']) ?>/m)</span>
+          </div>
+          <?php endif; ?>
+        </div>
+
+        <!-- Price block -->
+        <div class="border-b border-[rgba(226,221,213,0.8)] pb-4 flex items-end justify-between">
+          <div>
+            <div class="flex items-baseline gap-3">
+              <span class="font-playfair font-semibold text-[#540011] text-[36px] leading-[44px] tracking-[1.44px]"><?= fmt_price($product['price']) ?></span>
+              <?php if ($product['original_price']): ?>
+              <span class="font-jakarta text-[#5f5e5a] text-[14px] leading-[22px] line-through"><?= fmt_price($product['original_price']) ?></span>
+              <?php endif; ?>
+            </div>
+            <p class="font-jakarta text-[#564242] text-[12px] tracking-[0.24px] leading-[18px]"><?= htmlspecialchars($product['price_unit']) ?> kain jadi</p>
+          </div>
+          <div class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.275px] uppercase leading-[16px] text-right">
+            <?php if (!empty($colors)): ?><p>VARIAN: <?= htmlspecialchars($colors[0]) ?></p><?php endif; ?>
+            <p id="conv-size">60×160CM</p>
+          </div>
+        </div>
+
+        <!-- WhatsApp CTA Button -->
+        <a href="<?= WA_URL ?>?text=<?= $wa_msg ?>"
+           target="_blank" rel="noopener" id="wa-cta-btn"
+           class="flex items-center justify-center gap-2 bg-[#731924] text-white font-jakarta font-semibold text-[12px] tracking-[0.6px] uppercase px-4 py-[14px] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] hover:bg-[#5a0d1a] transition-colors duration-200">
+          KONSULTASI &amp; CEK ESTIMASI WHATSAPP
+          <svg class="size-3" viewBox="0 0 12 12" fill="white"><path d="M6 0a6 6 0 0 0-5.27 8.82L0 12l3.28-.7A6 6 0 1 0 6 0Z"/><path d="M4.3 3.8c.1-.25.38-.5.75-.5.3 0 .5.15.63.3l.63 1c.12.25.02.5-.13.65l-.25.25c.25.45.68.88 1.13 1.13l.25-.25c.15-.15.4-.25.65-.13l1 .63c.15.13.3.33.3.63 0 .38-.25.65-.5.75C8.25 8.5 6.75 8.75 5.25 7.25S4 4.25 4.1 3.8Z" fill="rgba(255,255,255,0.9)"/></svg>
+        </a>
+
+        <!-- Trust Guarantees -->
+        <div class="border-t border-[#e2ddd5] pt-[9px] flex items-start justify-between gap-3">
+          <?php
+          $trusts = [
+            ['icon'=>'M9 12l-4 4-4-4M5 8v8M3 3h10a2 2 0 0 1 2 2v4H1V5a2 2 0 0 1 2-2Z', 'line1'=>'Koper 150+ sampel kain ke', 'line2'=>'rumah'],
+            ['icon'=>'M2 2h10v2H2zM3 4v8l2 1 2-1 2 1 2-1V4', 'line1'=>'Ukur laser milimeter', 'line2'=>'digital'],
+            ['icon'=>'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0Z', 'line1'=>'Garansi pengerjaan &amp; rel 3', 'line2'=>'tahun'],
+          ];
+          foreach($trusts as $t):
+          ?>
+          <div class="flex items-start gap-1">
+            <svg class="size-[14px] text-[#731924] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="<?= $t['icon'] ?>"/></svg>
+            <div class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.44px] leading-[16px]">
+              <p><?= $t['line1'] ?></p>
+              <p><?= $t['line2'] ?></p>
+            </div>
+          </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+
+      <!-- Features list -->
+      <?php if (!empty($features)): ?>
+      <div class="flex flex-col gap-2">
+        <p class="font-jakarta font-semibold text-[#5f5e5a] text-[11px] tracking-[1.65px] uppercase">SPESIFIKASI MATERIAL</p>
+        <ul class="flex flex-col gap-2">
+          <?php foreach ($features as $feat): ?>
+          <li class="flex items-start gap-2">
+            <svg class="size-4 text-[#731924] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0Z"/></svg>
+            <span class="font-jakarta text-[#564242] text-[13px] leading-[20px] tracking-[0.13px]"><?= htmlspecialchars($feat) ?></span>
+          </li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
+      <?php endif; ?>
+    </div><!-- /RIGHT COL -->
   </div>
 </section>
 
-<!-- ===== PROTOKOL 4 LANGKAH PEMESANAN WINTOM ===== -->
-<section class="py-16 md:py-20 bg-cream-dark/50 border-y border-border">
-  <div class="max-w-[1280px] mx-auto px-6 md:px-12">
-    <div class="text-center max-w-2xl mx-auto mb-14">
-      <span class="font-jakarta font-semibold text-[11px] tracking-widest-4 uppercase text-brand block mb-2">
-        STANDAR PELAYANAN ATELIER
-      </span>
-      <h2 class="font-playfair text-2xl md:text-3xl font-bold text-dark mb-3">
-        4 Tahap Pengerjaan Presisi Wintom
-      </h2>
-      <p class="font-jakarta text-[13px] md:text-[14px] text-muted">
-        Dari konsultasi pemilihan sampel fisik hingga pemasangan rapi bergaransi tanpa repot.
-      </p>
+<!-- ===== STEP-BY-STEP BESPOKE PROCESS RIBBON ===== -->
+<section class="bg-[#fbf9f6] border-t border-[#e2ddd5] px-12 py-[41px]">
+  <div class="max-w-[1280px] mx-auto flex flex-col gap-6">
+    <!-- Header -->
+    <div class="text-center flex flex-col gap-[5.5px]">
+      <p class="font-jakarta font-semibold text-[#5f5e5a] text-[11px] tracking-[1.65px] uppercase">PROTOKOL PEMESANAN TANPA REPOT</p>
+      <h2 class="font-playfair font-medium text-[#1e1e1e] text-[24px] leading-[32px] tracking-[1.2px]">4 Langkah Mewujudkan Tirai Sempurna</h2>
     </div>
-
+    <!-- Steps grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="bg-white p-6 rounded-[4px] border border-border relative">
-        <span class="font-playfair text-4xl font-bold text-brand/20 absolute top-4 right-4">01</span>
-        <h4 class="font-playfair text-[17px] font-bold text-dark mb-2">Konsultasi Desain</h4>
-        <p class="font-jakarta text-[12px] text-muted leading-relaxed">
-          Diskusikan konsep interior, tingkat privasi yang diinginkan, serta perkiraan anggaran jendela Anda.
-        </p>
+      <?php
+      $steps = [
+        ['num'=>'01','title'=>'Konsultasi Awal','desc'=>'Kirimkan estimasi ukuran jendela atau denah arsitek via WhatsApp untuk gambaran perkiraan biaya bahan & rel.'],
+        ['num'=>'02','title'=>'Survei & Swatch','desc'=>'Konsultan kami datang membawa koper sampel kain langsung ke hunian Anda dan melakukan ukur laser milimeter.'],
+        ['num'=>'03','title'=>'Penjahitan Atelier','desc'=>'Kain diproses dengan standard jahitan double blindstitch dan proses steam setting bentuk lipatan selama 7–10 hari kerja.'],
+        ['num'=>'04','title'=>'Pemasangan Rapi','desc'=>'Teknisi resmi Wintom memasang rel presisi tanpa debu kotor, melakukan final steaming, dan pelatihan remote smart motor.'],
+      ];
+      foreach($steps as $step):
+      ?>
+      <div class="bg-[#f5f3f0] border border-[#e2ddd5] rounded-[2px] p-[17px] flex flex-col gap-2">
+        <p class="font-playfair font-medium text-[#e2ddd5] text-[36px] leading-[44px] tracking-[1.44px]"><?= $step['num'] ?></p>
+        <h3 class="font-playfair font-semibold text-[#1e1e1e] text-[18px] leading-[26px] tracking-[1.08px] -mt-2"><?= $step['title'] ?></h3>
+        <p class="font-jakarta text-[#564242] text-[12px] leading-[18px] tracking-[0.24px]"><?= htmlspecialchars($step['desc']) ?></p>
       </div>
-
-      <div class="bg-white p-6 rounded-[4px] border border-border relative">
-        <span class="font-playfair text-4xl font-bold text-brand/20 absolute top-4 right-4">02</span>
-        <h4 class="font-playfair text-[17px] font-bold text-dark mb-2">Survei & Swatch Fisik</h4>
-        <p class="font-jakarta text-[12px] text-muted leading-relaxed">
-          Tim spesialis mengukur jendela menggunakan laser presisi dan membawa katalog kain asli ke lokasi Anda.
-        </p>
-      </div>
-
-      <div class="bg-white p-6 rounded-[4px] border border-border relative">
-        <span class="font-playfair text-4xl font-bold text-brand/20 absolute top-4 right-4">03</span>
-        <h4 class="font-playfair text-[17px] font-bold text-dark mb-2">Penjahitan Atelier</h4>
-        <p class="font-jakarta text-[12px] text-muted leading-relaxed">
-          Kain dijahit khusus dengan standar hemming lipatan bergelombang simetris dan quality check ketat.
-        </p>
-      </div>
-
-      <div class="bg-white p-6 rounded-[4px] border border-border relative">
-        <span class="font-playfair text-4xl font-bold text-brand/20 absolute top-4 right-4">04</span>
-        <h4 class="font-playfair text-[17px] font-bold text-dark mb-2">Instalasi & Garansi</h4>
-        <p class="font-jakarta text-[12px] text-muted leading-relaxed">
-          Teknisi berpengalaman memasang rel dan tirai tanpa debu, disertai garansi mekanisme hingga 5 tahun.
-        </p>
-      </div>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>
 
-<!-- ===== RELATED PRODUCTS ===== -->
-<?php if (!empty($related_products)): ?>
-<section class="py-16 md:py-20 bg-cream">
-  <div class="max-w-[1280px] mx-auto px-6 md:px-12">
-    <div class="flex items-end justify-between mb-10 pb-4 border-b border-border">
-      <div>
-        <span class="font-jakarta font-semibold text-[11px] tracking-widest-4 uppercase text-brand block mb-1">
-          REKOMENDASI ALTERNATIF
-        </span>
-        <h2 class="font-playfair text-2xl md:text-3xl font-bold text-dark">
-          Koleksi Pilihan Lainnya
-        </h2>
+<!-- ===== RELATED ARCHITECTURAL COLLECTIONS ===== -->
+<?php if (!empty($related)): ?>
+<section class="bg-[#f5f3f0] border-t border-[#e2ddd5] px-12 py-[41px]">
+  <div class="max-w-[1280px] mx-auto flex flex-col gap-6">
+    <!-- Header row -->
+    <div class="flex items-end justify-between">
+      <div class="flex flex-col gap-1">
+        <p class="font-jakarta font-semibold text-[#5f5e5a] text-[11px] tracking-[1.65px] uppercase">KOLEKSI PENDAMPING</p>
+        <h2 class="font-playfair font-medium text-[#1e1e1e] text-[24px] leading-[32px] tracking-[1.2px]">Eksplorasi Kurasi Tekstil Lainnya</h2>
       </div>
-      <a href="<?= BASE_URL ?>/products.php" class="font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase text-brand hover:underline">
-        SEMUA KOLEKSI &rarr;
+      <a href="/products.php" class="flex items-center gap-1.5 font-jakarta font-semibold text-[#731924] text-[12px] tracking-[1.2px] uppercase hover:gap-2.5 transition-all duration-200">
+        LIHAT SELURUH KATALOG
+        <svg class="size-[10px]" fill="none" viewBox="0 0 12 12" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2 6h8M7 3l3 3-3 3"/></svg>
       </a>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <?php foreach ($related_products as $rel):
-        $rel_url = BASE_URL . '/product-detail.php?slug=' . urlencode($rel['slug']);
+    <!-- Product cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <?php foreach($related as $rel):
+        $rel_discount = 0;
+        if ($rel['original_price'] && $rel['original_price'] > $rel['price']) {
+          $rel_discount = round((1 - $rel['price'] / $rel['original_price']) * 100);
+        }
+        $rel_wa = rawurlencode("Halo Wintom, saya tertarik dengan produk *{$rel['name']}* (REF: {$rel['ref_code']}). Boleh minta info lebih lanjut?");
       ?>
-        <div class="group bg-white border border-border rounded-[4px] overflow-hidden flex flex-col hover:border-brand/40 hover:shadow-lg transition-all duration-300">
-          <a href="<?= $rel_url ?>" class="relative aspect-[3/4] overflow-hidden bg-cream block">
-            <img
-              src="<?= htmlspecialchars($rel['cover_image']) ?>"
-              alt="<?= htmlspecialchars($rel['name']) ?>"
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-              loading="lazy"
-            />
-            <div class="absolute top-3 left-3">
-              <span class="bg-white/95 backdrop-blur-[4px] text-dark font-jakarta font-semibold text-[10px] tracking-wider uppercase px-2.5 py-1 rounded-[2px] shadow-sm">
-                <?= htmlspecialchars($rel['category']) ?>
-              </span>
-            </div>
-          </a>
-          <div class="p-5 flex-1 flex flex-col justify-between">
-            <div>
-              <h4 class="font-playfair text-[17px] font-bold text-dark group-hover:text-brand transition-colors mb-1">
-                <a href="<?= $rel_url ?>"><?= htmlspecialchars($rel['name']) ?></a>
-              </h4>
-              <p class="font-jakarta text-[12px] text-muted line-clamp-2 mb-3">
-                <?= htmlspecialchars($rel['description']) ?>
-              </p>
-            </div>
-            <div class="flex items-baseline justify-between pt-3 border-t border-border/70">
-              <span class="font-playfair font-bold text-lg text-brand">
-                Rp <?= number_format($rel['price'], 0, ',', '.') ?>
-              </span>
-              <a href="<?= $rel_url ?>" class="text-[11px] font-jakarta font-semibold uppercase tracking-wider text-dark hover:text-brand">
-                Detail &rarr;
-              </a>
-            </div>
+      <div class="bg-white border border-[#e2ddd5] rounded-[4px] overflow-hidden flex flex-col group">
+        <!-- Image -->
+        <div class="bg-[#efeeeb] relative overflow-hidden">
+          <img src="<?= htmlspecialchars($rel['cover_image']) ?>" alt="<?= htmlspecialchars($rel['name']) ?>"
+               class="w-full aspect-[4/3] object-cover transition-transform duration-700 group-hover:scale-105" />
+          <!-- Category badge -->
+          <div class="absolute top-3 left-3 backdrop-blur-[2px] bg-[rgba(255,255,255,0.9)] border border-[rgba(226,221,213,0.6)] rounded-[2px] px-[10px] py-[2px]">
+            <span class="font-jakarta font-semibold text-[#1e1e1e] text-[11px] tracking-[0.55px] uppercase"><?= htmlspecialchars($rel['category']) ?></span>
           </div>
         </div>
+        <!-- Info -->
+        <div class="p-4 flex flex-col gap-1.5">
+          <p class="font-jakarta font-medium text-[#5f5e5a] text-[11px] tracking-[0.275px] uppercase leading-[22px]">
+            <?= count(json_decode($rel['options_json'] ?? '{}', true)['colors'] ?? []) ?> VAR WARNA | <?= count(json_decode($rel['options_json'] ?? '{}', true)['stitch'] ?? []) + 2 ?> UKURAN
+          </p>
+          <h3 class="font-playfair font-semibold text-[#1e1e1e] text-[16px] leading-[22px] tracking-[0.14px]"><?= htmlspecialchars($rel['name']) ?></h3>
+        </div>
+        <!-- Pricing + Buttons -->
+        <div class="px-4 pb-4 border-t border-[rgba(226,221,213,0.6)] pt-[9px] flex flex-col gap-3 mt-auto">
+          <div>
+            <div class="flex items-center gap-2">
+              <?php if ($rel['original_price']): ?>
+              <span class="font-jakarta text-[#5f5e5a] text-[12px] line-through"><?= fmt_price($rel['original_price']) ?></span>
+              <?php if ($rel_discount > 0): ?>
+              <span class="bg-[rgba(115,25,36,0.1)] text-[#731924] font-jakarta font-semibold text-[11px] px-1.5 py-0.5 rounded-[2px]"><?= $rel_discount ?>%</span>
+              <?php endif; ?>
+              <?php endif; ?>
+            </div>
+            <p class="font-playfair font-semibold text-[#540011] text-[18px] leading-[22px] tracking-[0.14px]"><?= fmt_price($rel['price']) ?></p>
+          </div>
+          <div class="flex gap-2 pt-1">
+            <a href="/product-detail.php?slug=<?= urlencode($rel['slug']) ?>"
+               class="flex-1 bg-white border border-[#e2ddd5] flex items-center justify-center py-[9px] rounded-[2px] font-jakarta text-[#1e1e1e] text-[11px] tracking-[0.55px] uppercase hover:border-[#731924]/40 transition-colors">
+              LIHAT DETAIL
+            </a>
+            <a href="<?= WA_URL ?>?text=<?= $rel_wa ?>" target="_blank" rel="noopener"
+               class="flex-1 bg-[#731924] flex items-center justify-center gap-1.5 py-[9px] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] hover:bg-[#5a0d1a] transition-colors">
+              <svg class="size-3" viewBox="0 0 12 12" fill="white"><path d="M6 0a6 6 0 0 0-5.27 8.82L0 12l3.28-.7A6 6 0 1 0 6 0Z"/></svg>
+              <span class="font-jakarta text-white text-[11px] tracking-[0.55px] uppercase">WHATSAPP</span>
+            </a>
+          </div>
+        </div>
+      </div>
       <?php endforeach; ?>
     </div>
   </div>
@@ -408,23 +404,39 @@ include_once __DIR__ . '/includes/header.php';
 <?php endif; ?>
 
 <script>
-  function changeProductImage(newSrc, btnElement) {
-    const mainImg = document.getElementById('main-product-img');
-    if (!mainImg) return;
-    mainImg.style.opacity = '0.3';
-    setTimeout(() => {
-      mainImg.src = newSrc;
-      mainImg.style.opacity = '1';
-    }, 150);
+// Switch main image + thumbnail active state
+function switchImg(url, btn) {
+  const img = document.getElementById('main-img');
+  img.style.opacity = '0';
+  setTimeout(() => { img.src = url; img.style.opacity = '1'; }, 200);
+  document.querySelectorAll('.thumbnail-btn').forEach(b => {
+    b.className = b.className.replace('border-2 border-[#731924]', 'border border-[#e2ddd5]');
+  });
+  btn.className = btn.className.replace('border border-[#e2ddd5]', 'border-2 border-[#731924]');
+}
 
-    // Update active thumb border
-    document.querySelectorAll('.thumb-btn').forEach(btn => {
-      btn.classList.remove('border-brand');
-      btn.classList.add('border-border');
-    });
-    btnElement.classList.remove('border-border');
-    btnElement.classList.add('border-brand');
-  }
+// Color swatch selection
+function selectColor(btn, colorName) {
+  document.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('ring-2','ring-[#731924]','ring-offset-1'));
+  btn.classList.add('ring-2','ring-[#731924]','ring-offset-1');
+  document.getElementById('selected-color').textContent = colorName;
+}
+
+// Size selection
+function selectSize(btn, sizeName) {
+  document.querySelectorAll('.size-btn').forEach(b => {
+    b.classList.remove('border-2','border-[#731924]','text-[#731924]','font-semibold');
+    b.classList.add('border-[#e2ddd5]','text-[#564242]');
+    // restore text
+    if (b.textContent.includes('Ukuran Terpilih')) b.textContent = b.textContent.replace(' (Ukuran Terpilih)', '');
+  });
+  btn.classList.add('border-2','border-[#731924]','text-[#731924]','font-semibold');
+  btn.classList.remove('border-[#e2ddd5]','text-[#564242]');
+  if (!btn.textContent.includes('Terpilih')) btn.textContent += ' (Ukuran Terpilih)';
+  document.getElementById('selected-size').textContent = sizeName;
+  const convEl = document.getElementById('conv-size');
+  if (convEl) convEl.textContent = sizeName.toUpperCase();
+}
 </script>
 
 <?php include_once __DIR__ . '/includes/footer.php'; ?>
