@@ -1,6 +1,6 @@
 <?php
 // product-detail.php — Detail Produk Wintom Curtain
-// Sliced from Figma node-id=1:757 via Figma Dev Mode MCP
+// Variant System Overhaul: loads from product_variants tables, accordion UI, image linking
 require_once __DIR__ . '/includes/db.php';
 
 $slug = $_GET['slug'] ?? '';
@@ -12,18 +12,29 @@ $stmt->execute([$slug]);
 $product = $stmt->fetch();
 if (!$product) { header('Location: /products.php'); exit; }
 
-// Fetch images separately (SQLite GROUP_CONCAT doesn't support ORDER BY)
-$img_stmt = $db->prepare("SELECT image_url FROM product_images WHERE product_id = ? ORDER BY sort_order ASC");
+// Fetch gallery images
+$img_stmt = $db->prepare("SELECT * FROM product_images WHERE product_id = ? ORDER BY sort_order ASC");
 $img_stmt->execute([$product['id']]);
-$gallery_rows = $img_stmt->fetchAll();
-$gallery_urls = !empty($gallery_rows) ? array_column($gallery_rows, 'image_url') : [$product['cover_image']];
-$options = $product['options_json'] ? json_decode($product['options_json'], true) : [];
-$features = $product['features'] ? explode('|', $product['features']) : [];
-$colors = $options['colors'] ?? [];
-$stitch_options = $options['stitch'] ?? [];
+$gallery_images = $img_stmt->fetchAll();
+$gallery_urls = !empty($gallery_images) ? array_column($gallery_images, 'image_url') : [$product['cover_image']];
 
-// Related products (same category, excluding current)
-$related_stmt = $db->prepare("SELECT * FROM products WHERE category = ? AND slug != ? LIMIT 3");
+// Fetch variants from new tables
+$var_stmt = $db->prepare("SELECT * FROM product_variants WHERE product_id = ? ORDER BY sort_order ASC");
+$var_stmt->execute([$product['id']]);
+$variants = $var_stmt->fetchAll();
+
+foreach ($variants as &$v) {
+    $opt_stmt = $db->prepare("SELECT * FROM product_variant_options WHERE variant_id = ? ORDER BY sort_order ASC");
+    $opt_stmt->execute([$v['id']]);
+    $v['options'] = $opt_stmt->fetchAll();
+}
+unset($v);
+
+// Features
+$features = $product['features'] ? explode('|', $product['features']) : [];
+
+// Related products (same category, active only, excluding current)
+$related_stmt = $db->prepare("SELECT * FROM products WHERE category = ? AND slug != ? AND is_active = 1 LIMIT 3");
 $related_stmt->execute([$product['category'], $slug]);
 $related = $related_stmt->fetchAll();
 
@@ -42,7 +53,28 @@ $discount_pct = 0;
 if ($product['original_price'] && $product['original_price'] > $product['price']) {
     $discount_pct = round((1 - $product['price'] / $product['original_price']) * 100);
 }
+
+// Build gallery image map for JS (id → url) for variant-image linking
+$gallery_map = [];
+foreach ($gallery_images as $gi) {
+    $gallery_map[$gi['id']] = $gi['image_url'];
+}
 ?>
+
+<style>
+/* Accordion animations */
+.variant-accordion { border-bottom: 1px solid #e2ddd5; }
+.variant-accordion:last-child { border-bottom: none; }
+.variant-header { cursor: pointer; user-select: none; transition: background-color 0.15s; }
+.variant-header:hover { background-color: rgba(245,243,240,0.5); }
+.variant-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding 0.2s ease; padding: 0 17px; }
+.variant-body.open { max-height: 500px; padding: 0 17px 14px; }
+.variant-chevron { transition: transform 0.3s ease; }
+.variant-chevron.rotated { transform: rotate(180deg); }
+.option-pill { transition: all 0.2s ease; }
+.option-pill:hover { border-color: rgba(115,25,36,0.4); }
+.option-pill.active { border-color: #731924; color: #731924; font-weight: 600; background: #fff; border-width: 2px; }
+</style>
 
 <!-- ===== BREADCRUMB ===== -->
 <div class="bg-[#f5f3f0] border-b border-[#e2ddd5] px-12 py-[12px]">
@@ -85,9 +117,10 @@ if ($product['original_price'] && $product['original_price'] > $product['price']
       </div>
 
       <!-- Thumbnail Strip -->
-      <div class="flex gap-3">
+      <div class="flex gap-3" id="thumbnail-strip">
         <?php foreach ($gallery_urls as $i => $url): ?>
         <button onclick="switchImg('<?= htmlspecialchars($url) ?>', this)"
+                data-img-url="<?= htmlspecialchars($url) ?>"
                 class="thumbnail-btn shrink-0 bg-[#efeeeb] border rounded-[2px] overflow-hidden p-[3px] transition-all duration-200 <?= $i === 0 ? 'border-2 border-[#731924]' : 'border border-[#e2ddd5]' ?>"
                 style="width: calc(25% - 9px)">
           <img src="<?= htmlspecialchars($url) ?>" alt="Photo <?= $i+1 ?>" class="w-full aspect-square object-cover rounded-[2px]" />
@@ -127,7 +160,7 @@ if ($product['original_price'] && $product['original_price'] > $product['price']
       <div class="flex flex-col gap-1.5">
         <!-- Category + REF row -->
         <div class="flex items-center gap-2">
-          <span class="font-jakarta font-semibold text-[#731924] text-[11px] tracking-[1.1px] uppercase">CUSTOM ARCHITECTURAL DRAPERY</span>
+          <span class="font-jakarta font-semibold text-[#731924] text-[11px] tracking-[1.1px] uppercase"><?= htmlspecialchars(strtoupper($product['category'])) ?></span>
           <div class="size-[6px] rounded-full bg-[#e2ddd5] shrink-0"></div>
           <span class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.44px] uppercase">REF. #<?= htmlspecialchars($product['ref_code']) ?></span>
         </div>
@@ -148,79 +181,69 @@ if ($product['original_price'] && $product['original_price'] > $product['price']
         <?= nl2br(htmlspecialchars($product['description'])) ?>
       </div>
 
-      <!-- Color + Size + Stitch Selector Box -->
-      <div class="bg-white border border-[#e2ddd5] rounded-[8px] drop-shadow-[0px_1px_1px_rgba(0,0,0,0.05)] flex flex-col gap-3 p-[17px]">
+      <!-- ==========================================
+           VARIANT SELECTOR BOX (Accordion)
+           ========================================== -->
+      <?php if (!empty($variants)): ?>
+      <div class="bg-white border border-[#e2ddd5] rounded-[8px] drop-shadow-[0px_1px_1px_rgba(0,0,0,0.05)] flex flex-col overflow-hidden">
 
-        <?php if (!empty($colors)): ?>
-        <!-- VAR WARNA -->
-        <div class="flex items-center justify-between py-1">
-          <div>
-            <p class="font-jakarta font-medium text-[#5f5e5a] text-[12px] tracking-[0.6px] uppercase leading-[22px]">VAR WARNA</p>
-            <p class="font-playfair font-semibold text-[#1e1e1e] text-[16px] tracking-[0.16px] leading-[26px]" id="selected-color"><?= htmlspecialchars($colors[0]) ?></p>
-          </div>
-          <div class="flex items-center gap-2">
-            <?php foreach ($colors as $idx => $color): ?>
-            <button onclick="selectColor(this, '<?= htmlspecialchars($color) ?>')"
-                    title="<?= htmlspecialchars($color) ?>"
-                    class="color-swatch size-5 rounded-full border border-[#e2ddd5] transition-all duration-200 <?= $idx === 0 ? 'ring-2 ring-[#731924] ring-offset-1' : '' ?>"
-                    style="background-color: <?= match($color) {
-                        'Oatmeal Cream', 'Ivory Cashmere', 'Warm Alabaster', 'Champagne Tint', 'Natural Oak', 'Nordic White', 'Mono White' => '#e6dfd5',
-                        'Warm Sand', 'Soft Greige', 'Sand Dune', 'Warm Teak' => '#c4a882',
-                        'Slate Charcoal', 'Anthracite Dark Grey', 'Dark Bronze Charcoal', 'Ebony Charcoal', 'Ash Grey' => '#5a5a58',
-                        'Muted Olive' => '#8a8a6a',
-                        'Midnight Navy' => '#1a1a3a',
-                        'Deep Espresso' => '#3a1a1a',
-                        'Pure Snow White' => '#f8f8f8',
-                        default => '#c4a882'
-                    } ?>">
-            </button>
-            <?php endforeach; ?>
-            <svg class="size-[10px] text-[#5f5e5a]" fill="none" viewBox="0 0 10 6.2"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-        </div>
-        <div class="h-px bg-[#e2ddd5]"></div>
-        <?php endif; ?>
-
-        <!-- UKURAN -->
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center justify-between py-1">
+        <?php foreach ($variants as $vi => $variant):
+          $is_size = ($variant['label'] === 'Ukuran' || $variant['label'] === 'Panjang Track');
+          $first_option = $variant['options'][0]['value'] ?? '';
+          $has_image_link = (bool)$variant['is_image_linked'];
+        ?>
+        <div class="variant-accordion" data-variant-id="<?= $variant['id'] ?>" data-is-image-linked="<?= $has_image_link ? '1' : '0' ?>">
+          <!-- Header (click to expand) -->
+          <div class="variant-header flex items-center justify-between px-[17px] py-[13px]"
+               onclick="toggleAccordion(this)">
             <div>
-              <p class="font-jakarta font-medium text-[#5f5e5a] text-[12px] tracking-[0.6px] uppercase leading-[22px]">UKURAN</p>
-              <p class="font-playfair font-semibold text-[#1e1e1e] text-[16px] tracking-[0.16px] leading-[26px]" id="selected-size">Custom (diskusikan via WA)</p>
+              <p class="font-jakarta font-medium text-[#5f5e5a] text-[12px] tracking-[0.6px] uppercase leading-[22px]">
+                <?= htmlspecialchars(strtoupper($variant['label'])) ?>
+              </p>
+              <p class="font-playfair font-semibold text-[#1e1e1e] text-[16px] tracking-[0.16px] leading-[26px] variant-selected-label"
+                 data-variant-idx="<?= $vi ?>">
+                <?= htmlspecialchars($first_option ?: 'Pilih ' . $variant['label']) ?>
+              </p>
             </div>
-            <svg class="size-[10px] text-[#5f5e5a]" fill="none" viewBox="0 0 10 6.2"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg class="variant-chevron size-[10px] text-[#5f5e5a] shrink-0" fill="none" viewBox="0 0 10 6.2">
+              <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </div>
-          <!-- Dimension Grid -->
-          <div class="bg-[rgba(245,243,240,0.5)] border-t border-[rgba(226,221,213,0.6)] rounded-[2px] py-[9px] px-[10px] flex flex-col gap-1.5">
-            <p class="font-jakarta font-semibold text-[#5f5e5a] text-[11px] tracking-[0.44px] uppercase leading-[16px]">PILIHAN DIMENSI TIRAI:</p>
-            <div class="grid grid-cols-2 gap-1.5">
-              <?php
-              $size_options = ['120×160cm','120×240cm','150×160cm','150×240cm','60×160cm'];
-              foreach ($size_options as $i => $sz):
-                $is_active = ($i === count($size_options)-1);
-              ?>
-              <button onclick="selectSize(this, '<?= $sz ?>')"
-                      class="size-btn <?= $i === count($size_options)-1 ? 'col-span-2' : '' ?> h-[32px] border rounded-[2px] px-[11px] text-left font-jakarta text-[12px] tracking-[0.24px] transition-all duration-200
-                             <?= $is_active ? 'border-2 border-[#731924] text-[#731924] font-semibold bg-white' : 'border-[#e2ddd5] text-[#564242] bg-white hover:border-[#731924]/40' ?>">
-                <?= $is_active ? $sz . ' (Ukuran Terpilih)' : $sz ?>
+
+          <!-- Body (collapsible) -->
+          <div class="variant-body">
+            <?php if ($is_size): ?>
+            <!-- Size: Grid pills -->
+            <div class="bg-[rgba(245,243,240,0.5)] border-t border-[rgba(226,221,213,0.6)] rounded-[2px] py-[9px] px-[10px] flex flex-col gap-1.5">
+              <p class="font-jakarta font-semibold text-[#5f5e5a] text-[11px] tracking-[0.44px] uppercase leading-[16px]">PILIHAN DIMENSI:</p>
+              <div class="grid grid-cols-2 gap-1.5">
+                <?php foreach ($variant['options'] as $oi => $opt): ?>
+                <button type="button"
+                        onclick="selectOption(this, '<?= htmlspecialchars($opt['value']) ?>', <?= $vi ?>, <?= $opt['linked_image_id'] ?? 'null' ?>)"
+                        class="option-pill <?= $oi === 0 ? 'active' : '' ?> h-[32px] border rounded-[2px] px-[11px] text-left font-jakarta text-[12px] tracking-[0.24px] border-[#e2ddd5] text-[#564242] bg-white">
+                  <?= htmlspecialchars($opt['value']) ?>
+                </button>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <?php else: ?>
+            <!-- Non-size: Inline pills -->
+            <div class="flex flex-wrap gap-2 pt-2">
+              <?php foreach ($variant['options'] as $oi => $opt): ?>
+              <button type="button"
+                      onclick="selectOption(this, '<?= htmlspecialchars($opt['value']) ?>', <?= $vi ?>, <?= $opt['linked_image_id'] ?? 'null' ?>)"
+                      class="option-pill <?= $oi === 0 ? 'active' : '' ?> border rounded-[2px] px-3 py-1.5 font-jakarta text-[12px] tracking-[0.24px] border-[#e2ddd5] text-[#564242] bg-white">
+                <?= htmlspecialchars($opt['value']) ?>
               </button>
               <?php endforeach; ?>
             </div>
+            <?php endif; ?>
           </div>
         </div>
+        <?php endforeach; ?>
 
-        <?php if (!empty($stitch_options)): ?>
-        <div class="h-px bg-[#e2ddd5]"></div>
-        <!-- MOTIF / GAYA JAHITAN -->
-        <div class="flex items-center justify-between py-1">
-          <div>
-            <p class="font-jakarta font-medium text-[#5f5e5a] text-[12px] tracking-[0.6px] uppercase leading-[22px]">MOTIF / GAYA JAHITAN</p>
-            <p class="font-playfair font-semibold text-[#1e1e1e] text-[16px] tracking-[0.16px] leading-[26px]" id="selected-stitch"><?= htmlspecialchars($stitch_options[0]) ?></p>
-          </div>
-          <svg class="size-[10px] text-[#5f5e5a]" fill="none" viewBox="0 0 10 6.2"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <?php endif; ?>
       </div>
+      <?php endif; ?>
 
       <!-- ZERO-CART WHATSAPP CONVERSION BOX -->
       <div class="bg-[rgba(229,226,220,0.4)] border border-[#e2ddd5] rounded-[2px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex flex-col gap-4 p-[25px]">
@@ -247,9 +270,8 @@ if ($product['original_price'] && $product['original_price'] > $product['price']
             </div>
             <p class="font-jakarta text-[#564242] text-[12px] tracking-[0.24px] leading-[18px]"><?= htmlspecialchars($product['price_unit']) ?> kain jadi</p>
           </div>
-          <div class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.275px] uppercase leading-[16px] text-right">
-            <?php if (!empty($colors)): ?><p>VARIAN: <?= htmlspecialchars($colors[0]) ?></p><?php endif; ?>
-            <p id="conv-size">60×160CM</p>
+          <div class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.275px] uppercase leading-[16px] text-right" id="conv-summary">
+            <!-- Updated by JS -->
           </div>
         </div>
 
@@ -353,13 +375,19 @@ if ($product['original_price'] && $product['original_price'] > $product['price']
           $rel_discount = round((1 - $rel['price'] / $rel['original_price']) * 100);
         }
         $rel_wa = rawurlencode("Halo Wintom, saya tertarik dengan produk *{$rel['name']}* (REF: {$rel['ref_code']}). Boleh minta info lebih lanjut?");
+        // Count variants for this related product
+        $rel_var_stmt = $db->prepare("SELECT COUNT(*) FROM product_variants WHERE product_id = ?");
+        $rel_var_stmt->execute([$rel['id']]);
+        $rel_var_count = (int)$rel_var_stmt->fetchColumn();
+        $rel_opt_stmt = $db->prepare("SELECT COUNT(*) FROM product_variant_options pvo JOIN product_variants pv ON pvo.variant_id = pv.id WHERE pv.product_id = ?");
+        $rel_opt_stmt->execute([$rel['id']]);
+        $rel_opt_count = (int)$rel_opt_stmt->fetchColumn();
       ?>
       <div class="bg-white border border-[#e2ddd5] rounded-[4px] overflow-hidden flex flex-col group">
         <!-- Image -->
         <div class="bg-[#efeeeb] relative overflow-hidden">
           <img src="<?= htmlspecialchars($rel['cover_image']) ?>" alt="<?= htmlspecialchars($rel['name']) ?>"
                class="w-full aspect-[4/3] object-cover transition-transform duration-700 group-hover:scale-105" />
-          <!-- Category badge -->
           <div class="absolute top-3 left-3 backdrop-blur-[2px] bg-[rgba(255,255,255,0.9)] border border-[rgba(226,221,213,0.6)] rounded-[2px] px-[10px] py-[2px]">
             <span class="font-jakarta font-semibold text-[#1e1e1e] text-[11px] tracking-[0.55px] uppercase"><?= htmlspecialchars($rel['category']) ?></span>
           </div>
@@ -367,7 +395,7 @@ if ($product['original_price'] && $product['original_price'] > $product['price']
         <!-- Info -->
         <div class="p-4 flex flex-col gap-1.5">
           <p class="font-jakarta font-medium text-[#5f5e5a] text-[11px] tracking-[0.275px] uppercase leading-[22px]">
-            <?= count(json_decode($rel['options_json'] ?? '{}', true)['colors'] ?? []) ?> VAR WARNA | <?= count(json_decode($rel['options_json'] ?? '{}', true)['stitch'] ?? []) + 2 ?> UKURAN
+            <?= $rel_var_count ?> VARIAN | <?= $rel_opt_count ?> OPSI
           </p>
           <h3 class="font-playfair font-semibold text-[#1e1e1e] text-[16px] leading-[22px] tracking-[0.14px]"><?= htmlspecialchars($rel['name']) ?></h3>
         </div>
@@ -404,7 +432,37 @@ if ($product['original_price'] && $product['original_price'] > $product['price']
 <?php endif; ?>
 
 <script>
-// Switch main image + thumbnail active state
+/* ==========================================================
+   GALLERY IMAGE MAP (for variant-image linking)
+   ========================================================== */
+const galleryMap = <?= json_encode($gallery_map) ?>;
+
+/* ==========================================================
+   ACCORDION TOGGLE
+   ========================================================== */
+function toggleAccordion(header) {
+  const accordion = header.closest('.variant-accordion');
+  const body = accordion.querySelector('.variant-body');
+  const chevron = accordion.querySelector('.variant-chevron');
+
+  if (body.classList.contains('open')) {
+    body.classList.remove('open');
+    chevron.classList.remove('rotated');
+  } else {
+    body.classList.add('open');
+    chevron.classList.add('rotated');
+  }
+}
+
+// Auto-open first variant on load
+document.addEventListener('DOMContentLoaded', () => {
+  const first = document.querySelector('.variant-accordion .variant-header');
+  if (first) toggleAccordion(first);
+});
+
+/* ==========================================================
+   SWITCH MAIN IMAGE
+   ========================================================== */
 function switchImg(url, btn) {
   const img = document.getElementById('main-img');
   img.style.opacity = '0';
@@ -412,30 +470,48 @@ function switchImg(url, btn) {
   document.querySelectorAll('.thumbnail-btn').forEach(b => {
     b.className = b.className.replace('border-2 border-[#731924]', 'border border-[#e2ddd5]');
   });
-  btn.className = btn.className.replace('border border-[#e2ddd5]', 'border-2 border-[#731924]');
+  if (btn) {
+    btn.className = btn.className.replace('border border-[#e2ddd5]', 'border-2 border-[#731924]');
+  }
 }
 
-// Color swatch selection
-function selectColor(btn, colorName) {
-  document.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('ring-2','ring-[#731924]','ring-offset-1'));
-  btn.classList.add('ring-2','ring-[#731924]','ring-offset-1');
-  document.getElementById('selected-color').textContent = colorName;
+/* ==========================================================
+   SELECT VARIANT OPTION
+   ========================================================== */
+const selectedOptions = {};
+
+function selectOption(btn, value, variantIdx, linkedImageId) {
+  // Update active state within same accordion
+  const accordion = btn.closest('.variant-accordion') || btn.closest('.variant-body')?.parentElement;
+  if (accordion) {
+    accordion.querySelectorAll('.option-pill').forEach(p => p.classList.remove('active'));
+  }
+  btn.classList.add('active');
+
+  // Update label text
+  const label = document.querySelector(`.variant-selected-label[data-variant-idx="${variantIdx}"]`);
+  if (label) label.textContent = value;
+
+  // Store selection
+  selectedOptions[variantIdx] = value;
+
+  // Image linking: if linkedImageId, switch to that gallery image
+  if (linkedImageId && galleryMap[linkedImageId]) {
+    const targetUrl = galleryMap[linkedImageId];
+    // Find matching thumbnail button
+    const thumbBtn = document.querySelector(`.thumbnail-btn[data-img-url="${CSS.escape(targetUrl)}"]`);
+    switchImg(targetUrl, thumbBtn);
+  }
+
+  // Update conversion summary
+  updateConvSummary();
 }
 
-// Size selection
-function selectSize(btn, sizeName) {
-  document.querySelectorAll('.size-btn').forEach(b => {
-    b.classList.remove('border-2','border-[#731924]','text-[#731924]','font-semibold');
-    b.classList.add('border-[#e2ddd5]','text-[#564242]');
-    // restore text
-    if (b.textContent.includes('Ukuran Terpilih')) b.textContent = b.textContent.replace(' (Ukuran Terpilih)', '');
-  });
-  btn.classList.add('border-2','border-[#731924]','text-[#731924]','font-semibold');
-  btn.classList.remove('border-[#e2ddd5]','text-[#564242]');
-  if (!btn.textContent.includes('Terpilih')) btn.textContent += ' (Ukuran Terpilih)';
-  document.getElementById('selected-size').textContent = sizeName;
-  const convEl = document.getElementById('conv-size');
-  if (convEl) convEl.textContent = sizeName.toUpperCase();
+function updateConvSummary() {
+  const summary = document.getElementById('conv-summary');
+  if (!summary) return;
+  const lines = Object.values(selectedOptions).map(v => v.toUpperCase());
+  summary.innerHTML = lines.map(l => `<p>${l}</p>`).join('');
 }
 </script>
 

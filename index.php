@@ -8,7 +8,7 @@ $active_nav = 'home';
 
 // Ambil produk unggulan dari DB (optional, fallback ke hardcode jika kosong)
 $db = get_db();
-$featured = $db->query("SELECT * FROM products ORDER BY created_at DESC LIMIT 4")->fetchAll();
+$featured = $db->query("SELECT * FROM products WHERE is_active = 1 ORDER BY created_at DESC LIMIT 4")->fetchAll();
 ?>
 <?php include __DIR__ . '/includes/header.php'; ?>
 

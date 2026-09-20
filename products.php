@@ -29,24 +29,20 @@ $cat_aliases = [
 $normalized_key = strtolower(str_replace([' ', '&', '_'], ['-', '', '-'], $raw_cat));
 $selected_cat = $cat_aliases[$normalized_key] ?? $raw_cat;
 
-
-$categories = [
-    'Semua Koleksi'          => '',
-    'Curtain'                => 'Curtain',
-    'Vitrase & Sheer'        => 'Vitrase & Sheer',
-    'Roller Blind'           => 'Roller Blind',
-    'Motorized Smart System' => 'Motorized Smart System',
-    'Wood & Bamboo Blind'    => 'Wood & Bamboo Blind'
-];
+// Load categories from database (dynamic)
+$pdo = get_db();
+$db_cats = $pdo->query("SELECT name FROM categories ORDER BY sort_order ASC, name ASC")->fetchAll();
+$categories = ['Semua Koleksi' => ''];
+foreach ($db_cats as $c) {
+    $categories[$c['name']] = $c['name'];
+}
 
 $products = [];
 $error_db = null;
 
 try {
-    $pdo = get_db();
-
-    // Query builder
-    $sql = "SELECT * FROM products WHERE 1=1";
+    // Query builder — only show active products on public catalog
+    $sql = "SELECT * FROM products WHERE is_active = 1";
     $params = [];
 
     if (!empty($selected_cat)) {

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // admin/index.php — Admin Dashboard Wintom Curtain
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
@@ -37,6 +37,7 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
     $nav = [
       ['href'=>'index.php','label'=>'Dashboard','active'=>true],
       ['href'=>'products.php','label'=>'Produk','active'=>false],
+      ['href'=>'categories.php','label'=>'Kategori','active'=>false],
       ['href'=>'gallery.php','label'=>'Galeri Portofolio','active'=>false],
     ];
     foreach($nav as $n):
