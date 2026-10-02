@@ -13,6 +13,12 @@ define('SITE_PHONE_RAW', '089602052229');
 define('SITE_ADDRESS', 'PIK 2, Jakarta Utara');
 define('SITE_HOURS', 'Senin – Sabtu, 09:00 – 18:00 WIB');
 
-define('BASE_URL', '');  // Kosongkan untuk root, atau '/subfolder' jika di subdirektori
+// Auto-detect BASE_URL: kosong untuk root, atau otomatis mendeteksi '/wintom' saat dijalankan via MAMP htdocs
+if (!defined('BASE_URL')) {
+    $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+    $cleanPath = preg_replace('#/(admin|includes)$#', '', $scriptDir);
+    $detectedBase = ($cleanPath !== '/' && $cleanPath !== '.' && $cleanPath !== '') ? rtrim($cleanPath, '/') : '';
+    define('BASE_URL', $detectedBase);
+}
 define('UPLOAD_DIR', __DIR__ . '/../uploads/');
 define('DB_PATH', __DIR__ . '/../database/curtains.sqlite');
