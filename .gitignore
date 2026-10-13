@@ -7,16 +7,6 @@
 ehthumbs.db
 Thumbs.db
 
-# Database files (SQLite)
-database/*.sqlite
-database/*.db
-!database/.gitkeep
-
-# Uploaded files
-uploads/*
-!uploads/.gitkeep
-!uploads/products/.gitkeep
-!uploads/gallery/.gitkeep
 
 # IDE & Editor files
 .vscode/
