@@ -29,10 +29,10 @@ if (!defined('BASE_URL')) {
     define('BASE_URL', $detectedBase);
 }
 
-// Stored upload paths are root-relative ('/uploads/...'); external URLs pass through
 function asset_url(string $url): string
 {
     return preg_match('#^https?://#i', $url) ? $url : BASE_URL . $url;
 }
+
 define('UPLOAD_DIR', __DIR__ . '/../uploads/');
 define('DB_PATH', __DIR__ . '/../database/curtains.sqlite');

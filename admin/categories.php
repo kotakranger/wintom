@@ -4,9 +4,11 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_login();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') csrf_check();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
+}
 
-$db  = get_db();
+$db = get_db();
 $msg = '';
 $err = '';
 
@@ -18,13 +20,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'add'
     if (!$name) {
         $err = 'Nama kategori wajib diisi.';
     } else {
-        $check = $db->prepare("SELECT id FROM categories WHERE name = ?");
+        $check = $db->prepare('SELECT id FROM categories WHERE name = ?');
         $check->execute([$name]);
         if ($check->fetch()) {
             $err = 'Kategori "' . $name . '" sudah ada.';
         } else {
-            $max_sort = (int)$db->query("SELECT COALESCE(MAX(sort_order),0) FROM categories")->fetchColumn();
-            $ins = $db->prepare("INSERT INTO categories (name, sort_order) VALUES (?, ?)");
+            $max_sort = (int) $db->query('SELECT COALESCE(MAX(sort_order),0) FROM categories')->fetchColumn();
+            $ins = $db->prepare('INSERT INTO categories (name, sort_order) VALUES (?, ?)');
             $ins->execute([$name, $max_sort + 1]);
             $msg = 'Kategori "' . $name . '" berhasil ditambahkan.';
         }
@@ -35,20 +37,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'add'
    ACTION: DELETE CATEGORY
    ============================================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'delete') {
-    $cat_id = (int)($_POST['cat_id'] ?? 0);
+    $cat_id = (int) ($_POST['cat_id'] ?? 0);
     if ($cat_id > 0) {
         // Check if any products use this category
-        $cat_row = $db->prepare("SELECT name FROM categories WHERE id = ?");
+        $cat_row = $db->prepare('SELECT name FROM categories WHERE id = ?');
         $cat_row->execute([$cat_id]);
         $cat_data = $cat_row->fetch();
         if ($cat_data) {
-            $count = $db->prepare("SELECT COUNT(*) FROM products WHERE category = ?");
+            $count = $db->prepare('SELECT COUNT(*) FROM products WHERE category = ?');
             $count->execute([$cat_data['name']]);
-            $product_count = (int)$count->fetchColumn();
+            $product_count = (int) $count->fetchColumn();
             if ($product_count > 0) {
                 $err = "Kategori \"{$cat_data['name']}\" masih digunakan oleh {$product_count} produk. Pindahkan atau hapus produk terlebih dahulu.";
             } else {
-                $db->prepare("DELETE FROM categories WHERE id = ?")->execute([$cat_id]);
+                $db->prepare('DELETE FROM categories WHERE id = ?')->execute([$cat_id]);
                 $msg = 'Kategori "' . $cat_data['name'] . '" berhasil dihapus.';
             }
         }
@@ -59,23 +61,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'dele
    ACTION: RENAME CATEGORY
    ============================================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'rename') {
-    $cat_id   = (int)($_POST['cat_id'] ?? 0);
+    $cat_id = (int) ($_POST['cat_id'] ?? 0);
     $new_name = trim($_POST['new_name'] ?? '');
     if ($cat_id > 0 && $new_name) {
         // Get old name
-        $old = $db->prepare("SELECT name FROM categories WHERE id = ?");
+        $old = $db->prepare('SELECT name FROM categories WHERE id = ?');
         $old->execute([$cat_id]);
         $old_data = $old->fetch();
         if ($old_data) {
             // Check duplicate
-            $dup = $db->prepare("SELECT id FROM categories WHERE name = ? AND id != ?");
+            $dup = $db->prepare('SELECT id FROM categories WHERE name = ? AND id != ?');
             $dup->execute([$new_name, $cat_id]);
             if ($dup->fetch()) {
                 $err = 'Kategori dengan nama tersebut sudah ada.';
             } else {
                 $db->beginTransaction();
-                $db->prepare("UPDATE categories SET name = ? WHERE id = ?")->execute([$new_name, $cat_id]);
-                $db->prepare("UPDATE products SET category = ? WHERE category = ?")->execute([$new_name, $old_data['name']]);
+                $db->prepare('UPDATE categories SET name = ? WHERE id = ?')->execute([$new_name, $cat_id]);
+                $db->prepare('UPDATE products SET category = ? WHERE category = ?')->execute([$new_name, $old_data['name']]);
                 $db->commit();
                 $msg = 'Kategori berhasil diubah dari "' . $old_data['name'] . '" menjadi "' . $new_name . '".';
             }
@@ -83,22 +85,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'rena
     }
 }
 
-// Optional: handle ?msg= parameter with whitelist (currently unused, remove if not needed)
 if (isset($_GET['msg'])) {
-    $msg_map = ['added'=>'Kategori berhasil ditambahkan.','deleted'=>'Kategori berhasil dihapus.','renamed'=>'Kategori berhasil diubah.'];
+    $msg_map = ['added' => 'Kategori berhasil ditambahkan.', 'deleted' => 'Kategori berhasil dihapus.', 'renamed' => 'Kategori berhasil diubah.'];
     $msg = $msg_map[$_GET['msg']] ?? '';
 }
 
 /* ============================================================
    LOAD CATEGORIES + PRODUCT COUNT
    ============================================================ */
-$categories = $db->query("
+$categories = $db->query('
     SELECT c.*, COALESCE(p_cnt.cnt, 0) AS product_count
     FROM categories c
     LEFT JOIN (SELECT category, COUNT(*) AS cnt FROM products GROUP BY category) p_cnt
       ON p_cnt.category = c.name
     ORDER BY c.sort_order ASC, c.name ASC
-")->fetchAll();
+')->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -138,8 +139,16 @@ $categories = $db->query("
 <main class="ml-[220px] flex-1 p-8 min-h-screen">
 
   <!-- Toast -->
-  <?php if ($msg): ?><div class="mb-5 bg-green-50 border border-green-200 text-green-800 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
-  <?php if ($err): ?><div class="mb-5 bg-red-50 border border-red-200 text-red-700 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= htmlspecialchars($err) ?></div><?php endif; ?>
+  <?php
+if ($msg):
+?><div class="mb-5 bg-green-50 border border-green-200 text-green-800 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= htmlspecialchars($msg) ?></div><?php
+endif;
+?>
+  <?php
+if ($err):
+?><div class="mb-5 bg-red-50 border border-red-200 text-red-700 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= htmlspecialchars($err) ?></div><?php
+endif;
+?>
 
   <div class="mb-6">
     <h1 class="font-playfair font-semibold text-dark text-[26px]">Manajemen Kategori</h1>
@@ -161,7 +170,7 @@ $categories = $db->query("
             </tr>
           </thead>
           <tbody>
-            <?php foreach($categories as $i => $cat): ?>
+            <?php foreach ($categories as $i => $cat): ?>
             <tr class="border-t border-border hover:bg-cream/50 transition-colors group" id="cat-row-<?= $cat['id'] ?>">
               <td class="px-5 py-3.5 font-jakarta text-muted text-[12px]"><?= $i + 1 ?></td>
               <td class="px-5 py-3.5">
@@ -191,9 +200,9 @@ $categories = $db->query("
                      class="font-jakarta text-[11px] tracking-[0.5px] uppercase text-brand border border-brand/30 px-3 py-1.5 rounded-[3px] hover:bg-brand/5 transition-colors">
                     Ubah
                   </button>
-                  <?php if ((int)$cat['product_count'] === 0): ?>
-                  <form method="POST" onsubmit="return confirm(<?= htmlspecialchars(json_encode('Hapus kategori "'.$cat['name'].'"?'), ENT_QUOTES) ?>)" class="inline">
-                    <?= csrf_field() ?>
+                  <?php if ((int) $cat['product_count'] === 0): ?>
+                  <form method="POST" onsubmit="return confirm(<?= htmlspecialchars(json_encode('Hapus kategori "' . $cat['name'] . '"?'), ENT_QUOTES) ?>)" class="inline">
+                        <?= csrf_field() ?>
                     <input type="hidden" name="_action" value="delete"/>
                     <input type="hidden" name="cat_id" value="<?= $cat['id'] ?>"/>
                     <button type="submit" class="font-jakarta text-[11px] text-red-500 border border-red-200 px-3 py-1.5 rounded-[3px] hover:bg-red-50 transition-colors">Hapus</button>
