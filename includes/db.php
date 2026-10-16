@@ -104,6 +104,7 @@ function init_db(PDO $pdo): void {
     // SEED: Default admin
     // =====================================================================
     if ((int)$pdo->query("SELECT COUNT(*) FROM admins")->fetchColumn() === 0) {
+        // SECURITY: Change this default password immediately after first login
         $hash = password_hash('wintom2024', PASSWORD_DEFAULT);
         $pdo->prepare("INSERT INTO admins (username, password_hash) VALUES (?, ?)")
             ->execute(['admin', $hash]);

@@ -75,21 +75,21 @@ $active_nav = $active_nav ?? '';
     <!-- Primary Navigation -->
     <nav class="flex items-center gap-0">
       <?php
-      $nav_links = [
-        'HOME'     => BASE_URL . '/',
-        'PRODUCTS' => BASE_URL . '/products.php',
-        'GALLERY'  => BASE_URL . '/gallery.php',
-        'ABOUT'    => BASE_URL . '/about.php',
-        'CONTACT'  => BASE_URL . '/about.php#contact',
-      ];
-      foreach ($nav_links as $label => $href):
-        $is_active = ($active_nav === strtolower($label));
-      ?>
+$nav_links = [
+    'HOME' => BASE_URL . '/',
+    'PRODUCTS' => BASE_URL . '/products.php',
+    'GALLERY' => BASE_URL . '/gallery.php',
+    'ABOUT' => BASE_URL . '/about.php',
+    'CONTACT' => BASE_URL . '/about.php#contact',
+];
+foreach ($nav_links as $label => $href):
+    $is_active = ($active_nav === strtolower($label));
+    ?>
         <a href="<?= $href ?>"
            class="font-semibold text-[11px] tracking-[1.65px] uppercase whitespace-nowrap pl-10 <?= $is_active ? 'text-brand' : 'text-dark hover:text-brand' ?> transition-colors duration-200">
-          <?= $label ?>
+            <?= $label ?>
         </a>
-      <?php endforeach; ?>
+        <?php endforeach; ?>
     </nav>
 
     <!-- CTA Button -->

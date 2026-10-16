@@ -167,10 +167,10 @@ include_once __DIR__ . '/includes/header.php';
         if (!empty($queryArr)) $catUrl .= '?' . http_build_query($queryArr);
       ?>
         <a
-          href="<?= $catUrl ?>"
+          href="<?= htmlspecialchars($catUrl) ?>"
           class="whitespace-nowrap px-4 py-2 rounded-[3px] text-[12px] font-semibold tracking-wider uppercase transition-all duration-200 <?= $isActive ? 'bg-brand text-white shadow-sm' : 'bg-white text-dark hover:text-brand border border-border' ?>"
         >
-          <?= $label ?>
+          <?= htmlspecialchars($label) ?>
         </a>
       <?php endforeach; ?>
     </div>

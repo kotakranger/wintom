@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_login();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') csrf_check();
 
 $db  = get_db();
 $msg = '';
@@ -22,13 +23,17 @@ function slugify(string $text): string {
 
 function upload_image(array $file, string $subdir): string|false {
     if ($file['error'] !== UPLOAD_ERR_OK) return false;
-    $allowed = ['image/jpeg','image/png','image/webp'];
-    if (!in_array($file['type'], $allowed)) return false;
     if ($file['size'] > 5 * 1024 * 1024) return false;
-    $ext  = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $name = uniqid('img_', true) . '.' . strtolower($ext);
+    // Server-side MIME validation; ignore client type
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+    $ext_map = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+    if (!isset($ext_map[$mime])) return false;
+    // Validate image integrity
+    if (!getimagesize($file['tmp_name'])) return false;
+    $ext  = $ext_map[$mime];
+    $name = uniqid('img_', true) . '.' . $ext;
     $dir  = __DIR__ . '/../uploads/' . $subdir;
-    if (!is_dir($dir)) mkdir($dir, 0777, true);
+    if (!is_dir($dir)) mkdir($dir, 0755, true);
     $dest = $dir . '/' . $name;
     if (!move_uploaded_file($file['tmp_name'], $dest)) return false;
     return '/uploads/' . $subdir . '/' . $name;
@@ -37,7 +42,9 @@ function upload_image(array $file, string $subdir): string|false {
 function delete_file(string $url): void {
     if (str_starts_with($url, '/uploads/')) {
         $path = __DIR__ . '/..' . $url;
-        if (file_exists($path)) unlink($path);
+        $real = realpath($path);
+        $base = realpath(__DIR__ . '/../uploads') . DIRECTORY_SEPARATOR;
+        if ($real && strpos($real, $base) === 0 && file_exists($real)) unlink($real);
     }
 }
 
@@ -82,40 +89,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'togg
 }
 
 /* ============================================================
-   ACTION: DELETE GALLERY IMAGE (via GET)
+   ACTION: DELETE GALLERY IMAGE (via POST)
    ============================================================ */
-if (isset($_GET['del_img'])) {
-    $del_img_id = (int)$_GET['del_img'];
-    $pid_for_del = (int)($_GET['edit'] ?? 0);
-    $r = $db->prepare("SELECT image_url FROM product_images WHERE id=?");
-    $r->execute([$del_img_id]); $row = $r->fetch();
-    if ($row) {
-        delete_file($row['image_url']);
-        $db->prepare("DELETE FROM product_images WHERE id=?")->execute([$del_img_id]);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'del_img') {
+    $del_img_id = (int)($_POST['image_id'] ?? 0);
+    $pid_for_del = (int)($_POST['product_id'] ?? 0);
+    if ($del_img_id > 0 && $pid_for_del > 0) {
+        $r = $db->prepare("SELECT image_url FROM product_images WHERE id=? AND product_id=?");
+        $r->execute([$del_img_id, $pid_for_del]); $row = $r->fetch();
+        if ($row) {
+            $url = $row['image_url'];
+            delete_file($url);
+            // If this image is the cover, set cover_image to NULL
+            $db->prepare("UPDATE products SET cover_image = NULL WHERE id = ? AND cover_image = ?")->execute([$pid_for_del, $url]);
+            $db->prepare("DELETE FROM product_images WHERE id=?")->execute([$del_img_id]);
+        }
     }
-    header("Location: products.php?edit=$pid_for_del&msg=Foto+dihapus"); exit;
+    header("Location: products.php?edit=$pid_for_del&msg=img_deleted"); exit;
 }
 
 /* ============================================================
-   ACTION: SET COVER (via GET)
+   ACTION: SET COVER (via POST)
    ============================================================ */
-if (isset($_GET['set_cover'])) {
-    $img_id = (int)$_GET['set_cover'];
-    $pid_for_cover = (int)($_GET['edit'] ?? 0);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'set_cover') {
+    $img_id = (int)($_POST['image_id'] ?? 0);
+    $pid_for_cover = (int)($_POST['product_id'] ?? 0);
     if ($pid_for_cover > 0 && $img_id > 0) {
         // Unset all covers for this product
         $db->prepare("UPDATE product_images SET is_cover = 0 WHERE product_id = ?")->execute([$pid_for_cover]);
         // Set the selected one
         $db->prepare("UPDATE product_images SET is_cover = 1 WHERE id = ? AND product_id = ?")->execute([$img_id, $pid_for_cover]);
         // Update cover_image in products table for backward compat
-        $img_row = $db->prepare("SELECT image_url FROM product_images WHERE id = ?");
-        $img_row->execute([$img_id]);
+        $img_row = $db->prepare("SELECT image_url FROM product_images WHERE id = ? AND product_id = ?");
+        $img_row->execute([$img_id, $pid_for_cover]);
         $img_data = $img_row->fetch();
         if ($img_data) {
             $db->prepare("UPDATE products SET cover_image = ? WHERE id = ?")->execute([$img_data['image_url'], $pid_for_cover]);
         }
     }
-    header("Location: products.php?edit=$pid_for_cover&msg=Cover+berhasil+diubah"); exit;
+    header("Location: products.php?edit=$pid_for_cover&msg=cover_set"); exit;
 }
 
 /* ============================================================
@@ -154,10 +166,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
         $slug = slugify($name);
         if ($pid === 0) {
             $base_slug = $slug; $i = 2;
-            while ($db->query("SELECT id FROM products WHERE slug='$slug'")->fetchColumn()) {
+            $chk = $db->prepare("SELECT id FROM products WHERE slug=?");
+            while ($chk->execute([$slug]) && $chk->fetchColumn()) {
                 $slug = $base_slug . '-' . $i++;
             }
+        } else {
+            // On update, ensure uniqueness excluding own id
+            $chk = $db->prepare("SELECT id FROM products WHERE slug=? AND id != ?");
+            if ($chk->execute([$slug, $pid]) && $chk->fetchColumn()) {
+                $err = 'Slug sudah digunakan produk lain.';
+            }
         }
+
+        // Validate category exists
+        if (!$err) {
+            $cat_chk = $db->prepare("SELECT id FROM categories WHERE name=?");
+            if (!($cat_chk->execute([$category]) && $cat_chk->fetchColumn())) {
+                $err = 'Kategori tidak ditemukan.';
+            }
+        }
+
+        // Validate is_active (only 0 or 1)
+        if (!$err && !in_array($is_active, [0, 1])) {
+            $err = 'Status produk tidak valid.';
+        }
+
+        // Validate stock (non-negative if set)
+        if (!$err && $stock !== null && $stock < 0) {
+            $stock = 0;
+        }
+
+        // Start transaction for all db operations
+        if (!$err) {
+            $db->beginTransaction();
+            try {
 
         // Cover image (for new products)
         $cover_url = '';
@@ -183,7 +225,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
                 if ($cover_url) {
                     $old = $db->prepare("SELECT cover_image FROM products WHERE id=?");
                     $old->execute([$pid]); $r = $old->fetch();
-                    if ($r) delete_file($r['cover_image']);
+                    if ($r) {
+                        $old_url = $r['cover_image'];
+                        // Only delete if no other product_images row references it
+                        $ref_chk = $db->prepare("SELECT id FROM product_images WHERE image_url=?");
+                        if (!($ref_chk->execute([$old_url]) && $ref_chk->fetchColumn())) {
+                            delete_file($old_url);
+                        }
+                    }
                     $db->prepare("UPDATE products SET slug=?,name=?,category=?,badge=?,ref_code=?,price=?,original_price=?,price_unit=?,description=?,features=?,cover_image=?,is_active=?,stock=? WHERE id=?")
                        ->execute([$slug,$name,$category,$badge,$ref_code,$price,$orig_price ?: null,$price_unit,$description,$features,$cover_url,$is_active,$stock,$pid]);
                 } else {
@@ -223,26 +272,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
             $variant_image_linked = $_POST['variant_image_linked'] ?? [];
             $variant_options = $_POST['variant_options'] ?? [];
 
-            foreach ($variant_labels as $vi => $label) {
-                $label = trim($label);
-                if (!$label) continue;
-                $is_img_linked = in_array((string)$vi, $variant_image_linked) ? 1 : 0;
-                $ins_var = $db->prepare("INSERT INTO product_variants (product_id, label, is_image_linked, sort_order) VALUES (?, ?, ?, ?)");
-                $ins_var->execute([$pid, $label, $is_img_linked, $vi]);
-                $vid = (int)$db->lastInsertId();
+            // Validate max 4 variants
+            if (count($variant_labels) > 4) {
+                $err = 'Maksimum 4 varian.';
+            } else {
+                $valid_images = $db->prepare("SELECT id FROM product_images WHERE product_id = ?");
+                $valid_images->execute([$pid]);
+                $valid_img_ids = array_column($valid_images->fetchAll(), 'id');
 
-                $options = $variant_options[$vi] ?? [];
-                foreach ($options as $oi => $opt_val) {
-                    $opt_val = trim($opt_val);
-                    if (!$opt_val) continue;
-                    // Check for linked image
-                    $linked_img_id = null;
-                    $link_key = "variant_opt_image_{$vi}_{$oi}";
-                    if (isset($_POST[$link_key]) && (int)$_POST[$link_key] > 0) {
-                        $linked_img_id = (int)$_POST[$link_key];
+                foreach ($variant_labels as $vi => $label) {
+                    $label = trim($label);
+                    if (!$label) continue;
+                    $is_img_linked = in_array((string)$vi, $variant_image_linked) ? 1 : 0;
+                    $ins_var = $db->prepare("INSERT INTO product_variants (product_id, label, is_image_linked, sort_order) VALUES (?, ?, ?, ?)");
+                    $ins_var->execute([$pid, $label, $is_img_linked, $vi]);
+                    $vid = (int)$db->lastInsertId();
+
+                    $options = $variant_options[$vi] ?? [];
+                    foreach ($options as $oi => $opt_val) {
+                        $opt_val = trim($opt_val);
+                        if (!$opt_val) continue;
+                        // Check for linked image
+                        $linked_img_id = null;
+                        $link_val = (int)($_POST['variant_opt_image'][$vi][$oi] ?? 0);
+                        if ($link_val > 0 && in_array($link_val, $valid_img_ids)) {
+                            $linked_img_id = $link_val;
+                        }
+                        $ins_opt = $db->prepare("INSERT INTO product_variant_options (variant_id, value, linked_image_id, sort_order) VALUES (?, ?, ?, ?)");
+                        $ins_opt->execute([$vid, $opt_val, $linked_img_id, $oi]);
                     }
-                    $ins_opt = $db->prepare("INSERT INTO product_variant_options (variant_id, value, linked_image_id, sort_order) VALUES (?, ?, ?, ?)");
-                    $ins_opt->execute([$vid, $opt_val, $linked_img_id, $oi]);
                 }
             }
         }
@@ -252,10 +310,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
             $s = $db->prepare("SELECT * FROM products WHERE id=?");
             $s->execute([$pid]); $editing = $s->fetch(); $edit_id = $pid;
         }
+
+            } catch (Exception $e) {
+                if ($db->inTransaction()) $db->rollBack();
+                error_log($e->getMessage());
+                $err = 'Gagal menyimpan produk. Coba lagi.';
+            }
+            if ($db->inTransaction()) { $err ? $db->rollBack() : $db->commit(); }
+        }
     }
 }
 
-if (isset($_GET['msg'])) $msg = htmlspecialchars($_GET['msg']);
+if (isset($_GET['msg'])) $msg = ['img_deleted' => 'Foto dihapus', 'cover_set' => 'Cover berhasil diubah'][$_GET['msg']] ?? '';
 
 /* ============================================================
    LOAD PRODUCTS LIST
@@ -322,7 +388,10 @@ select.input{appearance:auto;}
     <a href="gallery.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Galeri Portofolio</a>
   </nav>
   <div class="p-4 border-t border-border">
-    <a href="logout.php" class="block px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors">Logout</a>
+    <form method="POST" action="logout.php">
+      <?= csrf_field() ?>
+      <button type="submit" class="block w-full text-left px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors bg-transparent border-0 cursor-pointer">Logout</button>
+    </form>
   </div>
 </aside>
 
@@ -330,7 +399,7 @@ select.input{appearance:auto;}
 <main class="ml-[220px] flex-1 p-8 min-h-screen">
 
   <!-- Toast -->
-  <?php if ($msg): ?><div class="mb-5 bg-green-50 border border-green-200 text-green-800 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= $msg ?></div><?php endif; ?>
+  <?php if ($msg): ?><div class="mb-5 bg-green-50 border border-green-200 text-green-800 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
   <?php if ($err): ?><div class="mb-5 bg-red-50 border border-red-200 text-red-700 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= htmlspecialchars($err) ?></div><?php endif; ?>
 
   <?php if ($editing || isset($_GET['add'])): ?>
@@ -346,6 +415,7 @@ select.input{appearance:auto;}
   <form method="POST" enctype="multipart/form-data" id="product-form" class="grid grid-cols-12 gap-6">
     <input type="hidden" name="_action" value="save"/>
     <input type="hidden" name="product_id" value="<?= $editing['id'] ?? 0 ?>"/>
+    <?= csrf_field() ?>
 
     <!-- LEFT: Main Info (8 cols) -->
     <div class="col-span-12 lg:col-span-8 flex flex-col gap-5">
@@ -479,7 +549,7 @@ select.input{appearance:auto;}
         <h2 class="font-jakarta font-semibold text-dark text-[14px] border-b border-border pb-3">Cover Image <?= !$editing ? '<span class="text-red-500">*</span>' : '' ?></h2>
         <?php if ($editing && $editing['cover_image']): ?>
         <div class="aspect-[3/4] rounded-[4px] overflow-hidden bg-cream-dark border border-border">
-          <img src="<?= htmlspecialchars($editing['cover_image']) ?>" alt="Cover" class="w-full h-full object-cover"/>
+          <img src="<?= htmlspecialchars(asset_url($editing['cover_image'])) ?>" alt="Cover" class="w-full h-full object-cover"/>
         </div>
         <p class="font-jakarta text-muted text-[11px]">Upload baru untuk mengganti cover, atau pilih dari galeri di bawah.</p>
         <?php endif; ?>
@@ -501,23 +571,32 @@ select.input{appearance:auto;}
         <div class="grid grid-cols-2 gap-2">
           <?php foreach($edit_images as $gi): ?>
           <div class="relative group aspect-square rounded-[3px] overflow-hidden border <?= $gi['is_cover'] ? 'border-2 border-brand' : 'border-border' ?>">
-            <img src="<?= htmlspecialchars($gi['image_url']) ?>" class="w-full h-full object-cover"/>
+            <img src="<?= htmlspecialchars(asset_url($gi['image_url'])) ?>" class="w-full h-full object-cover"/>
             <?php if ($gi['is_cover']): ?>
             <div class="cover-badge">COVER</div>
             <?php endif; ?>
             <!-- Hover overlay -->
             <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
               <?php if (!$gi['is_cover']): ?>
-              <a href="products.php?edit=<?= $editing['id'] ?>&set_cover=<?= $gi['id'] ?>"
-                 class="text-white text-[10px] tracking-[0.8px] uppercase font-semibold bg-brand/80 hover:bg-brand px-3 py-1.5 rounded-[2px] transition-colors">
-                ⭐ Jadikan Cover
-              </a>
+              <form method="POST" style="display:inline;">
+                <input type="hidden" name="_action" value="set_cover"/>
+                <input type="hidden" name="product_id" value="<?= $editing['id'] ?>"/>
+                <input type="hidden" name="image_id" value="<?= $gi['id'] ?>"/>
+                <?= csrf_field() ?>
+                <button type="submit" class="text-white text-[10px] tracking-[0.8px] uppercase font-semibold bg-brand/80 hover:bg-brand px-3 py-1.5 rounded-[2px] transition-colors border-0 cursor-pointer">
+                  ⭐ Jadikan Cover
+                </button>
+              </form>
               <?php endif; ?>
-              <a href="products.php?edit=<?= $editing['id'] ?>&del_img=<?= $gi['id'] ?>"
-                 onclick="return confirm('Hapus foto ini?')"
-                 class="text-white text-[10px] tracking-[0.8px] uppercase font-semibold bg-red-500/80 hover:bg-red-600 px-3 py-1.5 rounded-[2px] transition-colors">
-                🗑️ Hapus
-              </a>
+              <form method="POST" style="display:inline;" onsubmit="return confirm('Hapus foto ini?')">
+                <input type="hidden" name="_action" value="del_img"/>
+                <input type="hidden" name="product_id" value="<?= $editing['id'] ?>"/>
+                <input type="hidden" name="image_id" value="<?= $gi['id'] ?>"/>
+                <?= csrf_field() ?>
+                <button type="submit" class="text-white text-[10px] tracking-[0.8px] uppercase font-semibold bg-red-500/80 hover:bg-red-600 px-3 py-1.5 rounded-[2px] transition-colors border-0 cursor-pointer">
+                  🗑️ Hapus
+                </button>
+              </form>
             </div>
           </div>
           <?php endforeach; ?>
@@ -536,7 +615,7 @@ select.input{appearance:auto;}
         <?= $editing ? 'SIMPAN PERUBAHAN' : 'TAMBAH PRODUK' ?>
       </button>
       <?php if ($editing): ?>
-      <a href="/product-detail.php?slug=<?= htmlspecialchars($editing['slug']) ?>" target="_blank"
+      <a href="<?= BASE_URL ?>/product-detail.php?slug=<?= htmlspecialchars($editing['slug']) ?>" target="_blank"
          class="w-full border border-brand text-brand font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase py-3 rounded-[4px] hover:bg-brand/5 transition-colors text-center block">
         LIHAT DI HALAMAN DEPAN ↗
       </a>
@@ -577,7 +656,7 @@ select.input{appearance:auto;}
         <tr class="border-t border-border hover:bg-cream/50 transition-colors <?= !$p['is_active'] ? 'opacity-60' : '' ?>">
           <td class="px-4 py-3">
             <div class="size-12 rounded-[3px] overflow-hidden border border-border bg-cream-dark shrink-0">
-              <img src="<?= htmlspecialchars($p['cover_image']) ?>" alt="" class="w-full h-full object-cover"/>
+              <img src="<?= htmlspecialchars(asset_url($p['cover_image'])) ?>" alt="" class="w-full h-full object-cover"/>
             </div>
           </td>
           <td class="px-4 py-3">
@@ -594,6 +673,7 @@ select.input{appearance:auto;}
             <form method="POST" class="inline">
               <input type="hidden" name="_action" value="toggle_active"/>
               <input type="hidden" name="product_id" value="<?= $p['id'] ?>"/>
+              <?= csrf_field() ?>
               <button type="submit" title="<?= $p['is_active'] ? 'Klik untuk nonaktifkan' : 'Klik untuk aktifkan' ?>"
                       class="font-jakarta text-[10px] tracking-[0.5px] uppercase px-2 py-1 rounded-full border transition-colors
                              <?= $p['is_active'] ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' ?>">
@@ -616,13 +696,14 @@ select.input{appearance:auto;}
                  class="font-jakarta text-[11px] tracking-[0.5px] uppercase text-brand border border-brand/30 px-3 py-1.5 rounded-[3px] hover:bg-brand/5 transition-colors">
                 Edit
               </a>
-              <a href="/product-detail.php?slug=<?= htmlspecialchars($p['slug']) ?>" target="_blank"
+              <a href="<?= BASE_URL ?>/product-detail.php?slug=<?= htmlspecialchars($p['slug']) ?>" target="_blank"
                  class="font-jakarta text-[11px] text-muted border border-border px-3 py-1.5 rounded-[3px] hover:border-dark/30 transition-colors">
                 View
               </a>
               <form method="POST" onsubmit="return confirm('Hapus produk ini? Semua foto akan ikut terhapus.')">
                 <input type="hidden" name="_action" value="delete"/>
                 <input type="hidden" name="product_id" value="<?= $p['id'] ?>"/>
+                <?= csrf_field() ?>
                 <button type="submit" class="font-jakarta text-[11px] text-red-500 border border-red-200 px-3 py-1.5 rounded-[3px] hover:bg-red-50 transition-colors">Del</button>
               </form>
             </div>
@@ -646,14 +727,14 @@ const MAX_CUSTOM_VARIANTS = 3;
 let variantIndex = 0;
 
 // Gallery images for image-linking dropdown
-const galleryImages = <?= json_encode(array_map(fn($img) => ['id' => $img['id'], 'url' => $img['image_url']], $edit_images)) ?>;
+const galleryImages = <?= json_encode(array_map(fn($img) => ['id' => $img['id'], 'url' => $img['image_url']], $edit_images), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
 
 // Existing variants for edit mode
 const existingVariants = <?= json_encode(array_map(fn($v) => [
     'label' => $v['label'],
     'is_image_linked' => (bool)$v['is_image_linked'],
     'options' => array_map(fn($o) => ['value' => $o['value'], 'linked_image_id' => $o['linked_image_id']], $v['options']),
-], $edit_variants)) ?>;
+], $edit_variants), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
 
 function getVariantCount() {
     return document.querySelectorAll('.variant-card').length;
@@ -679,7 +760,7 @@ function createOptionRow(vi, oi, value = '', linkedImageId = null) {
     let imgSelect = '';
     if (galleryImages.length > 0) {
         imgSelect = `
-            <select name="variant_opt_image_${vi}_${oi}" class="opt-input" style="max-width:140px;" title="Link ke gambar galeri">
+            <select name="variant_opt_image[${vi}][]" class="opt-input" style="max-width:140px;" title="Link ke gambar galeri">
                 <option value="">— Tanpa link —</option>
                 ${galleryImages.map(img => `<option value="${img.id}" ${img.id == linkedImageId ? 'selected' : ''}>Foto #${img.id}</option>`).join('')}
             </select>
@@ -766,9 +847,8 @@ function handleImageLinkToggle(checkbox) {
 }
 
 function escHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    const map = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+    return String(str).replace(/[&<>"']/g, c => map[c]);
 }
 
 // Initialize variants on page load

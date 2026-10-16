@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // about.php — Tentang Kami & Kontak Wintom Curtain
 require_once __DIR__ . '/includes/config.php';
 

@@ -1,13 +1,13 @@
-﻿<?php
+<?php
 // admin/login.php — Admin Login Wintom Curtain
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 
-start_session();
 if (is_logged_in()) { header('Location: ' . BASE_URL . '/admin/index.php'); exit; }
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_check();
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
     if ($username && $password) {
@@ -54,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
       <?php endif; ?>
       <form method="POST" autocomplete="off" class="flex flex-col gap-4">
+        <?= csrf_field() ?>
         <div>
           <label class="font-jakarta font-medium text-dark text-[12px] tracking-[0.6px] uppercase block mb-1.5">Username</label>
           <input type="text" name="username" id="username" required autofocus
@@ -71,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           MASUK
         </button>
       </form>
-      <p class="font-jakarta text-muted text-[11px] text-center mt-5">Default: <strong>admin</strong> / <strong>wintom2024</strong></p>
     </div>
     <p class="text-center font-jakarta text-muted text-[11px] mt-5">← <a href="../" class="hover:text-brand transition-colors">Kembali ke Website</a></p>
   </div>
