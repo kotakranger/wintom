@@ -1,1 +1,14 @@
 DirectoryIndex index.php index.html
+
+# Disable directory listing
+Options -Indexes
+
+# Deny access to sensitive files
+<FilesMatch "\.(md|sqlite|sqlite3|db|php-cs-fixer)$">
+    Require all denied
+</FilesMatch>
+
+# Deny access to dotfiles
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>

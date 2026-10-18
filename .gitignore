@@ -16,3 +16,6 @@ Thumbs.db
 
 # Environment / local configs if any
 .env
+
+# PHP CS Fixer configuration
+/.php-cs*

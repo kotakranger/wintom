@@ -7,7 +7,7 @@ require_login();
 $db = get_db();
 $total_products = (int)$db->query("SELECT COUNT(*) FROM products")->fetchColumn();
 $total_gallery  = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
-$categories     = $db->query("SELECT category, COUNT(*) as cnt FROM products GROUP BY category")->fetchAll();
+$category_count = (int)$db->query("SELECT COUNT(*) FROM categories")->fetchColumn();
 $recent_products = $db->query("SELECT name, category, price, created_at FROM products ORDER BY created_at DESC LIMIT 5")->fetchAll();
 
 function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0, ',', '.'); }
@@ -50,9 +50,12 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
     <?php endforeach; ?>
   </nav>
   <div class="p-4 border-t border-border">
-    <a href="logout.php" class="flex items-center gap-2 px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors">
-      Logout
-    </a>
+    <form method="POST" action="logout.php" class="inline">
+      <?= csrf_field() ?>
+      <button type="submit" class="flex items-center gap-2 px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors bg-none border-none cursor-pointer w-full">
+        Logout
+      </button>
+    </form>
   </div>
 </aside>
 
@@ -75,7 +78,7 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
     </div>
     <div class="bg-white border border-border rounded-[6px] p-6">
       <p class="font-jakarta font-semibold text-muted text-[11px] tracking-[1.5px] uppercase mb-2">Kategori</p>
-      <p class="font-playfair font-semibold text-dark text-[32px]"><?= count($categories) ?></p>
+      <p class="font-playfair font-semibold text-dark text-[32px]"><?= $category_count ?></p>
     </div>
   </div>
 

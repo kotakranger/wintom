@@ -4,13 +4,38 @@
 require_once __DIR__ . '/includes/db.php';
 
 $slug = $_GET['slug'] ?? '';
-if (!$slug) { header('Location: /products.php'); exit; }
-
 $db = get_db();
-$stmt = $db->prepare("SELECT * FROM products WHERE slug = ?");
+
+if (!$slug) {
+    http_response_code(404);
+    include_once __DIR__ . '/includes/header.php';
+    ?>
+    <div class="max-w-[1280px] mx-auto px-12 py-16 text-center">
+      <h1 class="font-playfair text-4xl font-bold text-dark mb-4">Produk Tidak Ditemukan</h1>
+      <p class="font-jakarta text-muted text-lg mb-8">Maaf, produk yang Anda cari tidak ada atau telah dihapus.</p>
+      <a href="<?= BASE_URL ?>/products.php" class="inline-block bg-brand text-white px-6 py-3 rounded hover:bg-[#5a0d1a]">Kembali ke Katalog</a>
+    </div>
+    <?php
+    include_once __DIR__ . '/includes/footer.php';
+    exit;
+}
+
+$stmt = $db->prepare("SELECT * FROM products WHERE slug = ? AND is_active = 1");
 $stmt->execute([$slug]);
 $product = $stmt->fetch();
-if (!$product) { header('Location: /products.php'); exit; }
+if (!$product) {
+    http_response_code(404);
+    include_once __DIR__ . '/includes/header.php';
+    ?>
+    <div class="max-w-[1280px] mx-auto px-12 py-16 text-center">
+      <h1 class="font-playfair text-4xl font-bold text-dark mb-4">Produk Tidak Ditemukan</h1>
+      <p class="font-jakarta text-muted text-lg mb-8">Maaf, produk yang Anda cari tidak ada atau telah dihapus.</p>
+      <a href="<?= BASE_URL ?>/products.php" class="inline-block bg-brand text-white px-6 py-3 rounded hover:bg-[#5a0d1a]">Kembali ke Katalog</a>
+    </div>
+    <?php
+    include_once __DIR__ . '/includes/footer.php';
+    exit;
+}
 
 // Fetch gallery images
 $img_stmt = $db->prepare("SELECT * FROM product_images WHERE product_id = ? ORDER BY sort_order ASC");
@@ -79,11 +104,11 @@ foreach ($gallery_images as $gi) {
 <!-- ===== BREADCRUMB ===== -->
 <div class="bg-[#f5f3f0] border-b border-[#e2ddd5] px-12 py-[12px]">
   <div class="max-w-[1280px] mx-auto flex items-center gap-2 text-[11px] tracking-[0.44px] text-[#5f5e5a] font-jakarta">
-    <a href="/" class="hover:text-[#731924] transition-colors">Home</a>
+    <a href="<?= BASE_URL ?>/" class="hover:text-[#731924] transition-colors">Home</a>
     <svg class="size-[5px] shrink-0" viewBox="0 0 4 7" fill="none"><path d="M1 1l2.5 2.5L1 6" stroke="#5f5e5a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <a href="/products.php" class="hover:text-[#731924] transition-colors">Products</a>
+    <a href="<?= BASE_URL ?>/products.php" class="hover:text-[#731924] transition-colors">Products</a>
     <svg class="size-[5px] shrink-0" viewBox="0 0 4 7" fill="none"><path d="M1 1l2.5 2.5L1 6" stroke="#5f5e5a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <a href="/products.php?cat=<?= urlencode($product['category']) ?>" class="hover:text-[#731924] transition-colors"><?= htmlspecialchars($product['category']) ?></a>
+    <a href="<?= BASE_URL ?>/products.php?category=<?= urlencode($product['category']) ?>" class="hover:text-[#731924] transition-colors"><?= htmlspecialchars($product['category']) ?></a>
     <svg class="size-[5px] shrink-0" viewBox="0 0 4 7" fill="none"><path d="M1 1l2.5 2.5L1 6" stroke="#5f5e5a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span class="font-semibold text-[#1e1e1e]"><?= htmlspecialchars($product['name']) ?></span>
   </div>
@@ -119,7 +144,7 @@ foreach ($gallery_images as $gi) {
       <!-- Thumbnail Strip -->
       <div class="flex gap-3" id="thumbnail-strip">
         <?php foreach ($gallery_urls as $i => $url): ?>
-        <button onclick="switchImg('<?= htmlspecialchars($url) ?>', this)"
+        <button onclick="switchImg(<?= htmlspecialchars(json_encode($url), ENT_QUOTES) ?>, this)"
                 data-img-url="<?= htmlspecialchars($url) ?>"
                 class="thumbnail-btn shrink-0 bg-[#efeeeb] border rounded-[2px] overflow-hidden p-[3px] transition-all duration-200 <?= $i === 0 ? 'border-2 border-[#731924]' : 'border border-[#e2ddd5]' ?>"
                 style="width: calc(25% - 9px)">
@@ -219,7 +244,7 @@ foreach ($gallery_images as $gi) {
               <div class="grid grid-cols-2 gap-1.5">
                 <?php foreach ($variant['options'] as $oi => $opt): ?>
                 <button type="button"
-                        onclick="selectOption(this, '<?= htmlspecialchars($opt['value']) ?>', <?= $vi ?>, <?= $opt['linked_image_id'] ?? 'null' ?>)"
+                        onclick="selectOption(this, <?= htmlspecialchars(json_encode($opt['value']), ENT_QUOTES) ?>, <?= $vi ?>, <?= $opt['linked_image_id'] ?? 'null' ?>)"
                         class="option-pill <?= $oi === 0 ? 'active' : '' ?> h-[32px] border rounded-[2px] px-[11px] text-left font-jakarta text-[12px] tracking-[0.24px] border-[#e2ddd5] text-[#564242] bg-white">
                   <?= htmlspecialchars($opt['value']) ?>
                 </button>
@@ -231,7 +256,7 @@ foreach ($gallery_images as $gi) {
             <div class="flex flex-wrap gap-2 pt-2">
               <?php foreach ($variant['options'] as $oi => $opt): ?>
               <button type="button"
-                      onclick="selectOption(this, '<?= htmlspecialchars($opt['value']) ?>', <?= $vi ?>, <?= $opt['linked_image_id'] ?? 'null' ?>)"
+                      onclick="selectOption(this, <?= htmlspecialchars(json_encode($opt['value']), ENT_QUOTES) ?>, <?= $vi ?>, <?= $opt['linked_image_id'] ?? 'null' ?>)"
                       class="option-pill <?= $oi === 0 ? 'active' : '' ?> border rounded-[2px] px-3 py-1.5 font-jakarta text-[12px] tracking-[0.24px] border-[#e2ddd5] text-[#564242] bg-white">
                 <?= htmlspecialchars($opt['value']) ?>
               </button>
@@ -361,7 +386,7 @@ foreach ($gallery_images as $gi) {
         <p class="font-jakarta font-semibold text-[#5f5e5a] text-[11px] tracking-[1.65px] uppercase">KOLEKSI PENDAMPING</p>
         <h2 class="font-playfair font-medium text-[#1e1e1e] text-[24px] leading-[32px] tracking-[1.2px]">Eksplorasi Kurasi Tekstil Lainnya</h2>
       </div>
-      <a href="/products.php" class="flex items-center gap-1.5 font-jakarta font-semibold text-[#731924] text-[12px] tracking-[1.2px] uppercase hover:gap-2.5 transition-all duration-200">
+      <a href="<?= BASE_URL ?>/products.php" class="flex items-center gap-1.5 font-jakarta font-semibold text-[#731924] text-[12px] tracking-[1.2px] uppercase hover:gap-2.5 transition-all duration-200">
         LIHAT SELURUH KATALOG
         <svg class="size-[10px]" fill="none" viewBox="0 0 12 12" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2 6h8M7 3l3 3-3 3"/></svg>
       </a>
@@ -413,7 +438,7 @@ foreach ($gallery_images as $gi) {
             <p class="font-playfair font-semibold text-[#540011] text-[18px] leading-[22px] tracking-[0.14px]"><?= fmt_price($rel['price']) ?></p>
           </div>
           <div class="flex gap-2 pt-1">
-            <a href="/product-detail.php?slug=<?= urlencode($rel['slug']) ?>"
+            <a href="<?= BASE_URL ?>/product-detail.php?slug=<?= urlencode($rel['slug']) ?>"
                class="flex-1 bg-white border border-[#e2ddd5] flex items-center justify-center py-[9px] rounded-[2px] font-jakarta text-[#1e1e1e] text-[11px] tracking-[0.55px] uppercase hover:border-[#731924]/40 transition-colors">
               LIHAT DETAIL
             </a>
@@ -435,7 +460,7 @@ foreach ($gallery_images as $gi) {
 /* ==========================================================
    GALLERY IMAGE MAP (for variant-image linking)
    ========================================================== */
-const galleryMap = <?= json_encode($gallery_map) ?>;
+const galleryMap = <?= json_encode($gallery_map, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
 /* ==========================================================
    ACCORDION TOGGLE
@@ -511,7 +536,12 @@ function updateConvSummary() {
   const summary = document.getElementById('conv-summary');
   if (!summary) return;
   const lines = Object.values(selectedOptions).map(v => v.toUpperCase());
-  summary.innerHTML = lines.map(l => `<p>${l}</p>`).join('');
+  summary.replaceChildren();
+  lines.forEach(l => {
+    const p = document.createElement('p');
+    p.textContent = l;
+    summary.appendChild(p);
+  });
 }
 </script>
 

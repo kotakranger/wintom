@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // gallery.php — Galeri Portofolio Wintom Curtain
 require_once __DIR__ . '/includes/db.php';
 
@@ -8,7 +8,7 @@ $active_nav  = 'gallery';
 // --- Query & Filter ---
 $allowed_cats = ['Semua Proyek', 'Living Room', 'Penthouse Sanctuary', 'Dining & Atelier', 'Office & Commercial', 'Hotel & Private Villa'];
 $active_cat   = $_GET['cat'] ?? 'Semua Proyek';
-if (!in_array($active_cat, $allowed_cats)) $active_cat = 'Semua Proyek';
+if (!in_array($active_cat, $allowed_cats, true)) $active_cat = 'Semua Proyek';
 
 $db = get_db();
 
@@ -89,7 +89,7 @@ include_once __DIR__ . '/includes/header.php';
     <div class="columns-1 sm:columns-2 lg:columns-3 gap-5" id="gallery-grid">
       <?php foreach ($galleries as $item): ?>
       <div class="break-inside-avoid mb-5 group relative overflow-hidden rounded-[4px] bg-border cursor-pointer"
-           onclick="openLightbox('<?= htmlspecialchars($item['image_url']) ?>', '<?= htmlspecialchars(addslashes($item['title'])) ?>', '<?= htmlspecialchars($item['category']) ?>')">
+           onclick="openLightbox(<?= htmlspecialchars(json_encode($item['image_url']), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($item['title']), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($item['category']), ENT_QUOTES) ?>)">
         <img src="<?= htmlspecialchars($item['image_url']) ?>"
              alt="<?= htmlspecialchars($item['title']) ?>"
              class="w-full object-cover transition-transform duration-700 group-hover:scale-105"

@@ -4,26 +4,33 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_login();
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') csrf_check();
+
 $db  = get_db();
 $msg = '';
 $err = '';
 
 function upload_gallery_img(array $file): string|false {
     if ($file['error'] !== UPLOAD_ERR_OK) return false;
-    $allowed = ['image/jpeg','image/png','image/webp'];
-    if (!in_array($file['type'], $allowed)) return false;
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+    $mime_map = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'];
+    $ext = $mime_map[$mime] ?? null;
+    if (!$ext) return false;
     if ($file['size'] > 8 * 1024 * 1024) return false;
-    $ext  = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $name = uniqid('gal_', true) . '.' . strtolower($ext);
-    $dest = __DIR__ . '/../uploads/gallery/' . $name;
+    if (!@getimagesize($file['tmp_name'])) return false;
+    $upload_dir = __DIR__ . '/../uploads/gallery';
+    if (!is_dir($upload_dir)) @mkdir($upload_dir, 0755, true);
+    $name = uniqid('gal_', true) . '.' . $ext;
+    $dest = $upload_dir . '/' . $name;
     if (!move_uploaded_file($file['tmp_name'], $dest)) return false;
     return '/uploads/gallery/' . $name;
 }
 
 function delete_gal_file(string $url): void {
     if (str_starts_with($url, '/uploads/')) {
-        $path = __DIR__ . '/..' . $url;
-        if (file_exists($path)) unlink($path);
+        $base = realpath(__DIR__ . '/../uploads') . DIRECTORY_SEPARATOR;
+        $path = realpath(__DIR__ . '/..' . $url);
+        if ($path && str_starts_with($path, $base)) @unlink($path);
     }
 }
 
@@ -36,6 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'uplo
 
     if (!$title || !$category) {
         $err = 'Judul dan kategori wajib diisi.';
+    } elseif (!in_array($category, $categories, true)) {
+        $err = 'Kategori tidak valid.';
     } elseif (empty($_FILES['photo']['name'])) {
         $err = 'Pilih file foto untuk diupload.';
     } else {
@@ -80,8 +89,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'dele
         $r = $db->prepare("SELECT image_url FROM galleries WHERE id=?");
         $r->execute([$gid]); $row = $r->fetch();
         if ($row) { delete_gal_file($row['image_url']); }
-        $db->prepare("DELETE FROM galleries WHERE id=?")->execute([$gid]);
-        $msg = 'Foto berhasil dihapus dari galeri.';
+        $stmt = $db->prepare("DELETE FROM galleries WHERE id=?");
+        $stmt->execute([$gid]);
+        if ($stmt->rowCount() > 0) $msg = 'Foto berhasil dihapus dari galeri.';
     }
 }
 
@@ -92,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'upda
     $gid      = (int)($_POST['gallery_id'] ?? 0);
     $title    = trim($_POST['title'] ?? '');
     $category = trim($_POST['category'] ?? '');
-    if ($gid && $title && $category) {
+    if ($gid && $title && $category && in_array($category, $categories, true)) {
         $db->prepare("UPDATE galleries SET title=?, category=? WHERE id=?")->execute([$title, $category, $gid]);
         $msg = 'Info foto berhasil diperbarui.';
     }
@@ -112,9 +122,9 @@ if ($filter_cat === 'Semua') {
     $items = $stmt->fetchAll();
 }
 
-$total_by_cat = [];
-foreach ($categories as $cat) {
-    $total_by_cat[$cat] = (int)$db->prepare("SELECT COUNT(*) FROM galleries WHERE category=?")->execute([$cat]) ? $db->query("SELECT COUNT(*) FROM galleries WHERE category='$cat'")->fetchColumn() : 0;
+$cat_counts = [];
+foreach ($db->query("SELECT category, COUNT(*) c FROM galleries GROUP BY category")->fetchAll() as $row) {
+    $cat_counts[$row['category']] = $row['c'];
 }
 $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
 ?>
@@ -145,7 +155,10 @@ $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
     <a href="gallery.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium bg-brand/10 text-brand">Galeri Portofolio</a>
   </nav>
   <div class="p-4 border-t border-border">
-    <a href="logout.php" class="block px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors">Logout</a>
+    <form method="POST" action="logout.php" class="inline">
+      <?= csrf_field() ?>
+      <button type="submit" class="block px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors bg-none border-none cursor-pointer">Logout</button>
+    </form>
   </div>
 </aside>
 
@@ -153,7 +166,7 @@ $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
 <main class="ml-[220px] flex-1 p-8 min-h-screen">
 
   <!-- Toast -->
-  <?php if ($msg): ?><div class="mb-5 bg-green-50 border border-green-200 text-green-800 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= $msg ?></div><?php endif; ?>
+  <?php if ($msg): ?><div class="mb-5 bg-green-50 border border-green-200 text-green-800 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
   <?php if ($err): ?><div class="mb-5 bg-red-50 border border-red-200 text-red-700 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= htmlspecialchars($err) ?></div><?php endif; ?>
 
   <div class="mb-6 flex items-center justify-between">
@@ -174,6 +187,7 @@ $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
         <h2 class="font-jakarta font-semibold text-dark text-[14px] border-b border-border pb-3">Upload Foto Baru</h2>
 
         <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
+          <?= csrf_field() ?>
           <input type="hidden" name="_action" value="upload"/>
 
           <div>
@@ -215,12 +229,12 @@ $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
           <p class="font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase mb-3">Statistik Kategori</p>
           <div class="flex flex-col gap-2">
             <?php foreach($categories as $cat):
-              $cnt = (int)$db->query("SELECT COUNT(*) FROM galleries WHERE category='".addslashes($cat)."'")->fetchColumn();
+              $cnt = $cat_counts[$cat] ?? 0;
               $pct = $total_all > 0 ? round($cnt/$total_all*100) : 0;
             ?>
             <div>
               <div class="flex justify-between mb-1">
-                <span class="font-jakarta text-dark text-[11px]"><?= $cat ?></span>
+                <span class="font-jakarta text-dark text-[11px]"><?= htmlspecialchars($cat) ?></span>
                 <span class="font-jakarta text-muted text-[11px]"><?= $cnt ?></span>
               </div>
               <div class="h-1 bg-border rounded-full"><div class="h-1 bg-brand rounded-full" style="width:<?= $pct ?>%"></div></div>
@@ -241,12 +255,12 @@ $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
           $tabs = array_merge(['Semua'], $categories);
           foreach($tabs as $tab):
             $is_active = ($filter_cat === $tab || ($tab === 'Semua' && $filter_cat === 'Semua'));
-            $tab_count = $tab === 'Semua' ? $total_all : (int)$db->query("SELECT COUNT(*) FROM galleries WHERE category='".addslashes($tab)."'")->fetchColumn();
+            $tab_count = $tab === 'Semua' ? $total_all : ($cat_counts[$tab] ?? 0);
           ?>
           <a href="gallery.php?cat=<?= urlencode($tab) ?>"
              class="shrink-0 font-jakarta font-semibold text-[11px] tracking-[1.2px] uppercase whitespace-nowrap px-4 py-3.5 border-b-2 transition-all duration-200
                     <?= $is_active ? 'border-brand text-brand' : 'border-transparent text-muted hover:text-dark' ?>">
-            <?= $tab ?> <span class="text-[10px] opacity-60 ml-1">(<?= $tab_count ?>)</span>
+            <?= htmlspecialchars($tab) ?> <span class="text-[10px] opacity-60 ml-1">(<?= $tab_count ?>)</span>
           </a>
           <?php endforeach; ?>
         </div>
@@ -264,12 +278,13 @@ $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
         <div class="break-inside-avoid mb-4 bg-white border border-border rounded-[4px] overflow-hidden group">
           <!-- Image -->
           <div class="relative overflow-hidden">
-            <img src="<?= htmlspecialchars($item['image_url']) ?>"
+            <img src="<?= htmlspecialchars(asset_url($item['image_url'])) ?>"
                  alt="<?= htmlspecialchars($item['title']) ?>"
                  class="w-full object-cover transition-transform duration-500 group-hover:scale-105"/>
             <!-- Hover overlay with delete -->
             <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
               <form method="POST" onsubmit="return confirm('Hapus foto ini dari galeri?')" class="z-10">
+                <?= csrf_field() ?>
                 <input type="hidden" name="_action" value="delete"/>
                 <input type="hidden" name="gallery_id" value="<?= $item['id'] ?>"/>
                 <button type="submit" class="bg-red-500 text-white font-jakarta font-semibold text-[11px] tracking-[1px] uppercase px-4 py-2 rounded-[3px] hover:bg-red-600 transition-colors">
@@ -285,6 +300,7 @@ $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
             <!-- Quick edit toggle -->
             <button onclick="toggleEdit(<?= $item['id'] ?>)" class="block mt-2 font-jakarta text-brand text-[11px] tracking-[0.5px] uppercase hover:underline">Edit Info</button>
             <form method="POST" id="edit-form-<?= $item['id'] ?>" class="hidden mt-2 flex flex-col gap-2">
+              <?= csrf_field() ?>
               <input type="hidden" name="_action" value="update"/>
               <input type="hidden" name="gallery_id" value="<?= $item['id'] ?>"/>
               <input type="text" name="title" value="<?= htmlspecialchars($item['title']) ?>" class="input text-[12px] py-1.5" required/>
