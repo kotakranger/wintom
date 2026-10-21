@@ -133,10 +133,10 @@ $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Galeri Portofolio — Wintom Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/png" href="../assets/images/favicon.png"/>
 <script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={theme:{extend:{fontFamily:{playfair:['"Playfair Display"','serif'],jakarta:['"Plus Jakarta Sans"','sans-serif']},colors:{brand:{DEFAULT:'#741122',dark:'#5a0d1a'},dark:'#222220',muted:'#686561',cream:'#faf8f5','cream-dark':'#f4f1ea',border:'#ece8e1'}}}}</script>
-<style>*{box-sizing:border-box;} .label{display:block;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;font-size:12px;letter-spacing:0.6px;text-transform:uppercase;color:#686561;margin-bottom:6px;} .input{display:block;width:100%;border:1px solid #ece8e1;border-radius:4px;padding:9px 12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:#222220;background:#fff;transition:border-color 0.15s;} .input:focus{border-color:#741122;outline:none;} select.input{appearance:auto;}</style>
+<script>tailwind.config={theme:{extend:{fontFamily:{playfair:['Georgia','"Times New Roman"','serif'],jakarta:['Arial','Helvetica','sans-serif']},colors:{brand:{DEFAULT:'#860524',dark:'#6a041c'},dark:'#242424',muted:'#686561',cream:'#faf8f5','cream-dark':'#f4f1ea',border:'#ece8e1'}}}}</script>
+<style>*{box-sizing:border-box;} .label{display:block;font-family:Arial,Helvetica,sans-serif;font-weight:500;font-size:12px;letter-spacing:0.6px;text-transform:uppercase;color:#686561;margin-bottom:6px;} .input{display:block;width:100%;border:1px solid #ece8e1;border-radius:4px;padding:9px 12px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#242424;background:#fff;transition:border-color 0.15s;} .input:focus{border-color:#860524;outline:none;} select.input{appearance:auto;}</style>
 </head>
 <body class="font-jakarta bg-[#f5f3f0] text-dark antialiased flex min-h-screen">
 
@@ -150,9 +150,11 @@ $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
   </div>
   <nav class="flex flex-col p-4 gap-1 flex-1">
     <a href="index.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Dashboard</a>
+    <a href="inquiries.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Inquiry</a>
     <a href="products.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Produk</a>
     <a href="categories.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Kategori</a>
     <a href="gallery.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium bg-brand/10 text-brand">Galeri Portofolio</a>
+    <a href="videos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Konten Video</a>
   </nav>
   <div class="p-4 border-t border-border">
     <form method="POST" action="logout.php" class="inline">
@@ -219,7 +221,7 @@ $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
           <!-- Preview -->
           <div id="photo-previews" class="grid grid-cols-3 gap-2 hidden"></div>
 
-          <button type="submit" class="w-full bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase py-3 rounded-[4px] hover:bg-[#5a0d1a] transition-colors">
+          <button type="submit" class="w-full bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase py-3 rounded-[4px] hover:bg-[#6a041c] transition-colors">
             UPLOAD FOTO
           </button>
         </form>
@@ -309,7 +311,7 @@ $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
                 <option value="<?= $cat ?>" <?= $item['category'] === $cat ? 'selected' : '' ?>><?= $cat ?></option>
                 <?php endforeach; ?>
               </select>
-              <button type="submit" class="bg-brand text-white font-jakarta text-[11px] tracking-[1px] uppercase py-1.5 rounded-[3px] hover:bg-[#5a0d1a] transition-colors">Simpan</button>
+              <button type="submit" class="bg-brand text-white font-jakarta text-[11px] tracking-[1px] uppercase py-1.5 rounded-[3px] hover:bg-[#6a041c] transition-colors">Simpan</button>
             </form>
           </div>
         </div>

@@ -19,3 +19,6 @@ Thumbs.db
 
 # PHP CS Fixer configuration
 /.php-cs*
+
+# Local DB config
+/includes/config.local.php

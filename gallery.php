@@ -47,13 +47,19 @@ include_once __DIR__ . '/includes/header.php';
 <!-- ===== PAGE HERO ===== -->
 <section class="bg-cream-dark border-b border-border pt-[64px] pb-[60px]">
   <div class="max-w-[1280px] mx-auto px-12">
-    <p class="font-jakarta font-semibold text-brand text-[11px] tracking-[2.64px] uppercase leading-[16.5px] mb-4">PORTFOLIO GALLERY</p>
-    <h1 class="font-playfair font-bold text-dark text-[48px] leading-[56px] tracking-[-1px] max-w-[640px] mb-4">
-      Karya Kami, Cerita<br>Setiap Ruang
+    <p class="font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase leading-[16.5px] mb-4">PORTOFOLIO PROYEK</p>
+    <h1 class="font-playfair font-bold text-dark text-[40px] md:text-[48px] leading-[1.15] tracking-[-1px] max-w-[760px] mb-5">
+      Sentuhan Elegan di Setiap Sudut Ruangan
     </h1>
-    <p class="font-jakarta text-muted text-[15px] leading-[24px] max-w-[520px]">
-      Setiap instalasi adalah komitmen presisi — dari pengukuran, penjahitan atelier, hingga pemasangan rapi di lokasi Anda.
+    <p class="font-jakarta text-muted text-[17px] leading-[1.6] max-w-[680px] mb-8">
+      Jelajahi portofolio hasil pemasangan gorden kustom Wintom serta dokumentasi video proyek kami. Dari pemilihan bahan berkualitas hingga instalasi yang presisi untuk menyempurnakan estetika ruang Anda.
     </p>
+    <div class="flex flex-wrap items-center gap-4">
+      <a href="<?= WA_URL ?>?text=Halo+Wintom%2C+saya+ingin+konsultasi+gorden" target="_blank" rel="noopener"
+         class="inline-flex bg-brand text-white font-jakarta font-semibold text-[14px] px-8 py-[14px] rounded-[3px] hover:bg-[#6a041c] transition-colors duration-200">Konsultasi Gratis</a>
+      <a href="#galeri"
+         class="inline-flex border border-dark text-dark font-jakarta font-semibold text-[14px] px-8 py-[13px] rounded-[3px] hover:bg-dark hover:text-white transition-colors duration-200">Lihat Proyek Kami</a>
+    </div>
   </div>
 </section>
 
@@ -76,7 +82,7 @@ include_once __DIR__ . '/includes/header.php';
 </section>
 
 <!-- ===== GALLERY GRID ===== -->
-<section class="py-[64px] bg-cream">
+<section id="galeri" class="py-[64px] bg-cream scroll-mt-[140px]">
   <div class="max-w-[1280px] mx-auto px-12">
 
     <?php if (empty($galleries)): ?>
@@ -122,7 +128,7 @@ include_once __DIR__ . '/includes/header.php';
 </div>
 
 <!-- ===== RESERVATION CTA BANNER ===== -->
-<section class="bg-[#741122] py-[72px]">
+<section class="bg-[#860524] py-[72px]">
   <div class="max-w-[1280px] mx-auto px-12 flex flex-col lg:flex-row items-center justify-between gap-10">
     <div>
       <p class="font-jakarta font-semibold text-white/60 text-[11px] tracking-[2.64px] uppercase mb-3">MULAI PROYEK ANDA</p>

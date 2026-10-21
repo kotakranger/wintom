@@ -9,6 +9,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $db = get_db();
+
+/** "100.000" / "100000" -> 100000; anything negative or non-numeric -> null. */
+function parse_price($raw): ?int {
+    $digits = preg_replace('/[.\s,]/', '', trim((string) $raw));
+    if ($digits === '' ) return 0;
+    return ctype_digit($digits) && strlen($digits) <= 9 ? (int) $digits : null;
+}
 $msg = '';
 $err = '';
 
@@ -17,8 +24,11 @@ $err = '';
    ============================================================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'add') {
     $name = trim($_POST['name'] ?? '');
+    $ppm  = parse_price($_POST['price_per_meter'] ?? '0');
     if (!$name) {
         $err = 'Nama kategori wajib diisi.';
+    } elseif ($ppm === null) {
+        $err = 'Harga per meter harus berupa angka (0 atau lebih).';
     } else {
         $check = $db->prepare('SELECT id FROM categories WHERE name = ?');
         $check->execute([$name]);
@@ -26,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'add'
             $err = 'Kategori "' . $name . '" sudah ada.';
         } else {
             $max_sort = (int) $db->query('SELECT COALESCE(MAX(sort_order),0) FROM categories')->fetchColumn();
-            $ins = $db->prepare('INSERT INTO categories (name, sort_order) VALUES (?, ?)');
-            $ins->execute([$name, $max_sort + 1]);
+            $ins = $db->prepare('INSERT INTO categories (name, price_per_meter, sort_order) VALUES (?, ?, ?)');
+            $ins->execute([$name, $ppm, $max_sort + 1]);
             $msg = 'Kategori "' . $name . '" berhasil ditambahkan.';
         }
     }
@@ -44,8 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'dele
         $cat_row->execute([$cat_id]);
         $cat_data = $cat_row->fetch();
         if ($cat_data) {
-            $count = $db->prepare('SELECT COUNT(*) FROM products WHERE category = ?');
-            $count->execute([$cat_data['name']]);
+            $count = $db->prepare('SELECT COUNT(*) FROM products WHERE category_id = ?');
+            $count->execute([$cat_id]);
             $product_count = (int) $count->fetchColumn();
             if ($product_count > 0) {
                 $err = "Kategori \"{$cat_data['name']}\" masih digunakan oleh {$product_count} produk. Pindahkan atau hapus produk terlebih dahulu.";
@@ -63,7 +73,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'dele
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'rename') {
     $cat_id = (int) ($_POST['cat_id'] ?? 0);
     $new_name = trim($_POST['new_name'] ?? '');
-    if ($cat_id > 0 && $new_name) {
+    $ppm = parse_price($_POST['price_per_meter'] ?? '0');
+    if ($ppm === null) {
+        $err = 'Harga per meter harus berupa angka (0 atau lebih).';
+    } elseif ($cat_id > 0 && $new_name) {
         // Get old name
         $old = $db->prepare('SELECT name FROM categories WHERE id = ?');
         $old->execute([$cat_id]);
@@ -75,11 +88,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'rena
             if ($dup->fetch()) {
                 $err = 'Kategori dengan nama tersebut sudah ada.';
             } else {
-                $db->beginTransaction();
-                $db->prepare('UPDATE categories SET name = ? WHERE id = ?')->execute([$new_name, $cat_id]);
-                $db->prepare('UPDATE products SET category = ? WHERE category = ?')->execute([$new_name, $old_data['name']]);
-                $db->commit();
-                $msg = 'Kategori berhasil diubah dari "' . $old_data['name'] . '" menjadi "' . $new_name . '".';
+                // Produk merujuk ke category_id, jadi rename & harga otomatis berlaku ke semua produk turunan.
+                $db->prepare('UPDATE categories SET name = ?, price_per_meter = ? WHERE id = ?')->execute([$new_name, $ppm, $cat_id]);
+                $msg = 'Kategori "' . $new_name . '" berhasil diperbarui.';
             }
         }
     }
@@ -96,8 +107,8 @@ if (isset($_GET['msg'])) {
 $categories = $db->query('
     SELECT c.*, COALESCE(p_cnt.cnt, 0) AS product_count
     FROM categories c
-    LEFT JOIN (SELECT category, COUNT(*) AS cnt FROM products GROUP BY category) p_cnt
-      ON p_cnt.category = c.name
+    LEFT JOIN (SELECT category_id, COUNT(*) AS cnt FROM products GROUP BY category_id) p_cnt
+      ON p_cnt.category_id = c.id
     ORDER BY c.sort_order ASC, c.name ASC
 ')->fetchAll();
 ?>
@@ -106,9 +117,9 @@ $categories = $db->query('
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Kategori Produk — Wintom Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/png" href="../assets/images/favicon.png"/>
 <script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={theme:{extend:{fontFamily:{playfair:['"Playfair Display"','serif'],jakarta:['"Plus Jakarta Sans"','sans-serif']},colors:{brand:{DEFAULT:'#741122',dark:'#5a0d1a'},dark:'#222220',muted:'#686561',cream:'#faf8f5','cream-dark':'#f4f1ea',border:'#ece8e1'}}}};</script>
+<script>tailwind.config={theme:{extend:{fontFamily:{playfair:['Georgia','"Times New Roman"','serif'],jakarta:['Arial','Helvetica','sans-serif']},colors:{brand:{DEFAULT:'#860524',dark:'#6a041c'},dark:'#242424',muted:'#686561',cream:'#faf8f5','cream-dark':'#f4f1ea',border:'#ece8e1'}}}};</script>
 <style>*{box-sizing:border-box;} input{outline:none;}</style>
 </head>
 <body class="font-jakarta bg-[#f5f3f0] text-dark antialiased flex min-h-screen">
@@ -123,9 +134,11 @@ $categories = $db->query('
   </div>
   <nav class="flex flex-col p-4 gap-1 flex-1">
     <a href="index.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Dashboard</a>
+    <a href="inquiries.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Inquiry</a>
     <a href="products.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Produk</a>
     <a href="categories.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium bg-brand/10 text-brand">Kategori</a>
     <a href="gallery.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Galeri Portofolio</a>
+    <a href="videos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Konten Video</a>
   </nav>
   <div class="p-4 border-t border-border">
     <form method="POST" action="logout.php" class="inline">
@@ -165,7 +178,8 @@ endif;
             <tr>
               <th class="px-5 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-10">#</th>
               <th class="px-5 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Nama Kategori</th>
-              <th class="px-5 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-32">Produk</th>
+              <th class="px-5 py-3 text-right font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-40">Harga / meter</th>
+              <th class="px-5 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-24">Produk</th>
               <th class="px-5 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-44">Aksi</th>
             </tr>
           </thead>
@@ -183,12 +197,15 @@ endif;
                   <?= csrf_field() ?>
                   <input type="hidden" name="_action" value="rename"/>
                   <input type="hidden" name="cat_id" value="<?= $cat['id'] ?>"/>
-                  <input type="text" name="new_name" value="<?= htmlspecialchars($cat['name']) ?>"
+                  <input type="text" name="new_name" value="<?= htmlspecialchars($cat['name']) ?>" required
                          class="border border-border rounded-[3px] px-2.5 py-1.5 font-jakarta text-[13px] text-dark w-full focus:border-brand transition-colors"/>
+                  <input type="number" name="price_per_meter" value="<?= (int) $cat['price_per_meter'] ?>" min="0" step="1000" required aria-label="Harga per meter"
+                         class="border border-border rounded-[3px] px-2.5 py-1.5 font-jakarta text-[13px] text-dark w-32 shrink-0 focus:border-brand transition-colors"/>
                   <button type="submit" class="shrink-0 bg-brand text-white px-3 py-1.5 rounded-[3px] font-jakarta text-[11px] tracking-[0.5px] uppercase hover:bg-brand-dark transition-colors">Simpan</button>
                   <button type="button" onclick="cancelRename(<?= $cat['id'] ?>)" class="shrink-0 text-muted hover:text-dark font-jakarta text-[11px] tracking-[0.5px] uppercase px-2 py-1.5 transition-colors">Batal</button>
                 </form>
               </td>
+              <td class="px-5 py-3.5 text-right font-jakarta text-dark text-[13px] whitespace-nowrap">Rp <?= number_format((int) $cat['price_per_meter'], 0, ',', '.') ?></td>
               <td class="px-5 py-3.5 text-center">
                 <span class="inline-flex items-center justify-center bg-cream-dark border border-border rounded-full px-3 py-0.5 font-jakarta font-semibold text-dark text-[12px]">
                   <?= $cat['product_count'] ?>
@@ -215,7 +232,7 @@ endif;
             </tr>
             <?php endforeach; ?>
             <?php if (empty($categories)): ?>
-            <tr><td colspan="4" class="px-5 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada kategori.</td></tr>
+            <tr><td colspan="5" class="px-5 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada kategori.</td></tr>
             <?php endif; ?>
           </tbody>
         </table>
@@ -234,7 +251,12 @@ endif;
             <input type="text" name="name" required placeholder="cth. Roman Blind"
                    class="w-full border border-border rounded-[4px] px-3 py-2.5 font-jakarta text-[13px] text-dark focus:border-brand transition-colors"/>
           </div>
-          <button type="submit" class="w-full bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase py-3 rounded-[4px] hover:bg-[#5a0d1a] transition-colors shadow-sm">
+          <div>
+            <label class="block font-jakarta font-medium text-[12px] tracking-[0.6px] uppercase text-muted mb-1.5">Harga per Meter (Rp)</label>
+            <input type="number" name="price_per_meter" min="0" step="1000" value="0"
+                   class="w-full border border-border rounded-[4px] px-3 py-2.5 font-jakarta text-[13px] text-dark focus:border-brand transition-colors"/>
+          </div>
+          <button type="submit" class="w-full bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase py-3 rounded-[4px] hover:bg-[#6a041c] transition-colors shadow-sm">
             + TAMBAH KATEGORI
           </button>
         </form>
@@ -242,7 +264,7 @@ endif;
         <div class="mt-2 bg-cream border border-border rounded-[4px] px-4 py-3">
           <p class="font-jakarta text-muted text-[11px] leading-[16px]">
             <strong class="text-dark">Info:</strong> Kategori yang sudah digunakan oleh produk tidak bisa dihapus.
-            Ubah nama kategori akan otomatis memperbarui semua produk terkait.
+            Ubah nama atau harga per meter kategori akan otomatis berlaku untuk semua produk di kategori tersebut (dipakai kalkulator estimasi harga).
           </p>
         </div>
       </div>
