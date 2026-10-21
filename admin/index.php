@@ -8,7 +8,9 @@ $db = get_db();
 $total_products = (int)$db->query("SELECT COUNT(*) FROM products")->fetchColumn();
 $total_gallery  = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
 $category_count = (int)$db->query("SELECT COUNT(*) FROM categories")->fetchColumn();
-$recent_products = $db->query("SELECT name, category, price, created_at FROM products ORDER BY created_at DESC LIMIT 5")->fetchAll();
+$new_inquiries  = (int)$db->query("SELECT COUNT(*) FROM inquiries WHERE status = 'new'")->fetchColumn();
+$recent_inquiries = $db->query("SELECT id, full_name, whatsapp, curtain_type, status, created_at FROM inquiries ORDER BY created_at DESC, id DESC LIMIT 5")->fetchAll();
+$recent_products = $db->query("SELECT p.name, c.name AS category, p.price, p.created_at FROM products p JOIN categories c ON c.id = p.category_id ORDER BY p.created_at DESC LIMIT 5")->fetchAll();
 
 function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0, ',', '.'); }
 ?>
@@ -17,9 +19,9 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
 <head>
   <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — Wintom Admin</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="icon" type="image/png" href="../assets/images/favicon.png"/>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config={theme:{extend:{fontFamily:{playfair:['"Playfair Display"','serif'],jakarta:['"Plus Jakarta Sans"','sans-serif']},colors:{brand:{DEFAULT:'#741122',dark:'#5a0d1a'},dark:'#222220',muted:'#686561',cream:'#faf8f5','cream-dark':'#f4f1ea',border:'#ece8e1'}}}}</script>
+  <script>tailwind.config={theme:{extend:{fontFamily:{playfair:['Georgia','"Times New Roman"','serif'],jakarta:['Arial','Helvetica','sans-serif']},colors:{brand:{DEFAULT:'#860524',dark:'#6a041c'},dark:'#242424',muted:'#686561',cream:'#faf8f5','cream-dark':'#f4f1ea',border:'#ece8e1'}}}}</script>
   <style>*{box-sizing:border-box;}</style>
 </head>
 <body class="font-jakarta bg-[#f5f3f0] text-dark antialiased flex min-h-screen">
@@ -36,9 +38,11 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
     <?php
     $nav = [
       ['href'=>'index.php','label'=>'Dashboard','active'=>true],
+      ['href'=>'inquiries.php','label'=>'Inquiry','active'=>false],
       ['href'=>'products.php','label'=>'Produk','active'=>false],
       ['href'=>'categories.php','label'=>'Kategori','active'=>false],
       ['href'=>'gallery.php','label'=>'Galeri Portofolio','active'=>false],
+      ['href'=>'videos.php','label'=>'Konten Video','active'=>false],
     ];
     foreach($nav as $n):
     ?>
@@ -67,7 +71,11 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
   </div>
 
   <!-- Stats -->
-  <div class="grid grid-cols-3 gap-5 mb-8">
+  <div class="grid grid-cols-4 gap-5 mb-8">
+    <a href="inquiries.php?status=new" class="bg-white border border-border rounded-[6px] p-6 hover:border-brand/40 transition-colors">
+      <p class="font-jakarta font-semibold text-muted text-[11px] tracking-[1.5px] uppercase mb-2">Inquiry Baru</p>
+      <p class="font-playfair font-semibold <?= $new_inquiries > 0 ? 'text-brand' : 'text-dark' ?> text-[32px]"><?= $new_inquiries ?></p>
+    </a>
     <div class="bg-white border border-border rounded-[6px] p-6">
       <p class="font-jakarta font-semibold text-muted text-[11px] tracking-[1.5px] uppercase mb-2">Total Produk</p>
       <p class="font-playfair font-semibold text-dark text-[32px]"><?= $total_products ?></p>
@@ -80,6 +88,26 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
       <p class="font-jakarta font-semibold text-muted text-[11px] tracking-[1.5px] uppercase mb-2">Kategori</p>
       <p class="font-playfair font-semibold text-dark text-[32px]"><?= $category_count ?></p>
     </div>
+  </div>
+
+  <!-- Recent Inquiries -->
+  <div class="bg-white border border-border rounded-[6px] overflow-hidden mb-8">
+    <div class="px-6 py-4 border-b border-border flex items-center justify-between">
+      <h2 class="font-jakarta font-semibold text-dark text-[15px]">Inquiry Terbaru</h2>
+      <a href="inquiries.php" class="font-jakarta text-brand text-[12px] tracking-[1px] uppercase hover:underline">Lihat Semua →</a>
+    </div>
+    <table class="w-full">
+      <tbody>
+        <?php foreach($recent_inquiries as $q): ?>
+        <tr class="border-t border-border first:border-t-0 hover:bg-cream transition-colors">
+          <td class="px-5 py-3.5 font-jakarta text-dark text-[13px]"><?= htmlspecialchars($q['full_name']) ?><span class="block text-muted text-[11px]">+<?= htmlspecialchars($q['whatsapp']) ?></span></td>
+          <td class="px-5 py-3.5 font-jakarta text-muted text-[12px]"><?= htmlspecialchars($q['curtain_type']) ?></td>
+          <td class="px-5 py-3.5 font-jakarta text-muted text-[12px] text-right"><?= $q['status'] === 'new' ? '<span class="text-brand font-semibold">Baru</span> · ' : '' ?><?= htmlspecialchars(date('d M H:i', strtotime($q['created_at']))) ?></td>
+        </tr>
+        <?php endforeach; ?>
+        <?php if (!$recent_inquiries): ?><tr><td class="px-5 py-8 text-center font-jakarta text-muted text-[13px]">Belum ada inquiry.</td></tr><?php endif; ?>
+      </tbody>
+    </table>
   </div>
 
   <!-- Recent Products -->

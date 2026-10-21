@@ -1,104 +1,176 @@
 <?php
-// Wintom Curtain — Database Connection & Schema Initialization
-// Updated: 2026-09-19 — Variant System Overhaul
+// Wintom Curtain — Database Connection & Schema Initialization (MySQL / MariaDB)
 
 require_once __DIR__ . '/config.php';
 
 function get_db(): PDO {
     static $pdo = null;
     if ($pdo === null) {
-        $pdo = new PDO('sqlite:' . DB_PATH);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $pdo->exec('PRAGMA foreign_keys = ON;');
-        init_db($pdo);
+        $pdo = connect_db();
+        ensure_schema($pdo);
+        seed_defaults($pdo);
     }
     return $pdo;
 }
 
-function init_db(PDO $pdo): void {
+/**
+ * Open the MySQL connection. If the database does not exist yet (error 1049)
+ * it is created once so a fresh machine only needs a running MySQL server.
+ */
+function connect_db(): PDO {
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+    ];
+    $dsn = fn(bool $withDb) => 'mysql:host=' . DB_HOST . ';port=' . DB_PORT
+         . ($withDb ? ';dbname=' . DB_NAME : '') . ';charset=utf8mb4';
 
-    // =====================================================================
-    // CORE TABLES (CREATE IF NOT EXISTS — safe to run repeatedly)
-    // =====================================================================
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS admins (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            username      TEXT    UNIQUE NOT NULL,
-            password_hash TEXT    NOT NULL
-        );
+    try {
+        return new PDO($dsn(true), DB_USER, DB_PASS, $options);
+    } catch (PDOException $e) {
+        if ((int)$e->getCode() !== 1049) {
+            throw $e;
+        }
+        $root = new PDO($dsn(false), DB_USER, DB_PASS, $options);
+        $root->exec('CREATE DATABASE IF NOT EXISTS `' . str_replace('`', '', DB_NAME) . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+        return new PDO($dsn(true), DB_USER, DB_PASS, $options);
+    }
+}
 
-        CREATE TABLE IF NOT EXISTS categories (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            name       TEXT    NOT NULL UNIQUE,
-            sort_order INTEGER DEFAULT 0,
-            created_at TEXT    DEFAULT (datetime('now','localtime'))
-        );
+/**
+ * CREATE TABLE IF NOT EXISTS for every table. The information_schema check
+ * keeps this to a single cheap query per request once the schema exists.
+ */
+function ensure_schema(PDO $pdo): void {
+    $have = (int)$pdo->query(
+        "SELECT COUNT(*) FROM information_schema.tables
+         WHERE table_schema = DATABASE()
+           AND table_name IN ('admins','categories','products','product_images','product_variants',
+                              'product_variant_options','galleries','inquiries','content_videos')"
+    )->fetchColumn();
+    if ($have === 9) {
+        return;
+    }
 
-        CREATE TABLE IF NOT EXISTS products (
-            id             INTEGER PRIMARY KEY AUTOINCREMENT,
-            slug           TEXT    UNIQUE NOT NULL,
-            name           TEXT    NOT NULL,
-            category       TEXT    NOT NULL,
-            badge          TEXT,
-            ref_code       TEXT,
-            price          INTEGER NOT NULL,
-            original_price INTEGER,
-            price_unit     TEXT    DEFAULT '/ meter',
+    $tables = [
+        "CREATE TABLE IF NOT EXISTS admins (
+            id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            username      VARCHAR(100) NOT NULL UNIQUE,
+            password_hash VARCHAR(255) NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+
+        // price_per_meter: harga dasar per meter, diwarisi semua produk di kategori ini
+        "CREATE TABLE IF NOT EXISTS categories (
+            id              INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            name            VARCHAR(120) NOT NULL UNIQUE,
+            price_per_meter INT UNSIGNED NOT NULL DEFAULT 0,
+            sort_order      INT NOT NULL DEFAULT 0,
+            created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+
+        "CREATE TABLE IF NOT EXISTS products (
+            id             INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            slug           VARCHAR(190) NOT NULL UNIQUE,
+            name           VARCHAR(255) NOT NULL,
+            category_id    INT UNSIGNED NOT NULL,
+            badge          VARCHAR(100) DEFAULT NULL,
+            ref_code       VARCHAR(50)  DEFAULT NULL,
+            price          INT UNSIGNED NOT NULL,
+            original_price INT UNSIGNED DEFAULT NULL,
+            price_unit     VARCHAR(50)  DEFAULT '/ meter',
             description    TEXT,
             features       TEXT,
             options_json   TEXT,
-            cover_image    TEXT    NOT NULL,
-            is_active      INTEGER DEFAULT 1,
-            stock          INTEGER DEFAULT NULL,
-            created_at     TEXT    DEFAULT (datetime('now','localtime'))
-        );
+            cover_image    VARCHAR(500) DEFAULT NULL,
+            is_active      TINYINT(1) NOT NULL DEFAULT 1,
+            stock          INT DEFAULT NULL,
+            created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_products_category (category_id),
+            CONSTRAINT fk_products_category FOREIGN KEY (category_id)
+                REFERENCES categories(id) ON UPDATE CASCADE ON DELETE RESTRICT
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 
-        CREATE TABLE IF NOT EXISTS product_images (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-            image_url  TEXT    NOT NULL,
-            sort_order INTEGER DEFAULT 0,
-            is_cover   INTEGER DEFAULT 0
-        );
+        "CREATE TABLE IF NOT EXISTS product_images (
+            id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            product_id INT UNSIGNED NOT NULL,
+            image_url  VARCHAR(500) NOT NULL,
+            sort_order INT NOT NULL DEFAULT 0,
+            is_cover   TINYINT(1) NOT NULL DEFAULT 0,
+            KEY idx_images_product (product_id),
+            CONSTRAINT fk_images_product FOREIGN KEY (product_id)
+                REFERENCES products(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 
-        CREATE TABLE IF NOT EXISTS product_variants (
-            id               INTEGER PRIMARY KEY AUTOINCREMENT,
-            product_id       INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-            label            TEXT    NOT NULL,
-            is_image_linked  INTEGER DEFAULT 0,
-            sort_order       INTEGER DEFAULT 0
-        );
+        "CREATE TABLE IF NOT EXISTS product_variants (
+            id              INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            product_id      INT UNSIGNED NOT NULL,
+            label           VARCHAR(100) NOT NULL,
+            is_image_linked TINYINT(1) NOT NULL DEFAULT 0,
+            sort_order      INT NOT NULL DEFAULT 0,
+            KEY idx_variants_product (product_id),
+            CONSTRAINT fk_variants_product FOREIGN KEY (product_id)
+                REFERENCES products(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 
-        CREATE TABLE IF NOT EXISTS product_variant_options (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            variant_id      INTEGER NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
-            value           TEXT    NOT NULL,
-            linked_image_id INTEGER DEFAULT NULL REFERENCES product_images(id) ON DELETE SET NULL,
-            sort_order      INTEGER DEFAULT 0
-        );
+        "CREATE TABLE IF NOT EXISTS product_variant_options (
+            id              INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            variant_id      INT UNSIGNED NOT NULL,
+            value           VARCHAR(255) NOT NULL,
+            linked_image_id INT UNSIGNED DEFAULT NULL,
+            sort_order      INT NOT NULL DEFAULT 0,
+            KEY idx_options_variant (variant_id),
+            CONSTRAINT fk_options_variant FOREIGN KEY (variant_id)
+                REFERENCES product_variants(id) ON DELETE CASCADE,
+            CONSTRAINT fk_options_image FOREIGN KEY (linked_image_id)
+                REFERENCES product_images(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 
-        CREATE TABLE IF NOT EXISTS galleries (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            title      TEXT    NOT NULL,
-            category   TEXT    NOT NULL,
-            image_url  TEXT    NOT NULL,
-            created_at TEXT    DEFAULT (datetime('now','localtime'))
-        );
-    ");
+        "CREATE TABLE IF NOT EXISTS galleries (
+            id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            title      VARCHAR(255) NOT NULL,
+            category   VARCHAR(120) NOT NULL,
+            image_url  VARCHAR(500) NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_gallery_category (category)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 
-    // =====================================================================
-    // MIGRATIONS — safely add columns to existing databases (ALTER TABLE)
-    // SQLite doesn't support IF NOT EXISTS on ALTER, so we catch errors.
-    // =====================================================================
-    $migrations = [
-        "ALTER TABLE products       ADD COLUMN is_active INTEGER DEFAULT 1",
-        "ALTER TABLE products       ADD COLUMN stock     INTEGER DEFAULT NULL",
-        "ALTER TABLE product_images ADD COLUMN is_cover  INTEGER DEFAULT 0",
+        // Inquiry dari form "Kontak Kami". curtain_type menyimpan nama kategori saat submit
+        // (snapshot), category_id dipakai untuk relasi selama kategorinya masih ada.
+        "CREATE TABLE IF NOT EXISTS inquiries (
+            id             INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            full_name      VARCHAR(120) NOT NULL,
+            whatsapp       VARCHAR(25)  NOT NULL,
+            category_id    INT UNSIGNED DEFAULT NULL,
+            curtain_type   VARCHAR(120) NOT NULL,
+            estimated_size VARCHAR(100) DEFAULT NULL,
+            notes          TEXT,
+            status         ENUM('new','contacted','closed') NOT NULL DEFAULT 'new',
+            ip_address     VARCHAR(45)  DEFAULT NULL,
+            created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_inquiries_status (status, created_at),
+            CONSTRAINT fk_inquiries_category FOREIGN KEY (category_id)
+                REFERENCES categories(id) ON UPDATE CASCADE ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+
+        // Video/Shorts YouTube untuk section konten di homepage (dikelola dari admin)
+        "CREATE TABLE IF NOT EXISTS content_videos (
+            id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            title      VARCHAR(200) DEFAULT NULL,
+            youtube_id CHAR(11)     NOT NULL UNIQUE,
+            is_short   TINYINT(1)   NOT NULL DEFAULT 0,
+            sort_order INT          NOT NULL DEFAULT 0,
+            is_active  TINYINT(1)   NOT NULL DEFAULT 1,
+            created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_videos_order (is_active, sort_order)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
     ];
-    foreach ($migrations as $sql) {
-        try { $pdo->exec($sql); } catch (\PDOException) { /* column already exists — skip */ }
+    foreach ($tables as $sql) {
+        $pdo->exec($sql);
     }
+}
+
+function seed_defaults(PDO $pdo): void {
 
     // =====================================================================
     // SEED: Default admin
@@ -111,16 +183,20 @@ function init_db(PDO $pdo): void {
     }
 
     // =====================================================================
-    // SEED: Categories (dynamic — replaces hardcoded array in admin)
+    // SEED: Categories + harga dasar per meter (placeholder — edit di admin)
     // =====================================================================
     if ((int)$pdo->query("SELECT COUNT(*) FROM categories")->fetchColumn() === 0) {
         $default_cats = [
-            'Curtain', 'Vitrase & Sheer', 'Roller Blind',
-            'Motorized Smart System', 'Wood & Bamboo Blind',
+            ['Curtain',                 150000],
+            ['Roller Blind',            100000],
+            ['Zebra Blind',             100000],
+            ['Roman Blind',             120000],
+            ['Vertical Blind',          100000],
+            ['Motorized Curtain Track', 750000],
         ];
-        $ins_cat = $pdo->prepare("INSERT INTO categories (name, sort_order) VALUES (?, ?)");
-        foreach ($default_cats as $i => $cat) {
-            $ins_cat->execute([$cat, $i]);
+        $ins_cat = $pdo->prepare("INSERT INTO categories (name, price_per_meter, sort_order) VALUES (?, ?, ?)");
+        foreach ($default_cats as $i => [$cat, $ppm]) {
+            $ins_cat->execute([$cat, $ppm, $i]);
         }
     }
 
@@ -132,6 +208,8 @@ function init_db(PDO $pdo): void {
         migrate_variants_from_options_json($pdo);
         return;
     }
+
+    $cat_ids = $pdo->query("SELECT name, id FROM categories")->fetchAll(PDO::FETCH_KEY_PAIR);
 
     $sample_products = [
         [
@@ -184,7 +262,7 @@ function init_db(PDO $pdo): void {
         [
             'slug'           => 'lumiere-sheer-ripple-fold',
             'name'           => 'Lumière Sheer — Swiss Voile Vitrase',
-            'category'       => 'Vitrase & Sheer',
+            'category'       => 'Curtain',
             'badge'          => 'Bestseller',
             'ref_code'       => 'WNT-SH-01',
             'price'          => 265000,
@@ -230,7 +308,7 @@ function init_db(PDO $pdo): void {
         [
             'slug'           => 'zenith-motorized-somfy-system',
             'name'           => 'Zenith Smart Motorized Curtain System',
-            'category'       => 'Motorized Smart System',
+            'category'       => 'Motorized Curtain Track',
             'badge'          => 'Smart Home Ready',
             'ref_code'       => 'WNT-SM-01',
             'price'          => 2750000,
@@ -253,7 +331,7 @@ function init_db(PDO $pdo): void {
         [
             'slug'           => 'komorebi-paulownia-wood-blind',
             'name'           => 'Komorebi Natural Paulownia Wood Blind',
-            'category'       => 'Wood & Bamboo Blind',
+            'category'       => 'Vertical Blind',
             'badge'          => 'Eco-Natural Wood',
             'ref_code'       => 'WNT-WB-01',
             'price'          => 540000,
@@ -276,7 +354,7 @@ function init_db(PDO $pdo): void {
     ];
 
     $ins_prod = $pdo->prepare("
-        INSERT INTO products (slug, name, category, badge, ref_code, price, original_price,
+        INSERT INTO products (slug, name, category_id, badge, ref_code, price, original_price,
                               price_unit, description, features, cover_image, is_active)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
@@ -286,7 +364,7 @@ function init_db(PDO $pdo): void {
 
     foreach ($sample_products as $p) {
         $ins_prod->execute([
-            $p['slug'], $p['name'], $p['category'], $p['badge'], $p['ref_code'],
+            $p['slug'], $p['name'], $cat_ids[$p['category']], $p['badge'], $p['ref_code'],
             $p['price'], $p['original_price'], $p['price_unit'], $p['description'],
             $p['features'], $p['cover_image'], $p['is_active'],
         ]);
@@ -330,7 +408,7 @@ function migrate_variants_from_options_json(PDO $pdo): void {
     // Also ensure is_cover flag on first product_image
     $set_cover = $pdo->prepare("
         UPDATE product_images SET is_cover = 1
-        WHERE id = (SELECT id FROM product_images WHERE product_id = ? ORDER BY sort_order ASC LIMIT 1)
+        WHERE id = (SELECT id FROM (SELECT id FROM product_images WHERE product_id = ? ORDER BY sort_order ASC LIMIT 1) first_img)
     ");
 
     foreach ($rows as $row) {

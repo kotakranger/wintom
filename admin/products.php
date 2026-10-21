@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'set_
 $editing   = null;
 $edit_id   = (int)($_GET['edit'] ?? 0);
 if ($edit_id > 0) {
-    $s = $db->prepare("SELECT * FROM products WHERE id = ?");
+    $s = $db->prepare("SELECT p.*, c.name AS category FROM products p JOIN categories c ON c.id = p.category_id WHERE p.id = ?");
     $s->execute([$edit_id]);
     $editing = $s->fetch();
     if (!$editing) { $edit_id = 0; }
@@ -181,7 +181,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
         // Validate category exists
         if (!$err) {
             $cat_chk = $db->prepare("SELECT id FROM categories WHERE name=?");
-            if (!($cat_chk->execute([$category]) && $cat_chk->fetchColumn())) {
+            $cat_chk->execute([$category]);
+            $category_id = (int)$cat_chk->fetchColumn();
+            if ($category_id === 0) {
                 $err = 'Kategori tidak ditemukan.';
             }
         }
@@ -213,8 +215,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
                 // INSERT
                 if (!$cover_url) { $err = 'Cover image wajib untuk produk baru.'; }
                 else {
-                    $ins = $db->prepare("INSERT INTO products (slug,name,category,badge,ref_code,price,original_price,price_unit,description,features,cover_image,is_active,stock) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
-                    $ins->execute([$slug,$name,$category,$badge,$ref_code,$price,$orig_price ?: null,$price_unit,$description,$features,$cover_url,$is_active,$stock]);
+                    $ins = $db->prepare("INSERT INTO products (slug,name,category_id,badge,ref_code,price,original_price,price_unit,description,features,cover_image,is_active,stock) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                    $ins->execute([$slug,$name,$category_id,$badge,$ref_code,$price,$orig_price ?: null,$price_unit,$description,$features,$cover_url,$is_active,$stock]);
                     $pid = (int)$db->lastInsertId();
                     // Also add cover as first gallery image
                     $db->prepare("INSERT INTO product_images (product_id, image_url, sort_order, is_cover) VALUES (?,?,0,1)")->execute([$pid, $cover_url]);
@@ -233,11 +235,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
                             delete_file($old_url);
                         }
                     }
-                    $db->prepare("UPDATE products SET slug=?,name=?,category=?,badge=?,ref_code=?,price=?,original_price=?,price_unit=?,description=?,features=?,cover_image=?,is_active=?,stock=? WHERE id=?")
-                       ->execute([$slug,$name,$category,$badge,$ref_code,$price,$orig_price ?: null,$price_unit,$description,$features,$cover_url,$is_active,$stock,$pid]);
+                    $db->prepare("UPDATE products SET slug=?,name=?,category_id=?,badge=?,ref_code=?,price=?,original_price=?,price_unit=?,description=?,features=?,cover_image=?,is_active=?,stock=? WHERE id=?")
+                       ->execute([$slug,$name,$category_id,$badge,$ref_code,$price,$orig_price ?: null,$price_unit,$description,$features,$cover_url,$is_active,$stock,$pid]);
                 } else {
-                    $db->prepare("UPDATE products SET slug=?,name=?,category=?,badge=?,ref_code=?,price=?,original_price=?,price_unit=?,description=?,features=?,is_active=?,stock=? WHERE id=?")
-                       ->execute([$slug,$name,$category,$badge,$ref_code,$price,$orig_price ?: null,$price_unit,$description,$features,$is_active,$stock,$pid]);
+                    $db->prepare("UPDATE products SET slug=?,name=?,category_id=?,badge=?,ref_code=?,price=?,original_price=?,price_unit=?,description=?,features=?,is_active=?,stock=? WHERE id=?")
+                       ->execute([$slug,$name,$category_id,$badge,$ref_code,$price,$orig_price ?: null,$price_unit,$description,$features,$is_active,$stock,$pid]);
                 }
                 $msg = 'Produk berhasil diperbarui.';
             }
@@ -307,7 +309,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
 
         // Refresh editing
         if ($pid > 0 && !$err) {
-            $s = $db->prepare("SELECT * FROM products WHERE id=?");
+            $s = $db->prepare("SELECT p.*, c.name AS category FROM products p JOIN categories c ON c.id = p.category_id WHERE p.id=?");
             $s->execute([$pid]); $editing = $s->fetch(); $edit_id = $pid;
         }
 
@@ -326,7 +328,7 @@ if (isset($_GET['msg'])) $msg = ['img_deleted' => 'Foto dihapus', 'cover_set' =>
 /* ============================================================
    LOAD PRODUCTS LIST
    ============================================================ */
-$products = $db->query("SELECT * FROM products ORDER BY created_at DESC")->fetchAll();
+$products = $db->query("SELECT p.*, c.name AS category FROM products p JOIN categories c ON c.id = p.category_id ORDER BY p.created_at DESC")->fetchAll();
 
 // Load gallery images and variants for editing product
 $edit_images   = [];
@@ -353,22 +355,22 @@ if ($editing) {
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title><?= $editing ? 'Edit Produk' : 'Manajemen Produk' ?> — Wintom Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="icon" type="image/png" href="../assets/images/favicon.png"/>
 <script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={theme:{extend:{fontFamily:{playfair:['"Playfair Display"','serif'],jakarta:['"Plus Jakarta Sans"','sans-serif']},colors:{brand:{DEFAULT:'#741122',dark:'#5a0d1a'},dark:'#222220',muted:'#686561',cream:'#faf8f5','cream-dark':'#f4f1ea',border:'#ece8e1'}}}}</script>
+<script>tailwind.config={theme:{extend:{fontFamily:{playfair:['Georgia','"Times New Roman"','serif'],jakarta:['Arial','Helvetica','sans-serif']},colors:{brand:{DEFAULT:'#860524',dark:'#6a041c'},dark:'#242424',muted:'#686561',cream:'#faf8f5','cream-dark':'#f4f1ea',border:'#ece8e1'}}}}</script>
 <style>
 *{box-sizing:border-box;} textarea,input,select{outline:none;}
-.label{display:block;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;font-size:12px;letter-spacing:0.6px;text-transform:uppercase;color:#686561;margin-bottom:6px;}
-.input{display:block;width:100%;border:1px solid #ece8e1;border-radius:4px;padding:9px 12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:#222220;background:#fff;transition:border-color 0.15s;}
-.input:focus{border-color:#741122;}
+.label{display:block;font-family:Arial,Helvetica,sans-serif;font-weight:500;font-size:12px;letter-spacing:0.6px;text-transform:uppercase;color:#686561;margin-bottom:6px;}
+.input{display:block;width:100%;border:1px solid #ece8e1;border-radius:4px;padding:9px 12px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#242424;background:#fff;transition:border-color 0.15s;}
+.input:focus{border-color:#860524;}
 select.input{appearance:auto;}
 .variant-card{border:1px solid #ece8e1;border-radius:6px;background:#fff;padding:16px;margin-bottom:12px;}
-.variant-card.is-size{border-left:3px solid #741122;}
+.variant-card.is-size{border-left:3px solid #860524;}
 .opt-row{display:flex;gap:8px;align-items:center;margin-top:6px;}
-.opt-input{flex:1;border:1px solid #ece8e1;border-radius:3px;padding:6px 10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:#222220;background:#fff;}
-.opt-input:focus{border-color:#741122;}
-.btn-sm{padding:4px 10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;letter-spacing:0.5px;text-transform:uppercase;border-radius:3px;cursor:pointer;transition:all 0.15s;}
-.cover-badge{position:absolute;top:4px;left:4px;background:#741122;color:#fff;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:2px;font-weight:600;}
+.opt-input{flex:1;border:1px solid #ece8e1;border-radius:3px;padding:6px 10px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#242424;background:#fff;}
+.opt-input:focus{border-color:#860524;}
+.btn-sm{padding:4px 10px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.5px;text-transform:uppercase;border-radius:3px;cursor:pointer;transition:all 0.15s;}
+.cover-badge{position:absolute;top:4px;left:4px;background:#860524;color:#fff;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:2px;font-weight:600;}
 </style>
 </head>
 <body class="font-jakarta bg-[#f5f3f0] text-dark antialiased flex min-h-screen">
@@ -383,9 +385,11 @@ select.input{appearance:auto;}
   </div>
   <nav class="flex flex-col p-4 gap-1 flex-1">
     <a href="index.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Dashboard</a>
+    <a href="inquiries.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Inquiry</a>
     <a href="products.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium bg-brand/10 text-brand">Produk</a>
     <a href="categories.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Kategori</a>
     <a href="gallery.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Galeri Portofolio</a>
+    <a href="videos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Konten Video</a>
   </nav>
   <div class="p-4 border-t border-border">
     <form method="POST" action="logout.php">
@@ -525,11 +529,11 @@ select.input{appearance:auto;}
           <label class="label">Status Produk</label>
           <div class="flex items-center gap-4">
             <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="is_active" value="1" <?= ($editing['is_active'] ?? 1) == 1 ? 'checked' : '' ?> class="accent-[#741122]"/>
+              <input type="radio" name="is_active" value="1" <?= ($editing['is_active'] ?? 1) == 1 ? 'checked' : '' ?> class="accent-[#860524]"/>
               <span class="font-jakarta text-[13px] text-dark">Aktif <span class="text-green-600 text-[11px]">●</span></span>
             </label>
             <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="is_active" value="0" <?= ($editing['is_active'] ?? 1) == 0 ? 'checked' : '' ?> class="accent-[#741122]"/>
+              <input type="radio" name="is_active" value="0" <?= ($editing['is_active'] ?? 1) == 0 ? 'checked' : '' ?> class="accent-[#860524]"/>
               <span class="font-jakarta text-[13px] text-dark">Nonaktif <span class="text-red-500 text-[11px]">●</span></span>
             </label>
           </div>
@@ -611,7 +615,7 @@ select.input{appearance:auto;}
       </div>
 
       <!-- Save Button -->
-      <button type="submit" class="w-full bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase py-3.5 rounded-[4px] hover:bg-[#5a0d1a] transition-colors shadow-sm">
+      <button type="submit" class="w-full bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase py-3.5 rounded-[4px] hover:bg-[#6a041c] transition-colors shadow-sm">
         <?= $editing ? 'SIMPAN PERUBAHAN' : 'TAMBAH PRODUK' ?>
       </button>
       <?php if ($editing): ?>
@@ -633,7 +637,7 @@ select.input{appearance:auto;}
       <h1 class="font-playfair font-semibold text-dark text-[26px]">Manajemen Produk</h1>
       <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= count($products) ?> produk terdaftar</p>
     </div>
-    <a href="products.php?add=1" class="bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-[#5a0d1a] transition-colors">
+    <a href="products.php?add=1" class="bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-[#6a041c] transition-colors">
       + TAMBAH PRODUK
     </a>
   </div>
@@ -795,7 +799,7 @@ function addVariant(label = '', isSize = false, isImageLinked = false, options =
                 ${!isSize ? `
                 <label class="flex items-center gap-1.5 cursor-pointer shrink-0" title="Link varian ini ke gambar galeri">
                     <input type="checkbox" name="variant_image_linked[]" value="${vi}" ${isImageLinked ? 'checked' : ''}
-                           onchange="handleImageLinkToggle(this)" class="accent-[#741122]"/>
+                           onchange="handleImageLinkToggle(this)" class="accent-[#860524]"/>
                     <span class="font-jakarta text-muted text-[11px]">🔗 Link gambar</span>
                 </label>
                 ` : ''}

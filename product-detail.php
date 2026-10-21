@@ -13,14 +13,14 @@ if (!$slug) {
     <div class="max-w-[1280px] mx-auto px-12 py-16 text-center">
       <h1 class="font-playfair text-4xl font-bold text-dark mb-4">Produk Tidak Ditemukan</h1>
       <p class="font-jakarta text-muted text-lg mb-8">Maaf, produk yang Anda cari tidak ada atau telah dihapus.</p>
-      <a href="<?= BASE_URL ?>/products.php" class="inline-block bg-brand text-white px-6 py-3 rounded hover:bg-[#5a0d1a]">Kembali ke Katalog</a>
+      <a href="<?= BASE_URL ?>/products.php" class="inline-block bg-brand text-white px-6 py-3 rounded hover:bg-[#6a041c]">Kembali ke Katalog</a>
     </div>
     <?php
     include_once __DIR__ . '/includes/footer.php';
     exit;
 }
 
-$stmt = $db->prepare("SELECT * FROM products WHERE slug = ? AND is_active = 1");
+$stmt = $db->prepare("SELECT p.*, c.name AS category, c.price_per_meter FROM products p JOIN categories c ON c.id = p.category_id WHERE p.slug = ? AND p.is_active = 1");
 $stmt->execute([$slug]);
 $product = $stmt->fetch();
 if (!$product) {
@@ -30,7 +30,7 @@ if (!$product) {
     <div class="max-w-[1280px] mx-auto px-12 py-16 text-center">
       <h1 class="font-playfair text-4xl font-bold text-dark mb-4">Produk Tidak Ditemukan</h1>
       <p class="font-jakarta text-muted text-lg mb-8">Maaf, produk yang Anda cari tidak ada atau telah dihapus.</p>
-      <a href="<?= BASE_URL ?>/products.php" class="inline-block bg-brand text-white px-6 py-3 rounded hover:bg-[#5a0d1a]">Kembali ke Katalog</a>
+      <a href="<?= BASE_URL ?>/products.php" class="inline-block bg-brand text-white px-6 py-3 rounded hover:bg-[#6a041c]">Kembali ke Katalog</a>
     </div>
     <?php
     include_once __DIR__ . '/includes/footer.php';
@@ -59,8 +59,8 @@ unset($v);
 $features = $product['features'] ? explode('|', $product['features']) : [];
 
 // Related products (same category, active only, excluding current)
-$related_stmt = $db->prepare("SELECT * FROM products WHERE category = ? AND slug != ? AND is_active = 1 LIMIT 3");
-$related_stmt->execute([$product['category'], $slug]);
+$related_stmt = $db->prepare("SELECT p.*, c.name AS category FROM products p JOIN categories c ON c.id = p.category_id WHERE p.category_id = ? AND p.slug != ? AND p.is_active = 1 LIMIT 3");
+$related_stmt->execute([$product['category_id'], $slug]);
 $related = $related_stmt->fetchAll();
 
 // WhatsApp message
@@ -98,19 +98,19 @@ foreach ($gallery_images as $gi) {
 .variant-chevron.rotated { transform: rotate(180deg); }
 .option-pill { transition: all 0.2s ease; }
 .option-pill:hover { border-color: rgba(115,25,36,0.4); }
-.option-pill.active { border-color: #731924; color: #731924; font-weight: 600; background: #fff; border-width: 2px; }
+.option-pill.active { border-color: #860524; color: #860524; font-weight: 600; background: #fff; border-width: 2px; }
 </style>
 
 <!-- ===== BREADCRUMB ===== -->
 <div class="bg-[#f5f3f0] border-b border-[#e2ddd5] px-12 py-[12px]">
   <div class="max-w-[1280px] mx-auto flex items-center gap-2 text-[11px] tracking-[0.44px] text-[#5f5e5a] font-jakarta">
-    <a href="<?= BASE_URL ?>/" class="hover:text-[#731924] transition-colors">Home</a>
+    <a href="<?= BASE_URL ?>/" class="hover:text-[#860524] transition-colors">Home</a>
     <svg class="size-[5px] shrink-0" viewBox="0 0 4 7" fill="none"><path d="M1 1l2.5 2.5L1 6" stroke="#5f5e5a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <a href="<?= BASE_URL ?>/products.php" class="hover:text-[#731924] transition-colors">Products</a>
+    <a href="<?= BASE_URL ?>/products.php" class="hover:text-[#860524] transition-colors">Products</a>
     <svg class="size-[5px] shrink-0" viewBox="0 0 4 7" fill="none"><path d="M1 1l2.5 2.5L1 6" stroke="#5f5e5a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <a href="<?= BASE_URL ?>/products.php?category=<?= urlencode($product['category']) ?>" class="hover:text-[#731924] transition-colors"><?= htmlspecialchars($product['category']) ?></a>
+    <a href="<?= BASE_URL ?>/products.php?category=<?= urlencode($product['category']) ?>" class="hover:text-[#860524] transition-colors"><?= htmlspecialchars($product['category']) ?></a>
     <svg class="size-[5px] shrink-0" viewBox="0 0 4 7" fill="none"><path d="M1 1l2.5 2.5L1 6" stroke="#5f5e5a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span class="font-semibold text-[#1e1e1e]"><?= htmlspecialchars($product['name']) ?></span>
+    <span class="font-semibold text-[#242424]"><?= htmlspecialchars($product['name']) ?></span>
   </div>
 </div>
 
@@ -130,8 +130,8 @@ foreach ($gallery_images as $gi) {
 
         <!-- OEKO Badge -->
         <div class="absolute top-4 left-4 backdrop-blur-[6px] bg-[rgba(251,249,246,0.9)] border border-[#e2ddd5] rounded-[2px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex items-center gap-2 px-[13px] py-[7px]">
-          <div class="size-2 rounded-full bg-[#731924] shrink-0"></div>
-          <span class="font-jakarta font-semibold text-[#1e1e1e] text-[11px] tracking-[1.1px] uppercase whitespace-nowrap">OEKO-TEX® CERTIFIED · 100% PREMIUM WEAVE</span>
+          <div class="size-2 rounded-full bg-[#860524] shrink-0"></div>
+          <span class="font-jakarta font-semibold text-[#242424] text-[11px] tracking-[1.1px] uppercase whitespace-nowrap">OEKO-TEX® CERTIFIED · 100% PREMIUM WEAVE</span>
         </div>
 
         <!-- Zoom indicator -->
@@ -146,7 +146,7 @@ foreach ($gallery_images as $gi) {
         <?php foreach ($gallery_urls as $i => $url): ?>
         <button onclick="switchImg(<?= htmlspecialchars(json_encode($url), ENT_QUOTES) ?>, this)"
                 data-img-url="<?= htmlspecialchars($url) ?>"
-                class="thumbnail-btn shrink-0 bg-[#efeeeb] border rounded-[2px] overflow-hidden p-[3px] transition-all duration-200 <?= $i === 0 ? 'border-2 border-[#731924]' : 'border border-[#e2ddd5]' ?>"
+                class="thumbnail-btn shrink-0 bg-[#efeeeb] border rounded-[2px] overflow-hidden p-[3px] transition-all duration-200 <?= $i === 0 ? 'border-2 border-[#860524]' : 'border border-[#e2ddd5]' ?>"
                 style="width: calc(25% - 9px)">
           <img src="<?= htmlspecialchars($url) ?>" alt="Photo <?= $i+1 ?>" class="w-full aspect-square object-cover rounded-[2px]" />
         </button>
@@ -185,18 +185,18 @@ foreach ($gallery_images as $gi) {
       <div class="flex flex-col gap-1.5">
         <!-- Category + REF row -->
         <div class="flex items-center gap-2">
-          <span class="font-jakarta font-semibold text-[#731924] text-[11px] tracking-[1.1px] uppercase"><?= htmlspecialchars(strtoupper($product['category'])) ?></span>
+          <span class="font-jakarta font-semibold text-[#860524] text-[11px] tracking-[1.1px] uppercase"><?= htmlspecialchars(strtoupper($product['category'])) ?></span>
           <div class="size-[6px] rounded-full bg-[#e2ddd5] shrink-0"></div>
           <span class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.44px] uppercase">REF. #<?= htmlspecialchars($product['ref_code']) ?></span>
         </div>
         <!-- Product Name H1 -->
-        <h1 class="font-playfair font-medium text-[#1e1e1e] text-[36px] leading-[44px] tracking-[-0.9px]">
+        <h1 class="font-playfair font-medium text-[#242424] text-[36px] leading-[44px] tracking-[-0.9px]">
           <?= htmlspecialchars(strtoupper($product['name'])) ?>
         </h1>
         <!-- Estimasi Harga -->
         <div class="flex items-baseline gap-2 pt-1">
           <span class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.44px] uppercase">ESTIMASI BAHAN MULAI:</span>
-          <span class="font-playfair font-semibold text-[#540011] text-[18px] tracking-[1.08px]"><?= fmt_price($product['price']) ?></span>
+          <span class="font-playfair font-semibold text-[#860524] text-[18px] tracking-[1.08px]"><?= fmt_price($product['price']) ?></span>
           <span class="font-jakarta text-[#564242] text-[12px] tracking-[0.24px]"><?= htmlspecialchars($product['price_unit']) ?> (termasuk ongkos jahit atelier)</span>
         </div>
       </div>
@@ -225,7 +225,7 @@ foreach ($gallery_images as $gi) {
               <p class="font-jakarta font-medium text-[#5f5e5a] text-[12px] tracking-[0.6px] uppercase leading-[22px]">
                 <?= htmlspecialchars(strtoupper($variant['label'])) ?>
               </p>
-              <p class="font-playfair font-semibold text-[#1e1e1e] text-[16px] tracking-[0.16px] leading-[26px] variant-selected-label"
+              <p class="font-playfair font-semibold text-[#242424] text-[16px] tracking-[0.16px] leading-[26px] variant-selected-label"
                  data-variant-idx="<?= $vi ?>">
                 <?= htmlspecialchars($first_option ?: 'Pilih ' . $variant['label']) ?>
               </p>
@@ -275,11 +275,11 @@ foreach ($gallery_images as $gi) {
 
         <!-- Badges row -->
         <div class="flex items-center justify-between">
-          <div class="bg-[#731924] text-white font-jakarta font-semibold text-[11px] tracking-[0.55px] uppercase px-2 py-[2px] rounded-[2px]">PENAWARAN TERBATAS</div>
+          <div class="bg-[#860524] text-white font-jakarta font-semibold text-[11px] tracking-[0.55px] uppercase px-2 py-[2px] rounded-[2px]">PENAWARAN TERBATAS</div>
           <?php if ($discount_pct > 0): ?>
           <div class="bg-white border border-[#e2ddd5] flex items-center gap-1.5 px-[11px] py-[3px] rounded-[2px]">
-            <svg class="size-[11px] text-[#731924]" fill="none" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M1 6l5-5 5 5M6 1v10"/></svg>
-            <span class="font-jakarta font-semibold text-[#731924] text-[11px] tracking-[0.44px]">Hemat <?= $discount_pct ?>% (<?= fmt_price($product['original_price'] - $product['price']) ?>/m)</span>
+            <svg class="size-[11px] text-[#860524]" fill="none" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" d="M1 6l5-5 5 5M6 1v10"/></svg>
+            <span class="font-jakarta font-semibold text-[#860524] text-[11px] tracking-[0.44px]">Hemat <?= $discount_pct ?>% (<?= fmt_price($product['original_price'] - $product['price']) ?>/m)</span>
           </div>
           <?php endif; ?>
         </div>
@@ -288,7 +288,7 @@ foreach ($gallery_images as $gi) {
         <div class="border-b border-[rgba(226,221,213,0.8)] pb-4 flex items-end justify-between">
           <div>
             <div class="flex items-baseline gap-3">
-              <span class="font-playfair font-semibold text-[#540011] text-[36px] leading-[44px] tracking-[1.44px]"><?= fmt_price($product['price']) ?></span>
+              <span class="font-playfair font-semibold text-[#860524] text-[36px] leading-[44px] tracking-[1.44px]"><?= fmt_price($product['price']) ?></span>
               <?php if ($product['original_price']): ?>
               <span class="font-jakarta text-[#5f5e5a] text-[14px] leading-[22px] line-through"><?= fmt_price($product['original_price']) ?></span>
               <?php endif; ?>
@@ -300,10 +300,57 @@ foreach ($gallery_images as $gi) {
           </div>
         </div>
 
+        <!-- Kalkulator Estimasi Harga -->
+        <?php $ppm = (int) ($product['price_per_meter'] ?? 0); ?>
+        <div id="price-calc" class="border-b border-[rgba(226,221,213,0.8)] pb-5" data-ppm="<?= $ppm ?>">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-jakarta font-semibold text-[#242424] text-[12px] tracking-[1.1px] uppercase">Kalkulator Estimasi Harga</h3>
+            <?php if ($ppm > 0): ?>
+            <span class="font-jakarta text-[#5f5e5a] text-[11px]">Harga dasar <?= htmlspecialchars($product['category']) ?>: <strong class="text-[#860524]"><?= fmt_price($ppm) ?></strong> / meter</span>
+            <?php endif; ?>
+          </div>
+
+          <?php if ($ppm > 0): ?>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label for="calc-w" class="block font-jakarta font-medium text-[#5f5e5a] text-[11px] mb-1">Lebar (cm)</label>
+              <input id="calc-w" type="number" inputmode="decimal" min="1" max="10000" step="any" placeholder="150"
+                     class="w-full bg-white border border-[#e2ddd5] rounded-[2px] px-3 py-2.5 font-jakarta text-[14px] text-[#242424] focus:outline-none focus:border-[#860524]">
+            </div>
+            <div>
+              <label for="calc-h" class="block font-jakarta font-medium text-[#5f5e5a] text-[11px] mb-1">Tinggi (cm)</label>
+              <input id="calc-h" type="number" inputmode="decimal" min="1" max="10000" step="any" placeholder="200"
+                     class="w-full bg-white border border-[#e2ddd5] rounded-[2px] px-3 py-2.5 font-jakarta text-[14px] text-[#242424] focus:outline-none focus:border-[#860524]">
+            </div>
+            <div>
+              <label for="calc-q" class="block font-jakarta font-medium text-[#5f5e5a] text-[11px] mb-1">Jumlah</label>
+              <input id="calc-q" type="number" inputmode="numeric" min="1" max="999" step="1" value="1"
+                     class="w-full bg-white border border-[#e2ddd5] rounded-[2px] px-3 py-2.5 font-jakarta text-[14px] text-[#242424] focus:outline-none focus:border-[#860524]">
+            </div>
+          </div>
+
+          <p id="calc-error" role="alert" class="hidden mt-2 font-jakarta text-[12px] text-red-600"></p>
+
+          <div id="calc-result" class="mt-4 bg-white border border-[#e2ddd5] rounded-[2px] px-4 py-3" aria-live="polite">
+            <p id="calc-placeholder" class="font-jakarta text-[#5f5e5a] text-[12px]">Masukkan lebar &amp; tinggi untuk melihat estimasi harga.</p>
+            <div id="calc-output" class="hidden">
+              <div class="flex items-baseline justify-between">
+                <span class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.55px] uppercase">Total Estimasi</span>
+                <span id="calc-total" class="font-playfair font-semibold text-[#860524] text-[26px] leading-[32px]">Rp 0</span>
+              </div>
+              <p id="calc-breakdown" class="font-jakarta text-[#5f5e5a] text-[11px] leading-[16px] mt-1"></p>
+            </div>
+          </div>
+          <p class="font-jakarta text-[#5f5e5a] text-[10.5px] leading-[15px] mt-2">*Estimasi awal, belum termasuk ongkos pasang &amp; pilihan varian. Harga final dikonfirmasi tim kami setelah ukur di lokasi.</p>
+          <?php else: ?>
+          <p class="font-jakarta text-[#5f5e5a] text-[12px]">Harga dasar per meter untuk kategori ini belum diatur. Hubungi kami via WhatsApp untuk estimasi.</p>
+          <?php endif; ?>
+        </div>
+
         <!-- WhatsApp CTA Button -->
         <a href="<?= WA_URL ?>?text=<?= $wa_msg ?>"
            target="_blank" rel="noopener" id="wa-cta-btn"
-           class="flex items-center justify-center gap-2 bg-[#731924] text-white font-jakarta font-semibold text-[12px] tracking-[0.6px] uppercase px-4 py-[14px] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] hover:bg-[#5a0d1a] transition-colors duration-200">
+           class="flex items-center justify-center gap-2 bg-[#860524] text-white font-jakarta font-semibold text-[12px] tracking-[0.6px] uppercase px-4 py-[14px] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] hover:bg-[#6a041c] transition-colors duration-200">
           KONSULTASI &amp; CEK ESTIMASI WHATSAPP
           <svg class="size-3" viewBox="0 0 12 12" fill="white"><path d="M6 0a6 6 0 0 0-5.27 8.82L0 12l3.28-.7A6 6 0 1 0 6 0Z"/><path d="M4.3 3.8c.1-.25.38-.5.75-.5.3 0 .5.15.63.3l.63 1c.12.25.02.5-.13.65l-.25.25c.25.45.68.88 1.13 1.13l.25-.25c.15-.15.4-.25.65-.13l1 .63c.15.13.3.33.3.63 0 .38-.25.65-.5.75C8.25 8.5 6.75 8.75 5.25 7.25S4 4.25 4.1 3.8Z" fill="rgba(255,255,255,0.9)"/></svg>
         </a>
@@ -319,7 +366,7 @@ foreach ($gallery_images as $gi) {
           foreach($trusts as $t):
           ?>
           <div class="flex items-start gap-1">
-            <svg class="size-[14px] text-[#731924] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="<?= $t['icon'] ?>"/></svg>
+            <svg class="size-[14px] text-[#860524] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="<?= $t['icon'] ?>"/></svg>
             <div class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.44px] leading-[16px]">
               <p><?= $t['line1'] ?></p>
               <p><?= $t['line2'] ?></p>
@@ -336,7 +383,7 @@ foreach ($gallery_images as $gi) {
         <ul class="flex flex-col gap-2">
           <?php foreach ($features as $feat): ?>
           <li class="flex items-start gap-2">
-            <svg class="size-4 text-[#731924] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0Z"/></svg>
+            <svg class="size-4 text-[#860524] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0Z"/></svg>
             <span class="font-jakarta text-[#564242] text-[13px] leading-[20px] tracking-[0.13px]"><?= htmlspecialchars($feat) ?></span>
           </li>
           <?php endforeach; ?>
@@ -353,7 +400,7 @@ foreach ($gallery_images as $gi) {
     <!-- Header -->
     <div class="text-center flex flex-col gap-[5.5px]">
       <p class="font-jakarta font-semibold text-[#5f5e5a] text-[11px] tracking-[1.65px] uppercase">PROTOKOL PEMESANAN TANPA REPOT</p>
-      <h2 class="font-playfair font-medium text-[#1e1e1e] text-[24px] leading-[32px] tracking-[1.2px]">4 Langkah Mewujudkan Tirai Sempurna</h2>
+      <h2 class="font-playfair font-medium text-[#242424] text-[24px] leading-[32px] tracking-[1.2px]">4 Langkah Mewujudkan Tirai Sempurna</h2>
     </div>
     <!-- Steps grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -368,7 +415,7 @@ foreach ($gallery_images as $gi) {
       ?>
       <div class="bg-[#f5f3f0] border border-[#e2ddd5] rounded-[2px] p-[17px] flex flex-col gap-2">
         <p class="font-playfair font-medium text-[#e2ddd5] text-[36px] leading-[44px] tracking-[1.44px]"><?= $step['num'] ?></p>
-        <h3 class="font-playfair font-semibold text-[#1e1e1e] text-[18px] leading-[26px] tracking-[1.08px] -mt-2"><?= $step['title'] ?></h3>
+        <h3 class="font-playfair font-semibold text-[#242424] text-[18px] leading-[26px] tracking-[1.08px] -mt-2"><?= $step['title'] ?></h3>
         <p class="font-jakarta text-[#564242] text-[12px] leading-[18px] tracking-[0.24px]"><?= htmlspecialchars($step['desc']) ?></p>
       </div>
       <?php endforeach; ?>
@@ -384,9 +431,9 @@ foreach ($gallery_images as $gi) {
     <div class="flex items-end justify-between">
       <div class="flex flex-col gap-1">
         <p class="font-jakarta font-semibold text-[#5f5e5a] text-[11px] tracking-[1.65px] uppercase">KOLEKSI PENDAMPING</p>
-        <h2 class="font-playfair font-medium text-[#1e1e1e] text-[24px] leading-[32px] tracking-[1.2px]">Eksplorasi Kurasi Tekstil Lainnya</h2>
+        <h2 class="font-playfair font-medium text-[#242424] text-[24px] leading-[32px] tracking-[1.2px]">Eksplorasi Kurasi Tekstil Lainnya</h2>
       </div>
-      <a href="<?= BASE_URL ?>/products.php" class="flex items-center gap-1.5 font-jakarta font-semibold text-[#731924] text-[12px] tracking-[1.2px] uppercase hover:gap-2.5 transition-all duration-200">
+      <a href="<?= BASE_URL ?>/products.php" class="flex items-center gap-1.5 font-jakarta font-semibold text-[#860524] text-[12px] tracking-[1.2px] uppercase hover:gap-2.5 transition-all duration-200">
         LIHAT SELURUH KATALOG
         <svg class="size-[10px]" fill="none" viewBox="0 0 12 12" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2 6h8M7 3l3 3-3 3"/></svg>
       </a>
@@ -414,7 +461,7 @@ foreach ($gallery_images as $gi) {
           <img src="<?= htmlspecialchars($rel['cover_image']) ?>" alt="<?= htmlspecialchars($rel['name']) ?>"
                class="w-full aspect-[4/3] object-cover transition-transform duration-700 group-hover:scale-105" />
           <div class="absolute top-3 left-3 backdrop-blur-[2px] bg-[rgba(255,255,255,0.9)] border border-[rgba(226,221,213,0.6)] rounded-[2px] px-[10px] py-[2px]">
-            <span class="font-jakarta font-semibold text-[#1e1e1e] text-[11px] tracking-[0.55px] uppercase"><?= htmlspecialchars($rel['category']) ?></span>
+            <span class="font-jakarta font-semibold text-[#242424] text-[11px] tracking-[0.55px] uppercase"><?= htmlspecialchars($rel['category']) ?></span>
           </div>
         </div>
         <!-- Info -->
@@ -422,7 +469,7 @@ foreach ($gallery_images as $gi) {
           <p class="font-jakarta font-medium text-[#5f5e5a] text-[11px] tracking-[0.275px] uppercase leading-[22px]">
             <?= $rel_var_count ?> VARIAN | <?= $rel_opt_count ?> OPSI
           </p>
-          <h3 class="font-playfair font-semibold text-[#1e1e1e] text-[16px] leading-[22px] tracking-[0.14px]"><?= htmlspecialchars($rel['name']) ?></h3>
+          <h3 class="font-playfair font-semibold text-[#242424] text-[16px] leading-[22px] tracking-[0.14px]"><?= htmlspecialchars($rel['name']) ?></h3>
         </div>
         <!-- Pricing + Buttons -->
         <div class="px-4 pb-4 border-t border-[rgba(226,221,213,0.6)] pt-[9px] flex flex-col gap-3 mt-auto">
@@ -431,19 +478,19 @@ foreach ($gallery_images as $gi) {
               <?php if ($rel['original_price']): ?>
               <span class="font-jakarta text-[#5f5e5a] text-[12px] line-through"><?= fmt_price($rel['original_price']) ?></span>
               <?php if ($rel_discount > 0): ?>
-              <span class="bg-[rgba(115,25,36,0.1)] text-[#731924] font-jakarta font-semibold text-[11px] px-1.5 py-0.5 rounded-[2px]"><?= $rel_discount ?>%</span>
+              <span class="bg-[rgba(115,25,36,0.1)] text-[#860524] font-jakarta font-semibold text-[11px] px-1.5 py-0.5 rounded-[2px]"><?= $rel_discount ?>%</span>
               <?php endif; ?>
               <?php endif; ?>
             </div>
-            <p class="font-playfair font-semibold text-[#540011] text-[18px] leading-[22px] tracking-[0.14px]"><?= fmt_price($rel['price']) ?></p>
+            <p class="font-playfair font-semibold text-[#860524] text-[18px] leading-[22px] tracking-[0.14px]"><?= fmt_price($rel['price']) ?></p>
           </div>
           <div class="flex gap-2 pt-1">
             <a href="<?= BASE_URL ?>/product-detail.php?slug=<?= urlencode($rel['slug']) ?>"
-               class="flex-1 bg-white border border-[#e2ddd5] flex items-center justify-center py-[9px] rounded-[2px] font-jakarta text-[#1e1e1e] text-[11px] tracking-[0.55px] uppercase hover:border-[#731924]/40 transition-colors">
+               class="flex-1 bg-white border border-[#e2ddd5] flex items-center justify-center py-[9px] rounded-[2px] font-jakarta text-[#242424] text-[11px] tracking-[0.55px] uppercase hover:border-[#860524]/40 transition-colors">
               LIHAT DETAIL
             </a>
             <a href="<?= WA_URL ?>?text=<?= $rel_wa ?>" target="_blank" rel="noopener"
-               class="flex-1 bg-[#731924] flex items-center justify-center gap-1.5 py-[9px] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] hover:bg-[#5a0d1a] transition-colors">
+               class="flex-1 bg-[#860524] flex items-center justify-center gap-1.5 py-[9px] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] hover:bg-[#6a041c] transition-colors">
               <svg class="size-3" viewBox="0 0 12 12" fill="white"><path d="M6 0a6 6 0 0 0-5.27 8.82L0 12l3.28-.7A6 6 0 1 0 6 0Z"/></svg>
               <span class="font-jakarta text-white text-[11px] tracking-[0.55px] uppercase">WHATSAPP</span>
             </a>
@@ -493,10 +540,10 @@ function switchImg(url, btn) {
   img.style.opacity = '0';
   setTimeout(() => { img.src = url; img.style.opacity = '1'; }, 200);
   document.querySelectorAll('.thumbnail-btn').forEach(b => {
-    b.className = b.className.replace('border-2 border-[#731924]', 'border border-[#e2ddd5]');
+    b.className = b.className.replace('border-2 border-[#860524]', 'border border-[#e2ddd5]');
   });
   if (btn) {
-    btn.className = btn.className.replace('border border-[#e2ddd5]', 'border-2 border-[#731924]');
+    btn.className = btn.className.replace('border border-[#e2ddd5]', 'border-2 border-[#860524]');
   }
 }
 
@@ -543,6 +590,82 @@ function updateConvSummary() {
     summary.appendChild(p);
   });
 }
+</script>
+
+<script>
+// Kalkulator estimasi: (lebar × tinggi / 10.000) × harga per meter kategori × jumlah
+(function () {
+  const root = document.getElementById('price-calc');
+  if (!root || !root.querySelector('#calc-w')) return;
+  const ppm = parseInt(root.dataset.ppm, 10) || 0;
+  const wEl = root.querySelector('#calc-w');
+  const hEl = root.querySelector('#calc-h');
+  const qEl = root.querySelector('#calc-q');
+  const errEl = root.querySelector('#calc-error');
+  const placeholder = root.querySelector('#calc-placeholder');
+  const output = root.querySelector('#calc-output');
+  const totalEl = root.querySelector('#calc-total');
+  const breakdownEl = root.querySelector('#calc-breakdown');
+  const waBtn = document.getElementById('wa-cta-btn');
+  const waBase = waBtn ? waBtn.getAttribute('href') : '';
+  const MAX_DIM = 10000, MAX_QTY = 999;
+  const rp = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+  const num = n => n.toLocaleString('id-ID', { maximumFractionDigits: 2 });
+
+  // Cegah karakter yang membuat angka negatif / eksponen
+  [wEl, hEl, qEl].forEach(function (el) {
+    el.addEventListener('keydown', function (e) {
+      if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault();
+    });
+  });
+  qEl.addEventListener('keydown', function (e) { if (e.key === '.' || e.key === ',') e.preventDefault(); });
+
+  function show(msg) {
+    errEl.textContent = msg || '';
+    errEl.classList.toggle('hidden', !msg);
+  }
+  function reset() {
+    output.classList.add('hidden');
+    placeholder.classList.remove('hidden');
+    if (waBtn) waBtn.setAttribute('href', waBase);
+  }
+
+  function calc() {
+    const wRaw = wEl.value.trim(), hRaw = hEl.value.trim(), qRaw = qEl.value.trim();
+    const w = parseFloat(wRaw), h = parseFloat(hRaw), q = Number(qRaw);
+
+    // Belum diisi lengkap: tunggu, tanpa pesan error
+    if (wRaw === '' || hRaw === '') { show(''); reset(); return; }
+
+    let msg = '';
+    if (!(w > 0)) msg = 'Lebar harus lebih dari 0 cm.';
+    else if (!(h > 0)) msg = 'Tinggi harus lebih dari 0 cm.';
+    else if (w > MAX_DIM || h > MAX_DIM) msg = 'Ukuran maksimal ' + MAX_DIM.toLocaleString('id-ID') + ' cm.';
+    else if (qRaw === '' || !Number.isInteger(q) || q < 1) msg = 'Jumlah minimal 1 dan harus bilangan bulat.';
+    else if (q > MAX_QTY) msg = 'Jumlah maksimal ' + MAX_QTY + '.';
+
+    if (msg) { show(msg); reset(); return; }
+    show('');
+
+    const perUnit = Math.round((w * h / 10000) * ppm);
+    const total = perUnit * q;
+    totalEl.textContent = rp(total);
+    breakdownEl.textContent = num(w) + ' × ' + num(h) + ' cm = ' + num(w * h / 10000) + ' m²  ·  ' +
+      rp(perUnit) + ' / unit × ' + q + ' unit';
+    placeholder.classList.add('hidden');
+    output.classList.remove('hidden');
+
+    if (waBtn) {
+      const extra = '\n\nEstimasi kalkulator: ' + num(w) + ' × ' + num(h) + ' cm, ' + q + ' unit ≈ ' + rp(total);
+      waBtn.setAttribute('href', waBase + encodeURIComponent(extra));
+    }
+  }
+
+  ['input', 'change'].forEach(function (ev) {
+    [wEl, hEl, qEl].forEach(function (el) { el.addEventListener(ev, calc); });
+  });
+  calc();
+})();
 </script>
 
 <?php include_once __DIR__ . '/includes/footer.php'; ?>

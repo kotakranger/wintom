@@ -13,17 +13,18 @@ $sort_by      = trim($_GET['sort'] ?? 'newest');
 
 // Normalisasi kategori (mendukung slug homepage dan nama asli)
 $cat_aliases = [
-    'curtain'                => 'Curtain',
-    'vitrase'                => 'Vitrase & Sheer',
-    'sheer'                  => 'Vitrase & Sheer',
-    'vitrase-sheer'          => 'Vitrase & Sheer',
-    'roller-blind'           => 'Roller Blind',
-    'roller'                 => 'Roller Blind',
-    'motorized'              => 'Motorized Smart System',
-    'motorized-smart-system' => 'Motorized Smart System',
-    'wood'                   => 'Wood & Bamboo Blind',
-    'wood-blind'             => 'Wood & Bamboo Blind',
-    'wood-bamboo-blind'      => 'Wood & Bamboo Blind'
+    'curtain'                 => 'Curtain',
+    'gorden'                  => 'Curtain',
+    'roller-blind'            => 'Roller Blind',
+    'roller'                  => 'Roller Blind',
+    'zebra'                   => 'Zebra Blind',
+    'zebra-blind'             => 'Zebra Blind',
+    'roman'                   => 'Roman Blind',
+    'roman-blind'             => 'Roman Blind',
+    'vertical'                => 'Vertical Blind',
+    'vertical-blind'          => 'Vertical Blind',
+    'motorized'               => 'Motorized Curtain Track',
+    'motorized-curtain-track' => 'Motorized Curtain Track',
 ];
 
 $normalized_key = strtolower(str_replace([' ', '&', '_'], ['-', '', '-'], $raw_cat));
@@ -42,16 +43,16 @@ $error_db = null;
 
 try {
     // Query builder — only show active products on public catalog
-    $sql = "SELECT * FROM products WHERE is_active = 1";
+    $sql = "SELECT p.*, c.name AS category, c.price_per_meter FROM products p JOIN categories c ON c.id = p.category_id WHERE p.is_active = 1";
     $params = [];
 
     if (!empty($selected_cat)) {
-        $sql .= " AND category = ?";
+        $sql .= " AND c.name = ?";
         $params[] = $selected_cat;
     }
 
     if (!empty($search_query)) {
-        $sql .= " AND (name LIKE ? OR description LIKE ? OR ref_code LIKE ? OR features LIKE ?)";
+        $sql .= " AND (p.name LIKE ? OR p.description LIKE ? OR p.ref_code LIKE ? OR p.features LIKE ?)";
         $wildcard = '%' . $search_query . '%';
         $params[] = $wildcard;
         $params[] = $wildcard;
@@ -62,17 +63,17 @@ try {
     // Sorting
     switch ($sort_by) {
         case 'price_asc':
-            $sql .= " ORDER BY price ASC";
+            $sql .= " ORDER BY p.price ASC";
             break;
         case 'price_desc':
-            $sql .= " ORDER BY price DESC";
+            $sql .= " ORDER BY p.price DESC";
             break;
         case 'name_asc':
-            $sql .= " ORDER BY name ASC";
+            $sql .= " ORDER BY p.name ASC";
             break;
         case 'newest':
         default:
-            $sql .= " ORDER BY id DESC";
+            $sql .= " ORDER BY p.id DESC";
             break;
     }
 
@@ -347,7 +348,7 @@ include_once __DIR__ . '/includes/header.php';
                     href="<?= $wa_product_url ?>"
                     target="_blank"
                     rel="noopener"
-                    class="w-full text-center py-2.5 bg-brand hover:bg-[#5a0d1a] text-white font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors flex items-center justify-center gap-1.5"
+                    class="w-full text-center py-2.5 bg-brand hover:bg-[#6a041c] text-white font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors flex items-center justify-center gap-1.5"
                   >
                     <span>KONSULTASI</span>
                   </a>
@@ -390,7 +391,7 @@ include_once __DIR__ . '/includes/header.php';
           href="<?= WA_URL ?>?text=Halo+Wintom%2C+saya+ingin+reservasi+jadwal+survei+lokasi+dan+cek+sampel+kain+ke+alamat+saya"
           target="_blank"
           rel="noopener"
-          class="inline-flex items-center justify-center gap-2.5 bg-brand hover:bg-[#5a0d1a] text-white font-jakarta font-semibold text-[12px] tracking-widest-3 uppercase px-8 py-4 rounded-[3px] shadow-lg transition-all duration-200 text-center"
+          class="inline-flex items-center justify-center gap-2.5 bg-brand hover:bg-[#6a041c] text-white font-jakarta font-semibold text-[12px] tracking-widest-3 uppercase px-8 py-4 rounded-[3px] shadow-lg transition-all duration-200 text-center"
         >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.299.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.353.101.173.448.74 0.96 1.196.659.587 1.215.769 1.388.856.173.086.274.072.375-.044.101-.116.433-.506.549-.679.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.203c.044.072.044.419-.1.824z"/>

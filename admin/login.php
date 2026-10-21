@@ -34,24 +34,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Login — Wintom Curtain</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="icon" type="image/png" href="../assets/images/favicon.png"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
-            playfair: ['"Playfair Display"', 'serif'],
-            jakarta: ['"Plus Jakarta Sans"', 'sans-serif']
+            playfair: ['Georgia','"Times New Roman"','serif'],
+            jakarta: ['Arial','Helvetica','sans-serif']
           },
           colors: {
             brand: {
-              DEFAULT: '#741122',
-              dark: '#5a0d1a'
+              DEFAULT: '#860524',
+              dark: '#6a041c'
             },
-            dark: '#222220',
+            dark: '#242424',
             muted: '#686561',
             cream: '#faf8f5',
             'cream-dark': '#f4f1ea',
@@ -105,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             placeholder="••••••••" />
         </div>
         <button type="submit"
-          class="w-full bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase py-3 rounded-[3px] hover:bg-[#5a0d1a] transition-colors duration-200 mt-2">
+          class="w-full bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase py-3 rounded-[3px] hover:bg-[#6a041c] transition-colors duration-200 mt-2">
           MASUK
         </button>
       </form>
