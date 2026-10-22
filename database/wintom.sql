@@ -9,6 +9,23 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+DROP TABLE IF EXISTS `admins`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `admins` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `username` varchar(100) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+LOCK TABLES `admins` WRITE;
+/*!40000 ALTER TABLE `admins` DISABLE KEYS */;
+INSERT INTO `admins` VALUES (1,'admin','$2y$10$vHL.1Ox5rRlW5RMmB.OMROObHF9iMPgjKbOBJ6nd0uCC8dIE2zEYi');
+/*!40000 ALTER TABLE `admins` ENABLE KEYS */;
+UNLOCK TABLES;
 DROP TABLE IF EXISTS `categories`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -67,6 +84,31 @@ LOCK TABLES `galleries` WRITE;
 /*!40000 ALTER TABLE `galleries` DISABLE KEYS */;
 INSERT INTO `galleries` VALUES (1,'Ripple Fold Linen — Grand Penthouse PIK','Penthouse Sanctuary','https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=85','2026-10-02 07:17:06'),(2,'Sheer Voile Living Room — BSD City','Living Room','https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200&q=85','2026-10-02 07:17:06'),(3,'Velour Blackout Master Bedroom — Kebayoran','Living Room','https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=1200&q=85','2026-10-02 07:17:06'),(4,'Motorized Smart Curtain — SCBD Office Tower','Office & Commercial','https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200&q=85','2026-10-02 07:17:06'),(5,'Wood Blind Paulownia — Resort Bali','Hotel & Private Villa','https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=85','2026-10-02 07:17:06'),(6,'Double-Track Drape & Sheer — Dining Room Menteng','Dining & Atelier','https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1200&q=85','2026-10-02 07:17:06'),(7,'S-Fold Wave — Penthouse Pakubuwono','Penthouse Sanctuary','https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=1200&q=85','2026-10-02 07:17:06'),(8,'Sunscreen Roller — Co-Working Space Sudirman','Office & Commercial','https://images.unsplash.com/photo-1540518614846-7ede433c4b4f?w=1200&q=85','2026-10-02 07:17:06'),(9,'French Linen Drape — Private Villa Seminyak','Hotel & Private Villa','https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1200&q=85','2026-10-02 07:17:06'),(10,'Motorized Dual-Layer — Atelier Studio Kemang','Dining & Atelier','https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200&q=85','2026-10-02 07:17:06'),(11,'Bamboo Shade — Living Room Pondok Indah','Living Room','https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1200&q=85','2026-10-02 07:17:06'),(12,'Penthouse Full-Wall Draping — Ciputra World','Penthouse Sanctuary','https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=85','2026-10-02 07:17:06');
 /*!40000 ALTER TABLE `galleries` ENABLE KEYS */;
+UNLOCK TABLES;
+DROP TABLE IF EXISTS `inquiries`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `inquiries` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `full_name` varchar(120) NOT NULL,
+  `whatsapp` varchar(25) NOT NULL,
+  `category_id` int(10) unsigned DEFAULT NULL,
+  `curtain_type` varchar(120) NOT NULL,
+  `estimated_size` varchar(100) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `status` enum('new','contacted','closed') NOT NULL DEFAULT 'new',
+  `ip_address` varchar(45) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_inquiries_status` (`status`,`created_at`),
+  KEY `fk_inquiries_category` (`category_id`),
+  CONSTRAINT `fk_inquiries_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+LOCK TABLES `inquiries` WRITE;
+/*!40000 ALTER TABLE `inquiries` DISABLE KEYS */;
+/*!40000 ALTER TABLE `inquiries` ENABLE KEYS */;
 UNLOCK TABLES;
 DROP TABLE IF EXISTS `product_images`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
