@@ -19,7 +19,7 @@ require_once __DIR__ . '/config.php';
         <!-- CTA Text -->
         <div class="flex flex-col">
           <span class="font-jakarta font-semibold text-muted text-[11px] tracking-[2.42px] uppercase leading-[16.5px]">MARI WUJUDKAN</span>
-          <span class="font-playfair font-normal text-dark text-[20px] sm:text-[24px] uppercase leading-[1.3]">RUANG YANG LEBIH INDAH</span>
+          <span class="font-playfair font-normal text-dark text-[22px] sm:text-[24px] leading-[1.25]">Ruang yang Lebih Indah</span>
         </div>
       </div>
       <!-- Contact Button -->

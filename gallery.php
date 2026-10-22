@@ -64,7 +64,7 @@ include_once __DIR__ . '/includes/header.php';
 <section class="bg-cream-dark border-b border-border pt-12 pb-12 md:pt-[64px] md:pb-[60px]">
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12">
     <p class="wt-in font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase leading-[16.5px] mb-4" style="--d:60ms">PORTOFOLIO PROYEK</p>
-    <h1 class="wt-in font-playfair font-bold text-dark text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] tracking-[-1px] max-w-[760px] mb-5" style="--d:160ms">
+    <h1 class="wt-in font-playfair font-normal text-dark text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] tracking-[-0.5px] max-w-[760px] mb-5" style="--d:160ms">
       Sentuhan Elegan di Setiap Sudut Ruangan
     </h1>
     <p class="wt-in font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6] max-w-[680px] mb-8" style="--d:260ms">
@@ -103,7 +103,7 @@ include_once __DIR__ . '/includes/header.php';
 
     <?php if (empty($galleries)): ?>
     <div class="flex flex-col items-center justify-center py-[80px] text-center">
-      <p class="font-playfair text-dark text-[22px] mb-2">Belum ada portofolio</p>
+      <p class="font-playfair font-normal text-dark text-[22px] mb-2">Belum ada portofolio</p>
       <p class="font-jakarta text-muted text-[14px]">Portofolio untuk kategori ini sedang disiapkan.</p>
     </div>
 
@@ -129,7 +129,7 @@ include_once __DIR__ . '/includes/header.php';
 
         <figcaption class="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(34,34,32,0.80)] via-[rgba(34,34,32,0.15)] to-transparent opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-3 sm:p-5">
           <span class="font-jakarta font-semibold text-white/60 text-[9px] tracking-[2px] uppercase mb-1"><?= htmlspecialchars($item['category']) ?></span>
-          <span class="font-playfair text-white text-[13px] sm:text-[16px] leading-[1.35]"><?= htmlspecialchars($item['title']) ?></span>
+          <span class="font-playfair font-normal text-white text-[13px] sm:text-[16px] leading-[1.35]"><?= htmlspecialchars($item['title']) ?></span>
         </figcaption>
 
         <?php if ($multi): ?>
@@ -173,7 +173,7 @@ include_once __DIR__ . '/includes/header.php';
   </div>
   <div class="mt-4 px-4 text-center">
     <p id="lightbox-cat" class="font-jakarta font-semibold text-white/50 text-[10px] tracking-[2px] uppercase mb-1"></p>
-    <p id="lightbox-title" class="font-playfair text-white text-[16px] sm:text-[18px] m-0"></p>
+    <p id="lightbox-title" class="font-playfair font-normal text-white text-[16px] sm:text-[18px] m-0"></p>
     <p id="lightbox-count" class="font-jakarta text-white/50 text-[12px] mt-2 m-0"></p>
   </div>
 </div>
@@ -183,7 +183,7 @@ include_once __DIR__ . '/includes/header.php';
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12 flex flex-col lg:flex-row lg:items-center justify-between gap-8 lg:gap-10">
     <div data-reveal>
       <p class="font-jakarta font-semibold text-white/60 text-[11px] tracking-[2.64px] uppercase mb-3">MULAI PROYEK ANDA</p>
-      <h2 class="font-playfair font-bold text-white text-[28px] sm:text-[38px] leading-[1.2] tracking-[-0.8px] max-w-[480px]">
+      <h2 class="font-playfair font-normal text-white text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] max-w-[480px]">
         Jadwalkan Survei &amp; Pengukuran Gratis ke Lokasi Anda
       </h2>
     </div>

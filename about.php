@@ -15,7 +15,7 @@ include_once __DIR__ . '/includes/header.php';
     <!-- Text -->
     <div class="min-w-0">
       <p class="wt-in font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase leading-[16.5px] mb-5" style="--d:80ms">TENTANG KAMI</p>
-      <h1 class="wt-in font-playfair font-bold text-dark text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] tracking-[-1px] mb-6" style="--d:180ms">
+      <h1 class="wt-in font-playfair font-normal text-dark text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] tracking-[-0.5px] mb-6" style="--d:180ms">
         WINTOM Intelligent Solusi
       </h1>
       <p class="wt-in font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6] mb-5" style="--d:280ms">
@@ -43,7 +43,7 @@ include_once __DIR__ . '/includes/header.php';
   <div class="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-12 grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12">
     <div data-reveal>
       <p class="font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase mb-3">VISI</p>
-      <p class="font-playfair text-dark text-[22px] sm:text-[26px] leading-[1.35] m-0">Menjadi pilihan yang dipercaya untuk solusi tirai dan sistem jendela yang selaras dengan kebutuhan ruang.</p>
+      <p class="font-playfair font-normal text-dark text-[22px] sm:text-[26px] leading-[1.35] m-0">Menjadi pilihan yang dipercaya untuk solusi tirai dan sistem jendela yang selaras dengan kebutuhan ruang.</p>
     </div>
     <div data-reveal style="--d:120ms">
       <p class="font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase mb-3">MISI</p>
@@ -80,7 +80,7 @@ $team = [
 
     <!-- Judul: gaya sama dengan section di landing page -->
     <div class="flex flex-col gap-3 items-center w-full" data-reveal>
-      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] tracking-[1.8px] uppercase text-center leading-[1.15] m-0">TIM KAMI</h2>
+      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] tracking-[-0.5px] text-center leading-[1.2] m-0">Tim Kami</h2>
       <div class="bg-brand h-[2px] w-12"></div>
     </div>
 
@@ -115,7 +115,7 @@ $team = [
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12">
     <div class="text-center mb-10 md:mb-14" data-reveal>
       <p class="font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase mb-3">MENGAPA MEMILIH WINTOM?</p>
-      <h2 class="font-playfair font-bold text-dark text-[26px] sm:text-[32px] md:text-[36px] leading-[1.2] tracking-[-0.8px] max-w-[760px] mx-auto mb-4">Gorden Custom Premium: Praktis Secara Online, Presisi Secara Offline.</h2>
+      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] max-w-[760px] mx-auto mb-4">Gorden Custom Premium: Praktis Secara Online, Presisi Secara Offline.</h2>
       <p class="font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6] max-w-[760px] mx-auto">Kemudahan konsultasi dan pilih model gorden dari genggaman, dipadukan dengan jaminan kualitas bahan grade A, survei bawakan sampel ke lokasi, hingga instalasi rapi setara hotel bintang lima.</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-px bg-border rounded-[6px] overflow-hidden">
@@ -141,7 +141,7 @@ $team = [
             <?= $v['icon'] ?>
           </svg>
         </div>
-        <h3 class="font-jakarta font-semibold text-dark text-[18px] leading-[1.35] mb-3"><?= $v['title'] ?></h3>
+        <h3 class="font-playfair font-normal text-dark text-[20px] sm:text-[22px] leading-[1.3] mb-3"><?= $v['title'] ?></h3>
         <p class="font-jakarta text-muted text-[16px] leading-[1.6]"><?= $v['desc'] ?></p>
       </div>
       <?php endforeach; ?>
@@ -157,7 +157,7 @@ $team = [
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12">
     <div class="text-center mb-10 md:mb-14" data-reveal>
       <p class="font-jakarta font-semibold text-brand text-[11px] tracking-[2.64px] uppercase mb-3">HUBUNGI KAMI</p>
-      <h2 class="font-playfair font-bold text-dark text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.8px] m-0">Siap Membantu Proyek Anda</h2>
+      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] m-0">Siap Membantu Proyek Anda</h2>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
@@ -166,7 +166,7 @@ $team = [
         <div class="absolute -right-16 -top-16 size-56 rounded-full bg-white/5"></div>
         <div class="absolute -right-4 bottom-[-72px] size-44 rounded-full bg-white/5"></div>
         <p class="relative font-jakarta font-semibold text-white/70 text-[11px] tracking-[2.4px] uppercase mb-3">KONSULTASI GRATIS</p>
-        <h3 class="relative font-playfair font-bold text-[26px] sm:text-[30px] leading-[1.2] mb-4">Ceritakan kebutuhan jendela Anda</h3>
+        <h3 class="relative font-playfair font-normal text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] mb-4">Ceritakan kebutuhan jendela Anda</h3>
         <p class="relative font-jakarta text-white/80 text-[15px] leading-[1.6] mb-8 max-w-[440px]">Isi form singkat — jenis tirai, ukuran lebar &amp; tinggi, dan jumlahnya. Tim kami menyiapkan penawaran lalu melanjutkan obrolan lewat WhatsApp.</p>
         <div class="relative flex flex-col sm:flex-row gap-3">
           <button type="button" data-open-quote

@@ -50,7 +50,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
         </div>
 
         <!-- Main heading -->
-        <h1 class="wt-in font-playfair font-normal text-white text-[34px] sm:text-[44px] md:text-[54px] tracking-[-0.5px] md:tracking-[-1px] leading-[1.12] max-w-[760px] m-0 drop-shadow-[0px_1px_0.5px_rgba(0,0,0,0.05)]" style="--d:220ms">
+        <h1 class="wt-in font-playfair font-normal text-white text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] tracking-[-0.5px] max-w-[760px] m-0 drop-shadow-[0px_1px_0.5px_rgba(0,0,0,0.05)]" style="--d:220ms">
           Gorden &amp; Blinds yang Pas Sempurna di Setiap Jendela
         </h1>
 
@@ -109,12 +109,12 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
         <img src="<?= htmlspecialchars(asset_url($img)) ?>" alt="<?= htmlspecialchars($cat['name']) ?>" loading="lazy"
              class="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.06]" />
         <?php else: ?>
-        <span class="absolute inset-0 flex items-center justify-center font-playfair text-brand/25 text-[64px] uppercase"><?= htmlspecialchars(mb_substr($cat['name'], 0, 1)) ?></span>
+        <span class="absolute inset-0 flex items-center justify-center font-playfair font-normal text-brand/25 text-[64px] uppercase"><?= htmlspecialchars(mb_substr($cat['name'], 0, 1)) ?></span>
         <?php endif; ?>
       </div>
       <div class="flex items-center justify-between gap-4 p-5 sm:p-6 flex-1">
         <div class="flex flex-col gap-[3px] min-w-0">
-          <h2 class="font-playfair font-normal text-dark text-[22px] sm:text-[24px] uppercase leading-[1.2] m-0"><?= htmlspecialchars($cat['name']) ?></h2>
+          <h2 class="font-playfair font-normal text-dark text-[20px] sm:text-[22px] leading-[1.3] m-0"><?= htmlspecialchars($cat['name']) ?></h2>
           <?php if ($cat['tagline']): ?>
           <span class="font-jakarta font-medium text-muted text-[11px] tracking-[1.65px] uppercase leading-[16.5px]"><?= htmlspecialchars($cat['tagline']) ?></span>
           <?php endif; ?>
@@ -139,8 +139,8 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
 
       <div class="lg:col-span-3 flex flex-col gap-4 items-start" data-reveal>
-        <h2 class="font-playfair font-normal text-dark text-[26px] md:text-[30px] uppercase leading-[1.2] m-0">
-          KUALITAS<br class="hidden lg:block"> DI SETIAP DETAIL
+        <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] m-0">
+          Kualitas<br class="hidden lg:block"> di Setiap Detail
         </h2>
         <div class="bg-brand h-[2px] w-10"></div>
       </div>
@@ -182,7 +182,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
         <span class="size-14 rounded-full bg-white border border-[#ece8e1] flex items-center justify-center mb-4 shadow-sm">
           <svg class="size-7" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><?= $f['icon'] ?></svg>
         </span>
-        <h3 class="font-playfair font-normal text-dark text-[20px] leading-[1.3] m-0 mb-2"><?= $f['title'] ?></h3>
+        <h3 class="font-playfair font-normal text-dark text-[20px] sm:text-[22px] leading-[1.3] m-0 mb-2"><?= $f['title'] ?></h3>
         <p class="font-jakarta text-muted text-[15px] leading-[1.6] m-0 max-w-[340px]"><?= $f['desc'] ?></p>
       </div>
       <?php endforeach; ?>
@@ -198,7 +198,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12">
     <div class="max-w-[820px] mx-auto text-center mb-10 md:mb-14" data-reveal>
       <p class="font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase mb-4">MENGAPA MEMILIH WINTOM?</p>
-      <h2 class="font-playfair font-normal text-dark text-[26px] sm:text-[32px] md:text-[38px] leading-[1.2] m-0 mb-5">Konsultasi Praktis dari Rumah, Pemasangan Presisi di Lokasi</h2>
+      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] m-0 mb-5">Konsultasi Praktis dari Rumah, Pemasangan Presisi di Lokasi</h2>
       <p class="font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6] m-0">Pilih model dan konsultasi langsung dari ponsel Anda. Saat siap, tim kami datang membawa sampel bahan grade A, mengukur dengan presisi, lalu memasang serapi standar hotel bintang lima.</p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -211,9 +211,9 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
       ];
       foreach ($usp as $i => [$t, $d]): ?>
       <div class="bg-white border border-[#ece8e1] rounded-[2px] p-6 sm:p-8 flex gap-4 sm:gap-5 hover:-translate-y-1 hover:shadow-[0_18px_40px_-20px_rgba(34,34,32,0.3)] transition-all duration-300" data-reveal style="--d:<?= ($i % 2) * 120 ?>ms">
-        <span class="font-playfair text-brand text-[32px] leading-none shrink-0"><?= sprintf('%02d', $i + 1) ?></span>
+        <span class="font-playfair font-normal text-brand text-[32px] leading-none shrink-0"><?= sprintf('%02d', $i + 1) ?></span>
         <div>
-          <h3 class="font-playfair font-normal text-dark text-[19px] sm:text-[22px] leading-[1.3] m-0 mb-2"><?= htmlspecialchars($t) ?></h3>
+          <h3 class="font-playfair font-normal text-dark text-[20px] sm:text-[22px] leading-[1.3] m-0 mb-2"><?= htmlspecialchars($t) ?></h3>
           <p class="font-jakarta text-muted text-[15px] sm:text-[16px] leading-[1.6] m-0"><?= htmlspecialchars($d) ?></p>
         </div>
       </div>
@@ -296,7 +296,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
 <section id="konten" class="bg-[#faf8f5] border-t border-[#ece8e1] py-16 md:py-24">
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12 flex flex-col gap-10 md:gap-12">
     <div class="flex flex-col gap-3 items-center w-full" data-reveal>
-      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] tracking-[1.8px] uppercase text-center leading-[1.15] m-0">KONTEN WINTOM</h2>
+      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] tracking-[-0.5px] text-center leading-[1.2] m-0">Konten Wintom</h2>
       <div class="bg-brand h-[2px] w-12"></div>
     </div>
     <div class="flex flex-wrap justify-center gap-4 md:gap-6">
@@ -352,8 +352,8 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
 
     <!-- Section Heading -->
     <div class="flex flex-col gap-3 items-center w-full" data-reveal>
-      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] tracking-[1.8px] uppercase text-center leading-[1.15] m-0">
-        KATA PELANGGAN KAMI
+      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] tracking-[-0.5px] text-center leading-[1.2] m-0">
+        Kata Pelanggan Kami
       </h2>
       <div class="bg-brand h-[2px] w-12"></div>
     </div>
@@ -425,7 +425,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
 <section id="faq" class="bg-[#f4f1ea] border-t border-[#ece8e1] py-16 md:py-24">
   <div class="max-w-[860px] mx-auto px-4 sm:px-6 lg:px-12 flex flex-col gap-10 md:gap-12">
     <div class="flex flex-col gap-3 items-center w-full" data-reveal>
-      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] tracking-[1.8px] uppercase text-center leading-[1.15] m-0">PERTANYAAN UMUM</h2>
+      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] tracking-[-0.5px] text-center leading-[1.2] m-0">Pertanyaan Umum</h2>
       <div class="bg-brand h-[2px] w-12"></div>
     </div>
     <div class="flex flex-col gap-3">
@@ -464,7 +464,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12">
     <div class="text-center mb-10 md:mb-14" data-reveal>
       <p class="font-jakarta font-semibold text-brand text-[11px] tracking-[2.64px] uppercase mb-3">HUBUNGI KAMI</p>
-      <h2 class="font-playfair font-bold text-dark text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.8px] m-0">Ceritakan Kebutuhan Jendela Anda</h2>
+      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] m-0">Ceritakan Kebutuhan Jendela Anda</h2>
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
       <div class="min-w-0" data-reveal><?php render_inquiry_form('home', $quote_categories); ?></div>

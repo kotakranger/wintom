@@ -24,7 +24,10 @@ $quote_categories = $quote_categories
   <link rel="apple-touch-icon" href="<?= BASE_URL ?>/assets/images/favicon.png" />
   <meta name="description" content="Wintom Curtain — Spesialis gorden premium, roller blind, dan motorized smart system untuk hunian dan komersial di Jabodetabek." />
 
-  <!-- Google Fonts -->
+  <!-- Google Fonts: Libre Caslon Text untuk judul (teks tetap Arial) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <!-- Penanda JS aktif: konten [data-reveal] hanya disembunyikan bila script animasi bisa berjalan -->
   <script>document.documentElement.classList.add('js');</script>
@@ -36,7 +39,7 @@ $quote_categories = $quote_categories
       theme: {
         extend: {
           fontFamily: {
-            'playfair': ['Georgia','"Times New Roman"','serif'],
+            'playfair': ['"Libre Caslon Text"','Georgia','serif'],
             'jakarta': ['Arial','Helvetica','sans-serif'],
           },
           colors: {
