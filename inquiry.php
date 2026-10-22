@@ -48,7 +48,9 @@ if (trim((string)($_POST['website'] ?? '')) !== '') {
 $full_name   = trim(preg_replace('/\s+/u', ' ', (string)($_POST['full_name'] ?? '')));
 $whatsapp    = trim((string)($_POST['whatsapp'] ?? ''));
 $category_id = (int)($_POST['category_id'] ?? 0);
-$size        = trim((string)($_POST['estimated_size'] ?? ''));
+$width_raw   = trim(str_replace(',', '.', (string)($_POST['width_cm'] ?? '')));
+$height_raw  = trim(str_replace(',', '.', (string)($_POST['height_cm'] ?? '')));
+$qty_raw     = trim((string)($_POST['quantity'] ?? ''));
 $notes       = trim((string)($_POST['notes'] ?? ''));
 
 $errors = [];
@@ -84,19 +86,46 @@ $db = get_db();
 
 $category = null;
 if ($category_id <= 0) {
-    $errors['category_id'] = 'Pilih jenis curtain.';
+    $errors['category_id'] = 'Pilih jenis produk.';
 } else {
     $st = $db->prepare('SELECT id, name FROM categories WHERE id = ?');
     $st->execute([$category_id]);
     $category = $st->fetch();
     if (!$category) {
-        $errors['category_id'] = 'Jenis curtain tidak ditemukan.';
+        $errors['category_id'] = 'Jenis produk tidak ditemukan. Muat ulang halaman lalu pilih lagi.';
     }
 }
 
-if ($len($size) > 100) {
-    $errors['estimated_size'] = 'Estimasi ukuran maksimal 100 karakter.';
+// Ukuran opsional, tapi lebar & tinggi harus diisi berpasangan (cm, 1–10.000, maks. 1 desimal)
+const INQUIRY_MAX_DIM = 10000;
+const INQUIRY_MAX_QTY = 999;
+$parse_dim = function (string $raw, string $field, string $label) use (&$errors): ?float {
+    if ($raw === '') {
+        return null;
+    }
+    if (!preg_match('/^\d{1,5}(\.\d)?$/', $raw) || (float)$raw <= 0 || (float)$raw > INQUIRY_MAX_DIM) {
+        $errors[$field] = $label . ' harus angka 1–' . number_format(INQUIRY_MAX_DIM, 0, ',', '.') . ' cm.';
+        return null;
+    }
+    return (float)$raw;
+};
+$width  = $parse_dim($width_raw, 'width_cm', 'Lebar');
+$height = $parse_dim($height_raw, 'height_cm', 'Tinggi');
+if ($width_raw !== '' && $height_raw === '') {
+    $errors['height_cm'] = 'Isi juga tingginya.';
+} elseif ($height_raw !== '' && $width_raw === '') {
+    $errors['width_cm'] = 'Isi juga lebarnya.';
 }
+
+$quantity = 1;
+if ($qty_raw !== '') {
+    if (!ctype_digit($qty_raw) || (int)$qty_raw < 1 || (int)$qty_raw > INQUIRY_MAX_QTY) {
+        $errors['quantity'] = 'Jumlah harus bilangan bulat 1–' . INQUIRY_MAX_QTY . '.';
+    } else {
+        $quantity = (int)$qty_raw;
+    }
+}
+$size = format_inquiry_size($width, $height, $quantity);
 if ($len($notes) > 1000) {
     $errors['notes'] = 'Detail kebutuhan maksimal 1000 karakter.';
 }
@@ -119,15 +148,18 @@ if ((int)$rl->fetchColumn() >= INQUIRY_MAX_PER_WINDOW) {
 
 try {
     $ins = $db->prepare(
-        'INSERT INTO inquiries (full_name, whatsapp, category_id, curtain_type, estimated_size, notes, ip_address)
-         VALUES (?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO inquiries (full_name, whatsapp, category_id, curtain_type, estimated_size, width_cm, height_cm, quantity, notes, ip_address)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $ins->execute([
         $full_name,
         $whatsapp,
         (int)$category['id'],
         $category['name'],
-        $size !== '' ? $size : null,
+        $size,
+        $width,
+        $height,
+        $quantity,
         $notes !== '' ? $notes : null,
         $ip !== '' ? $ip : null,
     ]);
@@ -143,9 +175,9 @@ $lines = [
     '',
     '*Nama:* ' . $full_name,
     '*No. WhatsApp:* ' . $whatsapp,
-    '*Jenis Curtain:* ' . $category['name'],
-    '*Estimasi Ukuran:* ' . ($size !== '' ? $size : '-'),
-    '*Kebutuhan / Detail:* ' . ($notes !== '' ? $notes : '-'),
+    '*Jenis Produk:* ' . $category['name'],
+    '*Ukuran:* ' . $size,
+    '*Catatan:* ' . ($notes !== '' ? $notes : '-'),
     '',
     '(Ref. inquiry #' . $inquiry_id . ')',
 ];

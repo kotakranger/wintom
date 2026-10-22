@@ -22,3 +22,9 @@ Thumbs.db
 
 # Local DB config
 /includes/config.local.php
+
+# File upload dari admin (data lokal/server, bukan kode) — folder tetap di-track lewat .gitkeep/.htaccess
+/uploads/**/*
+!/uploads/**/
+!/uploads/.htaccess
+!/uploads/**/.gitkeep

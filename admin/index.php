@@ -10,7 +10,13 @@ $total_gallery  = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn
 $category_count = (int)$db->query("SELECT COUNT(*) FROM categories")->fetchColumn();
 $new_inquiries  = (int)$db->query("SELECT COUNT(*) FROM inquiries WHERE status = 'new'")->fetchColumn();
 $recent_inquiries = $db->query("SELECT id, full_name, whatsapp, curtain_type, status, created_at FROM inquiries ORDER BY created_at DESC, id DESC LIMIT 5")->fetchAll();
-$recent_products = $db->query("SELECT p.name, c.name AS category, p.price, p.created_at FROM products p JOIN categories c ON c.id = p.category_id ORDER BY p.created_at DESC LIMIT 5")->fetchAll();
+$category_rows = $db->query("
+    SELECT c.id, c.name, c.price_per_meter, COUNT(p.id) AS product_count,
+           SUM(p.is_active = 1) AS active_count
+    FROM categories c LEFT JOIN products p ON p.category_id = c.id
+    GROUP BY c.id, c.name, c.price_per_meter, c.sort_order
+    ORDER BY c.sort_order ASC, c.name ASC")->fetchAll();
+$recent_products = $db->query("SELECT p.name, c.name AS category, c.price_per_meter, p.price, p.price_unit, p.use_category_price, p.created_at FROM products p JOIN categories c ON c.id = p.category_id ORDER BY p.created_at DESC LIMIT 5")->fetchAll();
 
 function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0, ',', '.'); }
 ?>
@@ -20,7 +26,7 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
   <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — Wintom Admin</title>
 <link rel="icon" type="image/png" href="../assets/images/favicon.png"/>
-  <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{fontFamily:{playfair:['Georgia','"Times New Roman"','serif'],jakarta:['Arial','Helvetica','sans-serif']},colors:{brand:{DEFAULT:'#860524',dark:'#6a041c'},dark:'#242424',muted:'#686561',cream:'#faf8f5','cream-dark':'#f4f1ea',border:'#ece8e1'}}}}</script>
   <style>*{box-sizing:border-box;}</style>
 </head>
@@ -81,7 +87,7 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
       <p class="font-playfair font-semibold text-dark text-[32px]"><?= $total_products ?></p>
     </div>
     <div class="bg-white border border-border rounded-[6px] p-6">
-      <p class="font-jakarta font-semibold text-muted text-[11px] tracking-[1.5px] uppercase mb-2">Foto Galeri</p>
+      <p class="font-jakarta font-semibold text-muted text-[11px] tracking-[1.5px] uppercase mb-2">Proyek Portofolio</p>
       <p class="font-playfair font-semibold text-dark text-[32px]"><?= $total_gallery ?></p>
     </div>
     <div class="bg-white border border-border rounded-[6px] p-6">
@@ -110,6 +116,44 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
     </table>
   </div>
 
+  <!-- Kategori: harga per meter & jumlah produk -->
+  <div class="bg-white border border-border rounded-[6px] overflow-hidden mb-8">
+    <div class="px-6 py-4 border-b border-border flex items-center justify-between">
+      <h2 class="font-jakarta font-semibold text-dark text-[15px]">Kategori Produk</h2>
+      <a href="categories.php" class="font-jakarta text-brand text-[12px] tracking-[1px] uppercase hover:underline">Kelola Kategori →</a>
+    </div>
+    <table class="w-full">
+      <thead class="bg-cream-dark">
+        <tr>
+          <th class="px-5 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Kategori</th>
+          <th class="px-5 py-3 text-right font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Harga / meter</th>
+          <th class="px-5 py-3 text-right font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Jumlah Produk</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($category_rows as $c): ?>
+        <tr class="border-t border-border hover:bg-cream transition-colors">
+          <td class="px-5 py-3.5 font-jakarta text-dark text-[13px]"><?= htmlspecialchars($c['name']) ?></td>
+          <td class="px-5 py-3.5 text-right">
+            <?php if ((int)$c['price_per_meter'] > 0): ?>
+            <span class="font-playfair font-semibold text-dark text-[14px]"><?= fmt_price((int)$c['price_per_meter']) ?></span>
+            <?php else: ?>
+            <span class="font-jakarta text-amber-700 text-[12px]">Belum diatur</span>
+            <?php endif; ?>
+          </td>
+          <td class="px-5 py-3.5 font-jakarta text-dark text-[13px] text-right">
+            <?= (int)$c['product_count'] ?>
+            <?php if ((int)$c['product_count'] !== (int)$c['active_count']): ?>
+            <span class="text-muted text-[11px]">(<?= (int)$c['active_count'] ?> aktif)</span>
+            <?php endif; ?>
+          </td>
+        </tr>
+        <?php endforeach; ?>
+        <?php if (!$category_rows): ?><tr><td colspan="3" class="px-5 py-8 text-center font-jakarta text-muted text-[13px]">Belum ada kategori.</td></tr><?php endif; ?>
+      </tbody>
+    </table>
+  </div>
+
   <!-- Recent Products -->
   <div class="bg-white border border-border rounded-[6px] overflow-hidden">
     <div class="px-6 py-4 border-b border-border flex items-center justify-between">
@@ -129,7 +173,7 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
         <tr class="border-t border-border hover:bg-cream transition-colors">
           <td class="px-5 py-3.5 font-jakarta text-dark text-[13px]"><?= htmlspecialchars($p['name']) ?></td>
           <td class="px-5 py-3.5 font-jakarta text-muted text-[12px]"><?= htmlspecialchars($p['category']) ?></td>
-          <td class="px-5 py-3.5 font-playfair font-semibold text-dark text-[14px] text-right"><?= fmt_price($p['price']) ?></td>
+          <td class="px-5 py-3.5 font-playfair font-semibold text-dark text-[14px] text-right"><?php $pp = product_price($p); ?><?= $pp['amount'] > 0 ? fmt_price($pp['amount']) . ' <span class="font-jakarta font-normal text-muted text-[11px]">' . htmlspecialchars($pp['unit']) . ($pp['custom'] ? ' · custom' : '') . '</span>' : '<span class="font-jakarta font-normal text-amber-700 text-[12px]">Belum diatur</span>' ?></td>
         </tr>
         <?php endforeach; ?>
       </tbody>

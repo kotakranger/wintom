@@ -2,6 +2,7 @@
 // products.php — Katalog Produk & Koleksi Arsitektural Wintom
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/product-card.php';
 
 $page_title = 'Katalog Koleksi Gorden & Blinds';
 $active_nav = 'products';
@@ -63,10 +64,10 @@ try {
     // Sorting
     switch ($sort_by) {
         case 'price_asc':
-            $sql .= " ORDER BY p.price ASC";
+            $sql .= " ORDER BY " . PRODUCT_PRICE_SQL . " ASC, p.name ASC";
             break;
         case 'price_desc':
-            $sql .= " ORDER BY p.price DESC";
+            $sql .= " ORDER BY " . PRODUCT_PRICE_SQL . " DESC, p.name ASC";
             break;
         case 'name_asc':
             $sql .= " ORDER BY p.name ASC";
@@ -88,29 +89,28 @@ include_once __DIR__ . '/includes/header.php';
 ?>
 
 <!-- ===== HERO HEADER KATALOG ===== -->
-<section class="relative bg-cream-dark/60 border-b border-border py-16 md:py-20">
-  <div class="max-w-[1280px] mx-auto px-6 md:px-12">
+<section class="relative bg-cream-dark/60 border-b border-border py-12 md:py-20">
+  <div class="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
     <div class="max-w-3xl">
       <!-- Eyebrow -->
-      <div class="flex items-center gap-3 mb-4">
-        <span class="w-6 h-[1.5px] bg-brand"></span>
+      <div class="wt-in flex items-center gap-3 mb-4" style="--d:60ms">
         <span class="font-jakarta font-semibold text-[11px] tracking-widest-4 uppercase text-brand">
           KATALOG EKSKLUSIF WINTOM
         </span>
       </div>
 
       <!-- Main Heading -->
-      <h1 class="font-playfair text-3xl md:text-5xl font-bold text-dark leading-tight mb-5">
+      <h1 class="wt-in font-playfair text-3xl md:text-5xl font-bold text-dark leading-tight mb-5" style="--d:160ms">
         Kurasi Tirai & Blinds Arsitektural
       </h1>
 
       <!-- Description -->
-      <p class="font-jakarta text-[15px] md:text-[16px] text-muted leading-relaxed mb-8">
+      <p class="wt-in font-jakarta text-[15px] md:text-[16px] text-muted leading-relaxed mb-8" style="--d:260ms">
         Kombinasi material berstandar internasional, presisi hemming atelier, dan sistem rel silent mekanik bergaransi. Sempurna untuk hunian residensial mewah, apartemen, maupun ruang komersial.
       </p>
 
       <!-- Search & Sort Filter Bar -->
-      <form action="<?= BASE_URL ?>/products.php" method="GET" class="flex flex-col sm:flex-row gap-3">
+      <form action="<?= BASE_URL ?>/products.php" method="GET" class="wt-in flex flex-col sm:flex-row gap-3" style="--d:360ms">
         <?php if (!empty($selected_cat)): ?>
           <input type="hidden" name="category" value="<?= htmlspecialchars($selected_cat) ?>">
         <?php endif; ?>
@@ -121,7 +121,7 @@ include_once __DIR__ . '/includes/header.php';
             name="q"
             value="<?= htmlspecialchars($search_query) ?>"
             placeholder="Cari kain linen, blackout, motorized, kode seri..."
-            class="w-full bg-white border border-border rounded-[3px] px-4 py-3 pl-11 text-[13px] font-jakarta focus:outline-none focus:border-brand transition-colors text-dark"
+            class="w-full bg-white border border-border rounded-[3px] px-4 py-3 pl-11 text-[16px] sm:text-[13px] font-jakarta focus:outline-none focus:border-brand transition-colors text-dark"
           />
           <div class="absolute left-4 top-1/2 -translate-y-1/2 text-muted">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,7 +134,7 @@ include_once __DIR__ . '/includes/header.php';
           <select
             name="sort"
             onchange="this.form.submit()"
-            class="bg-white border border-border rounded-[3px] px-4 py-3 text-[13px] font-jakarta focus:outline-none focus:border-brand text-dark cursor-pointer"
+            class="flex-1 sm:flex-none min-w-0 bg-white border border-border rounded-[3px] px-4 py-3 text-[16px] sm:text-[13px] font-jakarta focus:outline-none focus:border-brand text-dark cursor-pointer"
           >
             <option value="newest" <?= $sort_by === 'newest' ? 'selected' : '' ?>>Koleksi Terbaru</option>
             <option value="price_asc" <?= $sort_by === 'price_asc' ? 'selected' : '' ?>>Harga: Terendah</option>
@@ -156,8 +156,8 @@ include_once __DIR__ . '/includes/header.php';
 
 <!-- ===== CATEGORY FILTER TABS ===== -->
 <section class="bg-cream sticky top-[80px] z-30 border-b border-border shadow-sm">
-  <div class="max-w-[1280px] mx-auto px-6 md:px-12">
-    <div class="flex items-center gap-2 md:gap-3 overflow-x-auto py-3.5 no-scrollbar">
+  <div class="max-w-[1280px] mx-auto">
+    <div class="flex items-center gap-2 md:gap-3 overflow-x-auto py-3.5 px-4 sm:px-6 md:px-12 no-scrollbar">
       <?php foreach ($categories as $label => $val):
         $isActive = ($selected_cat === $val);
         $catUrl = BASE_URL . '/products.php';
@@ -179,11 +179,11 @@ include_once __DIR__ . '/includes/header.php';
 </section>
 
 <!-- ===== PRODUCT LISTING GRID ===== -->
-<section class="py-16 md:py-24 bg-cream">
-  <div class="max-w-[1280px] mx-auto px-6 md:px-12">
+<section class="py-10 md:py-24 bg-cream">
+  <div class="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
 
     <!-- Active Filters Summary -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-8 mb-8 border-b border-border">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 md:pb-8 md:mb-8 border-b border-border">
       <div class="text-[13px] text-muted">
         Menampilkan <span class="font-bold text-dark"><?= count($products) ?></span> koleksi
         <?php if (!empty($selected_cat)): ?>
@@ -223,141 +223,10 @@ include_once __DIR__ . '/includes/header.php';
 
     <!-- Product Grid -->
     <?php else: ?>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <?php foreach ($products as $prod):
-          $detail_url = BASE_URL . '/product-detail.php?slug=' . urlencode($prod['slug']);
-          $wa_msg = urlencode("Halo Wintom Curtain, saya tertarik berkonsultasi mengenai produk: {$prod['name']} (REF: {$prod['ref_code']}). Mohon info estimasi harga dan jadwal survei gratis.");
-          $wa_product_url = WA_URL . "?text=" . $wa_msg;
-
-          // Hitung persen diskon jika ada
-          $has_discount = (!empty($prod['original_price']) && $prod['original_price'] > $prod['price']);
-          $discount_pct = $has_discount ? round((($prod['original_price'] - $prod['price']) / $prod['original_price']) * 100) : 0;
-
-          // Parse features (max 2 untuk kartu produk)
-          $feat_list = [];
-          if (!empty($prod['features'])) {
-              $feat_list = array_slice(explode('|', $prod['features']), 0, 2);
-          }
-        ?>
-          <div class="group bg-white border border-border rounded-[4px] overflow-hidden flex flex-col hover:border-brand/40 hover:shadow-xl transition-all duration-300">
-            
-            <!-- Image Card Container (Aspect 3/4) -->
-            <a href="<?= $detail_url ?>" class="relative aspect-[3/4] overflow-hidden bg-cream block">
-              <img
-                src="<?= htmlspecialchars($prod['cover_image']) ?>"
-                alt="<?= htmlspecialchars($prod['name']) ?>"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                loading="lazy"
-              />
-
-              <!-- Gradient overlay subtle on hover -->
-              <div class="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-black/10 opacity-60 group-hover:opacity-80 transition-opacity"></div>
-
-              <!-- Top Left: Category Badge -->
-              <div class="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
-                <span class="bg-white/95 backdrop-blur-[4px] text-dark font-jakarta font-semibold text-[10px] tracking-[1.2px] uppercase px-2.5 py-1 rounded-[2px] shadow-sm">
-                  <?= htmlspecialchars($prod['category']) ?>
-                </span>
-                <?php if (!empty($prod['badge'])): ?>
-                  <span class="bg-brand text-white font-jakarta font-semibold text-[9px] tracking-[1.2px] uppercase px-2 py-0.5 rounded-[2px] shadow-sm">
-                    <?= htmlspecialchars($prod['badge']) ?>
-                  </span>
-                <?php endif; ?>
-              </div>
-
-              <!-- Top Right: Discount Pill -->
-              <?php if ($has_discount): ?>
-                <div class="absolute top-3.5 right-3.5">
-                  <span class="bg-dark/90 text-white font-jakarta font-bold text-[10px] tracking-wider px-2 py-1 rounded-[2px] shadow-sm">
-                    HEMAT <?= $discount_pct ?>%
-                  </span>
-                </div>
-              <?php endif; ?>
-
-              <!-- Bottom Over Image: Ref Code -->
-              <div class="absolute bottom-3.5 left-3.5 right-3.5 flex items-center justify-between text-white/90 text-[11px] font-mono">
-                <span class="bg-dark/70 backdrop-blur-sm px-2 py-0.5 rounded-[2px]">
-                  REF: <?= htmlspecialchars($prod['ref_code'] ?? 'WNT-PROD') ?>
-                </span>
-                <span class="flex items-center gap-1 text-[10px] uppercase font-jakarta tracking-wider font-semibold opacity-0 group-hover:opacity-100 transition-opacity text-white">
-                  Detail Produk
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                  </svg>
-                </span>
-              </div>
-            </a>
-
-            <!-- Card Body Content -->
-            <div class="p-6 flex-1 flex flex-col justify-between">
-              <div>
-                <!-- Title -->
-                <h3 class="font-playfair text-[19px] md:text-[20px] font-bold text-dark leading-snug mb-2 group-hover:text-brand transition-colors">
-                  <a href="<?= $detail_url ?>">
-                    <?= htmlspecialchars($prod['name']) ?>
-                  </a>
-                </h3>
-
-                <!-- Short Description -->
-                <p class="font-jakarta text-[13px] text-muted leading-relaxed line-clamp-2 mb-4">
-                  <?= htmlspecialchars($prod['description']) ?>
-                </p>
-
-                <!-- Features Bullets -->
-                <?php if (!empty($feat_list)): ?>
-                  <div class="space-y-1.5 mb-5 pb-5 border-b border-border/70">
-                    <?php foreach ($feat_list as $f): ?>
-                      <div class="flex items-center gap-2 text-[11px] text-dark/80 font-jakarta">
-                        <svg class="w-3.5 h-3.5 text-brand shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                        <span class="truncate"><?= htmlspecialchars(trim($f)) ?></span>
-                      </div>
-                    <?php endforeach; ?>
-                  </div>
-                <?php endif; ?>
-              </div>
-
-              <!-- Price & CTA Action Buttons -->
-              <div>
-                <div class="mb-4">
-                  <div class="text-[11px] font-jakarta tracking-wider uppercase text-muted mb-0.5">Estimasi Material Mulai</div>
-                  <div class="flex items-baseline gap-2">
-                    <span class="font-playfair font-bold text-2xl text-brand">
-                      Rp <?= number_format($prod['price'], 0, ',', '.') ?>
-                    </span>
-                    <span class="text-[11px] font-jakarta text-muted">
-                      <?= htmlspecialchars($prod['price_unit'] ?? '/ meter') ?>
-                    </span>
-                    <?php if ($has_discount): ?>
-                      <span class="text-[12px] font-jakarta text-muted line-through ml-auto">
-                        Rp <?= number_format($prod['original_price'], 0, ',', '.') ?>
-                      </span>
-                    <?php endif; ?>
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2.5">
-                  <a
-                    href="<?= $detail_url ?>"
-                    class="w-full text-center py-2.5 border border-dark/30 hover:border-brand hover:text-brand text-dark font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors"
-                  >
-                    DETAIL
-                  </a>
-                  <a
-                    href="<?= $wa_product_url ?>"
-                    target="_blank"
-                    rel="noopener"
-                    class="w-full text-center py-2.5 bg-brand hover:bg-[#6a041c] text-white font-jakarta font-semibold text-[11px] tracking-widest-2 uppercase rounded-[3px] transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <span>KONSULTASI</span>
-                  </a>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        <?php endforeach; ?>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <?php foreach ($products as $i => $prod) {
+            render_product_card($prod, ($i % 3) * 100);
+        } ?>
       </div>
     <?php endif; ?>
 
@@ -365,16 +234,15 @@ include_once __DIR__ . '/includes/header.php';
 </section>
 
 <!-- ===== ARCHITECTURAL ON-SITE SURVEY BANNER ===== -->
-<section class="bg-dark text-white py-16 md:py-20 relative overflow-hidden">
+<section class="bg-dark text-white py-14 md:py-20 relative overflow-hidden">
   <!-- Subtle decorative grid pattern -->
   <div class="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px]"></div>
 
-  <div class="max-w-[1280px] mx-auto px-6 md:px-12 relative z-10">
+  <div class="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12 relative z-10">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-      <div class="lg:col-span-8">
+      <div class="lg:col-span-8" data-reveal>
         <div class="flex items-center gap-3 mb-3">
-          <span class="w-6 h-[1.5px] bg-brand"></span>
-          <span class="font-jakarta font-semibold text-[11px] tracking-widest-4 uppercase text-cream-dark">
+            <span class="font-jakarta font-semibold text-[11px] tracking-widest-4 uppercase text-cream-dark">
             LAYANAN ATELIER LANGSUNG KE LOKASI
           </span>
         </div>
@@ -386,7 +254,7 @@ include_once __DIR__ . '/includes/header.php';
         </p>
       </div>
 
-      <div class="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-3.5">
+      <div class="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-3.5" data-reveal style="--d:120ms">
         <a
           href="<?= WA_URL ?>?text=Halo+Wintom%2C+saya+ingin+reservasi+jadwal+survei+lokasi+dan+cek+sampel+kain+ke+alamat+saya"
           target="_blank"
