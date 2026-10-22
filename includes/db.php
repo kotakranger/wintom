@@ -57,9 +57,11 @@ function ensure_schema(PDO $pdo): void {
                  OR (table_name = 'product_variant_options' AND column_name = 'width_cm')
                  OR (table_name = 'galleries' AND column_name = 'category_id')
                  OR (table_name = 'products' AND column_name = 'use_category_price')
-                 OR (table_name = 'categories' AND column_name = 'image_url')))"
+                 OR (table_name = 'categories' AND column_name = 'image_url')
+                 OR (table_name = 'categories' AND column_name = 'whatsapp')
+                 OR (table_name = 'inquiries' AND column_name = 'routed_whatsapp')))"
     )->fetch(PDO::FETCH_NUM));
-    if ($have === 10 && $upgrades === 6) {
+    if ($have === 10 && $upgrades === 8) {
         return;
     }
 
@@ -77,6 +79,7 @@ function ensure_schema(PDO $pdo): void {
             price_per_meter INT UNSIGNED NOT NULL DEFAULT 0,
             image_url       VARCHAR(500) DEFAULT NULL,   -- foto kartu kategori di landing page
             tagline         VARCHAR(120) DEFAULT NULL,   -- teks kecil di bawah nama kategori
+            whatsapp        VARCHAR(20)  DEFAULT NULL,   -- admin penjualan kategori ini (628…); kosong = nomor utama
             sort_order      INT NOT NULL DEFAULT 0,
             created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
@@ -177,6 +180,7 @@ function ensure_schema(PDO $pdo): void {
             width_cm       DECIMAL(7,1) UNSIGNED DEFAULT NULL,
             height_cm      DECIMAL(7,1) UNSIGNED DEFAULT NULL,
             quantity       SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+            routed_whatsapp VARCHAR(20) DEFAULT NULL,   -- nomor admin tujuan saat inquiry dikirim
             notes          TEXT,
             status         ENUM('new','contacted','closed') NOT NULL DEFAULT 'new',
             ip_address     VARCHAR(45)  DEFAULT NULL,
@@ -257,6 +261,32 @@ function ensure_schema(PDO $pdo): void {
                     image_url = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1000&q=80&fit=crop'
                     WHERE name = 'Roller Blind'");
     }
+
+    // Upgrade: WhatsApp admin penjualan per kategori + nomor tujuan tiap inquiry
+    if (!$has_col('categories', 'whatsapp')) {
+        $pdo->exec("ALTER TABLE categories ADD COLUMN whatsapp VARCHAR(20) DEFAULT NULL AFTER tagline");
+    }
+    if (!$has_col('inquiries', 'routed_whatsapp')) {
+        $pdo->exec("ALTER TABLE inquiries ADD COLUMN routed_whatsapp VARCHAR(20) DEFAULT NULL AFTER quantity");
+    }
+}
+
+/**
+ * Normalisasi nomor WhatsApp Indonesia ke format wa.me: "0812-3456 7890" / "+62 812…" -> "6281234567890".
+ * @return string|null null bila tidak valid
+ */
+function normalize_wa_number(string $raw): ?string {
+    $raw = trim($raw);
+    if ($raw === '' || !preg_match('/^[+\d][\d\s().-]*$/', $raw)) return null;
+    $d = preg_replace('/\D/', '', $raw);
+    if (str_starts_with($d, '0')) $d = '62' . substr($d, 1);
+    elseif (str_starts_with($d, '8')) $d = '62' . $d;
+    return preg_match('/^62\d{8,13}$/', $d) ? $d : null;
+}
+
+/** Nomor WhatsApp tujuan untuk sebuah kategori (fallback: nomor utama di config). */
+function category_wa_number(?string $category_wa): string {
+    return ($category_wa !== null && $category_wa !== '') ? $category_wa : WA_NUMBER;
 }
 
 /**

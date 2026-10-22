@@ -12,7 +12,7 @@ $active_nav = $active_nav ?? '';
 // Modal "Get a Quote" global (footer.php) butuh sesi CSRF — mulai sebelum ada output.
 csrf_token();
 $quote_categories = $quote_categories
-    ?? get_db()->query('SELECT id, name FROM categories ORDER BY sort_order ASC, name ASC')->fetchAll();
+    ?? get_db()->query('SELECT id, name, whatsapp FROM categories ORDER BY sort_order ASC, name ASC')->fetchAll();   // juga dipakai panel chat (wa-fab.php)
 ?>
 <!DOCTYPE html>
 <html lang="id">

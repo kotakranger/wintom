@@ -21,7 +21,7 @@ if (!$slug) {
     exit;
 }
 
-$stmt = $db->prepare("SELECT p.*, c.name AS category, c.price_per_meter FROM products p JOIN categories c ON c.id = p.category_id WHERE p.slug = ? AND p.is_active = 1");
+$stmt = $db->prepare("SELECT p.*, c.name AS category, c.price_per_meter, c.whatsapp AS category_whatsapp FROM products p JOIN categories c ON c.id = p.category_id WHERE p.slug = ? AND p.is_active = 1");
 $stmt->execute([$slug]);
 $product = $stmt->fetch();
 if (!$product) {
@@ -330,7 +330,7 @@ foreach ($gallery_images as $gi) {
             MINTA PENAWARAN GRATIS
             <span class="transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span>
           </button>
-          <a href="<?= WA_URL ?>?text=<?= $wa_msg ?>" target="_blank" rel="noopener" id="wa-cta-btn"
+          <a href="https://wa.me/<?= htmlspecialchars(category_wa_number($product['category_whatsapp'] ?? null)) ?>?text=<?= $wa_msg ?>" target="_blank" rel="noopener" id="wa-cta-btn"
              data-product-name="<?= htmlspecialchars($product['name']) ?>"
              data-product-cat="<?= htmlspecialchars($product['category']) ?>"
              data-product-url="<?= htmlspecialchars($product_url) ?>"

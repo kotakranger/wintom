@@ -105,17 +105,8 @@ require_once __DIR__ . '/config.php';
   </div>
 </footer>
 
-<!-- ===== FLOATING WHATSAPP BUTTON ===== -->
-<a href="<?= WA_URL ?>?text=Halo+Wintom%2C+saya+ingin+konsultasi+gorden"
-   target="_blank" rel="noopener"
-   class="wa-float fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 bg-[#25d366] rounded-full p-[14px] shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
-   aria-label="Chat WhatsApp Wintom">
-  <svg class="size-6" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.946 9.946 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2Z"/>
-    <path d="M8.94 7.8c.2-.5.75-1 1.5-1 .6 0 1 .3 1.25.6l1.25 2c.25.5.05 1-.25 1.3l-.5.5c.5.9 1.35 1.75 2.25 2.25l.5-.5c.3-.3.8-.5 1.3-.25l2 1.25c.3.25.6.65.6 1.25 0 .75-.5 1.3-1 1.5C17.25 17 14.75 17.5 12 14.75c-2.75-2.75-2.25-5.25-1.8-6.08C10.4 8.42 9.24 8 8.94 7.8Z" fill="#242424" opacity="0"/>
-    <path d="M8.94 7.8c.2-.5.75-1 1.5-1 .6 0 1 .3 1.25.6l1.25 2c.25.5.05 1-.25 1.3l-.5.5c.5.9 1.35 1.75 2.25 2.25l.5-.5c.3-.3.8-.5 1.3-.25l2 1.25c.3.25.6.65.6 1.25 0 .75-.5 1.3-1 1.5C17.25 17 14.75 17.5 12 14.75c-2.75-2.75-2.25-5.25-1.8-6.08C10.4 8.42 9.24 8 8.94 7.8Z" fill="white"/>
-  </svg>
-</a>
+<!-- ===== FLOATING WHATSAPP: pilih topik ===== -->
+<?php include __DIR__ . '/wa-fab.php'; ?>
 
 <?php include __DIR__ . '/inquiry-modal.php'; ?>
 
