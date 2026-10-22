@@ -43,13 +43,23 @@ function connect_db(): PDO {
  * keeps this to a single cheap query per request once the schema exists.
  */
 function ensure_schema(PDO $pdo): void {
-    $have = (int)$pdo->query(
-        "SELECT COUNT(*) FROM information_schema.tables
-         WHERE table_schema = DATABASE()
-           AND table_name IN ('admins','categories','products','product_images','product_variants',
-                              'product_variant_options','galleries','inquiries','content_videos')"
-    )->fetchColumn();
-    if ($have === 9) {
+    // Satu query murah per request: jumlah tabel + kolom hasil upgrade yang wajib ada.
+    [$have, $upgrades] = array_map('intval', $pdo->query(
+        "SELECT
+           (SELECT COUNT(*) FROM information_schema.tables
+             WHERE table_schema = DATABASE()
+               AND table_name IN ('admins','categories','products','product_images','product_variants',
+                                  'product_variant_options','galleries','gallery_images','inquiries','content_videos')),
+           (SELECT COUNT(*) FROM information_schema.columns
+             WHERE table_schema = DATABASE()
+               AND ((table_name = 'inquiries' AND column_name = 'width_cm')
+                 OR (table_name = 'product_variants' AND column_name = 'is_size')
+                 OR (table_name = 'product_variant_options' AND column_name = 'width_cm')
+                 OR (table_name = 'galleries' AND column_name = 'category_id')
+                 OR (table_name = 'products' AND column_name = 'use_category_price')
+                 OR (table_name = 'categories' AND column_name = 'image_url')))"
+    )->fetch(PDO::FETCH_NUM));
+    if ($have === 10 && $upgrades === 6) {
         return;
     }
 
@@ -65,6 +75,8 @@ function ensure_schema(PDO $pdo): void {
             id              INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             name            VARCHAR(120) NOT NULL UNIQUE,
             price_per_meter INT UNSIGNED NOT NULL DEFAULT 0,
+            image_url       VARCHAR(500) DEFAULT NULL,   -- foto kartu kategori di landing page
+            tagline         VARCHAR(120) DEFAULT NULL,   -- teks kecil di bawah nama kategori
             sort_order      INT NOT NULL DEFAULT 0,
             created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
@@ -83,6 +95,7 @@ function ensure_schema(PDO $pdo): void {
             features       TEXT,
             options_json   TEXT,
             cover_image    VARCHAR(500) DEFAULT NULL,
+            use_category_price TINYINT(1) NOT NULL DEFAULT 1,   -- 1 = harga/meter kategori, 0 = price + price_unit
             is_active      TINYINT(1) NOT NULL DEFAULT 1,
             stock          INT DEFAULT NULL,
             created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -107,6 +120,7 @@ function ensure_schema(PDO $pdo): void {
             product_id      INT UNSIGNED NOT NULL,
             label           VARCHAR(100) NOT NULL,
             is_image_linked TINYINT(1) NOT NULL DEFAULT 0,
+            is_size         TINYINT(1) NOT NULL DEFAULT 0,
             sort_order      INT NOT NULL DEFAULT 0,
             KEY idx_variants_product (product_id),
             CONSTRAINT fk_variants_product FOREIGN KEY (product_id)
@@ -118,6 +132,8 @@ function ensure_schema(PDO $pdo): void {
             variant_id      INT UNSIGNED NOT NULL,
             value           VARCHAR(255) NOT NULL,
             linked_image_id INT UNSIGNED DEFAULT NULL,
+            width_cm        DECIMAL(7,1) UNSIGNED DEFAULT NULL,
+            height_cm       DECIMAL(7,1) UNSIGNED DEFAULT NULL,
             sort_order      INT NOT NULL DEFAULT 0,
             KEY idx_options_variant (variant_id),
             CONSTRAINT fk_options_variant FOREIGN KEY (variant_id)
@@ -128,11 +144,25 @@ function ensure_schema(PDO $pdo): void {
 
         "CREATE TABLE IF NOT EXISTS galleries (
             id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-            title      VARCHAR(255) NOT NULL,
-            category   VARCHAR(120) NOT NULL,
+            title       VARCHAR(255) NOT NULL,
+            category_id INT UNSIGNED DEFAULT NULL,   -- kategori produk (portofolio = hasil pemasangan produk)
+            category    VARCHAR(120) NOT NULL DEFAULT '',   -- lama (teks ruangan), tidak dipakai lagi
+            image_url   VARCHAR(500) NOT NULL,
+            created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_gallery_category (category_id),
+            CONSTRAINT fk_gallery_category FOREIGN KEY (category_id)
+                REFERENCES categories(id) ON UPDATE CASCADE ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+
+        // Foto tambahan per proyek portofolio (foto utama/cover tetap di galleries.image_url)
+        "CREATE TABLE IF NOT EXISTS gallery_images (
+            id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            gallery_id INT UNSIGNED NOT NULL,
             image_url  VARCHAR(500) NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            KEY idx_gallery_category (category)
+            sort_order INT NOT NULL DEFAULT 0,
+            KEY idx_gallery_images (gallery_id, sort_order),
+            CONSTRAINT fk_gallery_images FOREIGN KEY (gallery_id)
+                REFERENCES galleries(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 
         // Inquiry dari form "Kontak Kami". curtain_type menyimpan nama kategori saat submit
@@ -144,6 +174,9 @@ function ensure_schema(PDO $pdo): void {
             category_id    INT UNSIGNED DEFAULT NULL,
             curtain_type   VARCHAR(120) NOT NULL,
             estimated_size VARCHAR(100) DEFAULT NULL,
+            width_cm       DECIMAL(7,1) UNSIGNED DEFAULT NULL,
+            height_cm      DECIMAL(7,1) UNSIGNED DEFAULT NULL,
+            quantity       SMALLINT UNSIGNED NOT NULL DEFAULT 1,
             notes          TEXT,
             status         ENUM('new','contacted','closed') NOT NULL DEFAULT 'new',
             ip_address     VARCHAR(45)  DEFAULT NULL,
@@ -168,6 +201,147 @@ function ensure_schema(PDO $pdo): void {
     foreach ($tables as $sql) {
         $pdo->exec($sql);
     }
+
+    $has_col = function (string $table, string $col) use ($pdo): bool {
+        $st = $pdo->prepare("SELECT COUNT(*) FROM information_schema.columns
+                             WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?");
+        $st->execute([$table, $col]);
+        return (int)$st->fetchColumn() > 0;
+    };
+
+    // Upgrade: ukuran terstruktur (lebar × tinggi × jumlah) pada inquiry lama
+    if (!$has_col('inquiries', 'width_cm')) {
+        $pdo->exec("ALTER TABLE inquiries
+            ADD COLUMN width_cm  DECIMAL(7,1) UNSIGNED DEFAULT NULL AFTER estimated_size,
+            ADD COLUMN height_cm DECIMAL(7,1) UNSIGNED DEFAULT NULL AFTER width_cm,
+            ADD COLUMN quantity  SMALLINT UNSIGNED NOT NULL DEFAULT 1 AFTER height_cm");
+    }
+
+    // Upgrade: varian "Ukuran" jadi parameter tetap dengan lebar × tinggi terstruktur
+    if (!$has_col('product_variants', 'is_size')) {
+        $pdo->exec("ALTER TABLE product_variants ADD COLUMN is_size TINYINT(1) NOT NULL DEFAULT 0 AFTER is_image_linked");
+    }
+    if (!$has_col('product_variant_options', 'width_cm')) {
+        $pdo->exec("ALTER TABLE product_variant_options
+            ADD COLUMN width_cm  DECIMAL(7,1) UNSIGNED DEFAULT NULL AFTER linked_image_id,
+            ADD COLUMN height_cm DECIMAL(7,1) UNSIGNED DEFAULT NULL AFTER width_cm");
+        migrate_size_variants($pdo);
+    }
+
+    // Upgrade: kategori portofolio dihubungkan ke kategori produk
+    if (!$has_col('galleries', 'category_id')) {
+        $pdo->exec("ALTER TABLE galleries
+            ADD COLUMN category_id INT UNSIGNED DEFAULT NULL AFTER title,
+            MODIFY category VARCHAR(120) NOT NULL DEFAULT '',
+            ADD KEY idx_gallery_category_id (category_id),
+            ADD CONSTRAINT fk_gallery_category FOREIGN KEY (category_id)
+                REFERENCES categories(id) ON UPDATE CASCADE ON DELETE SET NULL");
+        migrate_gallery_categories($pdo);
+    }
+
+    // Upgrade: harga produk mengikuti kategori (default) atau harga custom per produk
+    if (!$has_col('products', 'use_category_price')) {
+        $pdo->exec("ALTER TABLE products ADD COLUMN use_category_price TINYINT(1) NOT NULL DEFAULT 1 AFTER cover_image");
+    }
+
+    // Upgrade: foto & tagline kategori (kartu kategori di landing page)
+    if (!$has_col('categories', 'image_url')) {
+        $pdo->exec("ALTER TABLE categories
+            ADD COLUMN image_url VARCHAR(500) DEFAULT NULL AFTER price_per_meter,
+            ADD COLUMN tagline   VARCHAR(120) DEFAULT NULL AFTER image_url");
+        // Pindahkan isi kartu landing page lama (sebelumnya hardcode) ke data kategori
+        $pdo->exec("UPDATE categories SET tagline = 'Sentuhan elegan di setiap ruang',
+                    image_url = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1000&q=80&fit=crop'
+                    WHERE name = 'Curtain'");
+        $pdo->exec("UPDATE categories SET tagline = 'Praktis dioperasikan, nyaman setiap hari',
+                    image_url = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1000&q=80&fit=crop'
+                    WHERE name = 'Roller Blind'");
+    }
+}
+
+/**
+ * Harga efektif produk untuk ditampilkan.
+ * Butuh kolom: use_category_price, price, price_unit, price_per_meter (dari JOIN categories).
+ * @return array{amount:int, unit:string, custom:bool}  amount 0 = belum diatur
+ */
+function product_price(array $p): array {
+    if (isset($p['use_category_price']) && (int)$p['use_category_price'] === 0) {
+        // Satuan disimpan tanpa "/" (mis. "set"); data lama "/ set" tetap didukung.
+        $unit = trim(ltrim((string)($p['price_unit'] ?? ''), "/ \t")) ?: 'unit';
+        return ['amount' => (int)$p['price'], 'unit' => '/ ' . $unit, 'custom' => true];
+    }
+    return ['amount' => (int)($p['price_per_meter'] ?? 0), 'unit' => '/ meter', 'custom' => false];
+}
+
+/** SQL harga efektif (alias tabel p = products, c = categories), untuk urutan katalog. */
+const PRODUCT_PRICE_SQL = "CASE WHEN p.use_category_price = 1 THEN c.price_per_meter ELSE p.price END";
+
+/**
+ * Data lama memakai kategori ruangan (Living Room, dll.). Tebak kategori produk dari judul proyek;
+ * yang tidak jelas dibiarkan NULL ("Tanpa kategori") untuk dipilih admin.
+ */
+function migrate_gallery_categories(PDO $pdo): void {
+    $cats = $pdo->query("SELECT LOWER(name), id FROM categories")->fetchAll(PDO::FETCH_KEY_PAIR);
+    $rules = [   // urutan penting: yang paling spesifik dulu
+        'motorized curtain track' => '/motori[sz]ed|smart curtain|somfy/i',
+        'roller blind'            => '/roller|sunscreen/i',
+        'zebra blind'             => '/zebra/i',
+        'roman blind'             => '/roman/i',
+        'vertical blind'          => '/vertical/i',
+        'curtain'                 => '/curtain|gorden|drape|draping|linen|sheer|voile|velour|blackout|ripple|s-fold|wave|pleat/i',
+    ];
+    $upd = $pdo->prepare("UPDATE galleries SET category_id = ? WHERE id = ?");
+    foreach ($pdo->query("SELECT id, title FROM galleries")->fetchAll() as $g) {
+        foreach ($rules as $cat => $re) {
+            if (isset($cats[$cat]) && preg_match($re, $g['title'])) {
+                $upd->execute([$cats[$cat], $g['id']]);
+                break;
+            }
+        }
+    }
+}
+
+/**
+ * Data lama: varian pertama berlabel "Ukuran"/"Panjang Track" berisi teks "120×160cm".
+ * Tandai sebagai varian ukuran, isi lebar/tinggi dari teks, buang opsi "Custom" (kini otomatis di halaman produk).
+ */
+function migrate_size_variants(PDO $pdo): void {
+    $vars = $pdo->query("SELECT id FROM product_variants
+                         WHERE label IN ('Ukuran','Panjang Track')
+                           AND sort_order = (SELECT MIN(v2.sort_order) FROM (SELECT * FROM product_variants) v2
+                                             WHERE v2.product_id = product_variants.product_id)")->fetchAll(PDO::FETCH_COLUMN);
+    $mark = $pdo->prepare("UPDATE product_variants SET is_size = 1, label = 'Ukuran' WHERE id = ?");
+    $opts = $pdo->prepare("SELECT id, value FROM product_variant_options WHERE variant_id = ?");
+    $set  = $pdo->prepare("UPDATE product_variant_options SET width_cm = ?, height_cm = ?, value = ? WHERE id = ?");
+    $del  = $pdo->prepare("DELETE FROM product_variant_options WHERE id = ?");
+    foreach ($vars as $vid) {
+        $mark->execute([$vid]);
+        $opts->execute([$vid]);
+        foreach ($opts->fetchAll() as $o) {
+            if (preg_match('/(\d+(?:[.,]\d+)?)\s*(?:×|x|X|\*)\s*(\d+(?:[.,]\d+)?)/u', $o['value'], $m)) {
+                $w = (float)str_replace(',', '.', $m[1]);
+                $h = (float)str_replace(',', '.', $m[2]);
+                $set->execute([$w, $h, format_size_label($w, $h), $o['id']]);
+            } else {
+                $del->execute([$o['id']]);   // "Custom (WA)" & teks bebas lain
+            }
+        }
+    }
+}
+
+/** Label opsi ukuran standar: "120×160cm". */
+function format_size_label(float $w, float $h): string {
+    $n = fn($v) => rtrim(rtrim(number_format($v, 1, '.', ''), '0'), '.');
+    return $n($w) . '×' . $n($h) . 'cm';
+}
+
+/**
+ * Format ukuran inquiry: "150cm x 200cm | Qty: 1 set". Tanpa lebar/tinggi -> "- | Qty: N set".
+ */
+function format_inquiry_size($width, $height, $qty): string {
+    $n = fn($v) => rtrim(rtrim(number_format((float)$v, 1, '.', ''), '0'), '.');
+    $dims = ($width !== null && $height !== null) ? $n($width) . 'cm x ' . $n($height) . 'cm' : '-';
+    return $dims . ' | Qty: ' . max(1, (int)$qty) . ' set';
 }
 
 function seed_defaults(PDO $pdo): void {

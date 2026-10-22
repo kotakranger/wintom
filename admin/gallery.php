@@ -1,7 +1,10 @@
 <?php
-// admin/gallery.php — Manajemen Galeri Portofolio
+// admin/gallery.php — Manajemen Portofolio Proyek (tabel + modal tambah/edit)
+// Kategori proyek = kategori produk (tabel categories), agar portofolio menunjukkan hasil nyata produk yang dijual.
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/admin-modal.php';
+require_once __DIR__ . '/../includes/image-upload.php';
 require_login();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') csrf_check();
@@ -9,21 +12,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') csrf_check();
 $db  = get_db();
 $msg = '';
 $err = '';
+$reopen = null;   // id modal yang dibuka ulang setelah aksi (mis. kelola foto / validasi gagal)
 
-function upload_gallery_img(array $file): string|false {
-    if ($file['error'] !== UPLOAD_ERR_OK) return false;
-    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-    $mime_map = ['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp'];
-    $ext = $mime_map[$mime] ?? null;
-    if (!$ext) return false;
-    if ($file['size'] > 8 * 1024 * 1024) return false;
-    if (!@getimagesize($file['tmp_name'])) return false;
-    $upload_dir = __DIR__ . '/../uploads/gallery';
-    if (!is_dir($upload_dir)) @mkdir($upload_dir, 0755, true);
-    $name = uniqid('gal_', true) . '.' . $ext;
-    $dest = $upload_dir . '/' . $name;
-    if (!move_uploaded_file($file['tmp_name'], $dest)) return false;
-    return '/uploads/gallery/' . $name;
+const MAX_PROJECT_PHOTOS = 12;
+
+$product_categories = $db->query("SELECT id, name FROM categories ORDER BY sort_order ASC, name ASC")->fetchAll(PDO::FETCH_KEY_PAIR);
+
+/** Simpan foto proyek (validasi + kompres standar). Alasan gagal dikumpulkan di $errors. */
+function upload_gallery_img(array $file, array &$errors): string|false {
+    $url = store_uploaded_image($file, 'gallery', $e, 'gal_');
+    if (!$url && $e) $errors[] = $file['name'] . ': ' . $e;
+    return $url;
 }
 
 function delete_gal_file(string $url): void {
@@ -34,99 +33,159 @@ function delete_gal_file(string $url): void {
     }
 }
 
-/* ============================================================
-   ACTION: UPLOAD NEW GALLERY PHOTO
-   ============================================================ */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'upload') {
-    $title    = trim($_POST['title'] ?? '');
-    $category = trim($_POST['category'] ?? '');
+$action = $_SERVER['REQUEST_METHOD'] === 'POST' ? (string)($_POST['_action'] ?? '') : '';
+$posted_cat = (int)($_POST['category_id'] ?? 0);
+$valid_cat  = isset($product_categories[$posted_cat]);
 
-    if (!$title || !$category) {
+/* ============================================================
+   ACTION: TAMBAH PROYEK (foto pertama = cover)
+   ============================================================ */
+if ($action === 'upload') {
+    $title = trim($_POST['title'] ?? '');
+    if (!$title || !$valid_cat) {
         $err = 'Judul dan kategori wajib diisi.';
-    } elseif (!in_array($category, $categories, true)) {
-        $err = 'Kategori tidak valid.';
-    } elseif (empty($_FILES['photo']['name'])) {
-        $err = 'Pilih file foto untuk diupload.';
+    } elseif (!has_uploaded_file($_FILES['photo'] ?? null)) {
+        $err = 'Pilih minimal satu foto proyek.';
     } else {
-        // Multiple file support
-        $files = $_FILES['photo'];
-        $is_multi = is_array($files['name']);
-        $count_ok = 0;
-
-        if ($is_multi) {
-            $ins = $db->prepare("INSERT INTO galleries (title, category, image_url) VALUES (?,?,?)");
-            foreach ($files['tmp_name'] as $i => $tmp) {
-                if ($files['error'][$i] !== UPLOAD_ERR_OK) continue;
-                $single = [
-                    'name'     => $files['name'][$i],
-                    'type'     => $files['type'][$i],
-                    'tmp_name' => $tmp,
-                    'error'    => $files['error'][$i],
-                    'size'     => $files['size'][$i],
-                ];
-                $url = upload_gallery_img($single);
-                if ($url) { $ins->execute([$title, $category, $url]); $count_ok++; }
-            }
-        } else {
-            $url = upload_gallery_img($files);
-            if ($url) {
-                $db->prepare("INSERT INTO galleries (title, category, image_url) VALUES (?,?,?)")->execute([$title, $category, $url]);
-                $count_ok = 1;
-            }
+        $urls = []; $upload_errors = [];
+        foreach (array_slice(uploaded_files($_FILES['photo']), 0, MAX_PROJECT_PHOTOS) as $f) {
+            if ($f['error'] === UPLOAD_ERR_NO_FILE) continue;
+            $url = upload_gallery_img($f, $upload_errors);
+            if ($url) $urls[] = $url;
         }
+        if ($urls) {
+            $db->prepare("INSERT INTO galleries (title, category_id, image_url) VALUES (?,?,?)")->execute([$title, $posted_cat, $urls[0]]);
+            $gid = (int)$db->lastInsertId();
+            $ins = $db->prepare("INSERT INTO gallery_images (gallery_id, image_url, sort_order) VALUES (?,?,?)");
+            foreach (array_slice($urls, 1) as $k => $u) $ins->execute([$gid, $u, $k]);
+            $msg = 'Proyek ditambahkan dengan ' . count($urls) . ' foto.' . ($upload_errors ? ' Dilewati: ' . implode('; ', $upload_errors) : '');
+        } else {
+            $err = 'Gagal upload foto. ' . implode('; ', $upload_errors);
+        }
+    }
+    if ($err) $reopen = 'add-project';
+}
 
-        if ($count_ok > 0) $msg = "$count_ok foto berhasil diupload ke galeri.";
-        else $err = 'Gagal upload foto. Pastikan format JPG/PNG/WEBP dan ukuran maks 8MB.';
+/* ============================================================
+   ACTION: UBAH JUDUL / KATEGORI
+   ============================================================ */
+if ($action === 'update') {
+    $gid   = (int)($_POST['gallery_id'] ?? 0);
+    $title = trim($_POST['title'] ?? '');
+    if ($gid && $title && $valid_cat) {
+        $db->prepare("UPDATE galleries SET title=?, category_id=? WHERE id=?")->execute([$title, $posted_cat, $gid]);
+        $msg = 'Proyek berhasil diperbarui.';
+    } else {
+        $err = 'Judul dan kategori wajib diisi.';
+        $reopen = 'edit-' . $gid;
     }
 }
 
 /* ============================================================
-   ACTION: DELETE GALLERY PHOTO
+   ACTION: HAPUS PROYEK (beserta semua file foto)
    ============================================================ */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'delete') {
+if ($action === 'delete') {
     $gid = (int)($_POST['gallery_id'] ?? 0);
-    if ($gid > 0) {
-        $r = $db->prepare("SELECT image_url FROM galleries WHERE id=?");
-        $r->execute([$gid]); $row = $r->fetch();
-        if ($row) { delete_gal_file($row['image_url']); }
-        $stmt = $db->prepare("DELETE FROM galleries WHERE id=?");
-        $stmt->execute([$gid]);
-        if ($stmt->rowCount() > 0) $msg = 'Foto berhasil dihapus dari galeri.';
+    $r = $db->prepare("SELECT image_url FROM galleries WHERE id=?");
+    $r->execute([$gid]);
+    if ($cover = $r->fetchColumn()) {
+        delete_gal_file($cover);
+        $ex = $db->prepare("SELECT image_url FROM gallery_images WHERE gallery_id=?");
+        $ex->execute([$gid]);
+        foreach ($ex->fetchAll(PDO::FETCH_COLUMN) as $u) delete_gal_file($u);
+        $db->prepare("DELETE FROM galleries WHERE id=?")->execute([$gid]);
+        $msg = 'Proyek berhasil dihapus.';
     }
 }
 
 /* ============================================================
-   ACTION: EDIT TITLE / CATEGORY
+   ACTION: TAMBAH FOTO KE PROYEK
    ============================================================ */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'update') {
-    $gid      = (int)($_POST['gallery_id'] ?? 0);
-    $title    = trim($_POST['title'] ?? '');
-    $category = trim($_POST['category'] ?? '');
-    if ($gid && $title && $category && in_array($category, $categories, true)) {
-        $db->prepare("UPDATE galleries SET title=?, category=? WHERE id=?")->execute([$title, $category, $gid]);
-        $msg = 'Info foto berhasil diperbarui.';
+if ($action === 'add_photos') {
+    $gid = (int)($_POST['gallery_id'] ?? 0);
+    $reopen = 'edit-' . $gid;
+    $exists = $db->prepare("SELECT COUNT(*) FROM galleries WHERE id=?");
+    $exists->execute([$gid]);
+    if ($exists->fetchColumn() && has_uploaded_file($_FILES['photo'] ?? null)) {
+        $cnt = $db->prepare("SELECT COUNT(*), COALESCE(MAX(sort_order), -1) FROM gallery_images WHERE gallery_id=?");
+        $cnt->execute([$gid]);
+        [$have, $max_sort] = $cnt->fetch(PDO::FETCH_NUM);
+        $room = MAX_PROJECT_PHOTOS - 1 - (int)$have;   // -1 untuk cover
+        $ins = $db->prepare("INSERT INTO gallery_images (gallery_id, image_url, sort_order) VALUES (?,?,?)");
+        $added = 0; $upload_errors = [];
+        foreach (uploaded_files($_FILES['photo']) as $f) {
+            if ($added >= $room) break;
+            if ($f['error'] === UPLOAD_ERR_NO_FILE) continue;
+            $url = upload_gallery_img($f, $upload_errors);
+            if ($url) { $ins->execute([$gid, $url, (int)$max_sort + 1 + $added]); $added++; }
+        }
+        if ($added) $msg = "$added foto ditambahkan ke proyek." . ($upload_errors ? ' Dilewati: ' . implode('; ', $upload_errors) : '');
+        else $err = $room <= 0 ? 'Maksimal ' . MAX_PROJECT_PHOTOS . ' foto per proyek.' : 'Gagal upload foto. ' . implode('; ', $upload_errors);
+    }
+}
+
+/* ============================================================
+   ACTION: HAPUS SATU FOTO / JADIKAN COVER
+   ============================================================ */
+if ($action === 'del_photo' || $action === 'make_cover') {
+    $pid = (int)($_POST['photo_id'] ?? 0);
+    $r = $db->prepare("SELECT gi.id, gi.gallery_id, gi.image_url, g.image_url AS cover FROM gallery_images gi JOIN galleries g ON g.id = gi.gallery_id WHERE gi.id=?");
+    $r->execute([$pid]);
+    if ($row = $r->fetch()) {
+        $reopen = 'edit-' . $row['gallery_id'];
+        if ($action === 'del_photo') {
+            delete_gal_file($row['image_url']);
+            $db->prepare("DELETE FROM gallery_images WHERE id=?")->execute([$pid]);
+            $msg = 'Foto dihapus dari proyek.';
+        } else {
+            // Tukar: foto ini jadi cover, cover lama jadi foto tambahan
+            $db->prepare("UPDATE galleries SET image_url=? WHERE id=?")->execute([$row['image_url'], $row['gallery_id']]);
+            $db->prepare("UPDATE gallery_images SET image_url=? WHERE id=?")->execute([$row['cover'], $pid]);
+            $msg = 'Cover proyek diperbarui.';
+        }
     }
 }
 
 /* ============================================================
    LOAD DATA
    ============================================================ */
-$filter_cat  = $_GET['cat'] ?? 'Semua';
-$categories  = ['Living Room','Penthouse Sanctuary','Dining & Atelier','Office & Commercial','Hotel & Private Villa'];
+$filter = (string)($_GET['cat'] ?? '');   // '' = semua, 'none' = tanpa kategori, angka = id kategori
+$sql = "SELECT g.*, c.name AS category_name FROM galleries g LEFT JOIN categories c ON c.id = g.category_id";
+$params = [];
+if ($filter === 'none') {
+    $sql .= " WHERE g.category_id IS NULL";
+} elseif ($filter !== '' && ctype_digit($filter)) {
+    $sql .= " WHERE g.category_id = ?";
+    $params[] = (int)$filter;
+}
+$sql .= " ORDER BY g.created_at DESC, g.id DESC";
+$st = $db->prepare($sql);
+$st->execute($params);
+$items = $st->fetchAll();
 
-if ($filter_cat === 'Semua') {
-    $items = $db->query("SELECT * FROM galleries ORDER BY created_at DESC")->fetchAll();
-} else {
-    $stmt = $db->prepare("SELECT * FROM galleries WHERE category=? ORDER BY created_at DESC");
-    $stmt->execute([$filter_cat]);
-    $items = $stmt->fetchAll();
+$extras = [];
+if ($items) {
+    $ids = implode(',', array_map('intval', array_column($items, 'id')));
+    foreach ($db->query("SELECT * FROM gallery_images WHERE gallery_id IN ($ids) ORDER BY sort_order, id") as $row) {
+        $extras[$row['gallery_id']][] = $row;
+    }
 }
 
-$cat_counts = [];
-foreach ($db->query("SELECT category, COUNT(*) c FROM galleries GROUP BY category")->fetchAll() as $row) {
-    $cat_counts[$row['category']] = $row['c'];
+$counts = [];
+foreach ($db->query("SELECT COALESCE(category_id, 0) cid, COUNT(*) c FROM galleries GROUP BY cid") as $row) {
+    $counts[(int)$row['cid']] = (int)$row['c'];
 }
-$total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
+$total_all = array_sum($counts);
+$uncategorized = $counts[0] ?? 0;
+
+/** <select> kategori produk */
+function category_select(array $cats, ?int $selected, string $id): string {
+    $h = '<select id="' . $id . '" name="category_id" class="input" required><option value="">— Pilih kategori produk —</option>';
+    foreach ($cats as $cid => $name) {
+        $h .= '<option value="' . (int)$cid . '"' . ($selected === (int)$cid ? ' selected' : '') . '>' . htmlspecialchars($name) . '</option>';
+    }
+    return $h . '</select>';
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -165,185 +224,202 @@ $total_all = (int)$db->query("SELECT COUNT(*) FROM galleries")->fetchColumn();
 </aside>
 
 <!-- ===== MAIN ===== -->
-<main class="ml-[220px] flex-1 p-8 min-h-screen">
+<main class="ml-[220px] flex-1 p-8 min-h-screen min-w-0">
 
-  <!-- Toast -->
   <?php if ($msg): ?><div class="mb-5 bg-green-50 border border-green-200 text-green-800 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
   <?php if ($err): ?><div class="mb-5 bg-red-50 border border-red-200 text-red-700 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= htmlspecialchars($err) ?></div><?php endif; ?>
 
-  <div class="mb-6 flex items-center justify-between">
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
     <div>
       <h1 class="font-playfair font-semibold text-dark text-[26px]">Galeri Portofolio</h1>
-      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= $total_all ?> foto tersimpan</p>
+      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= $total_all ?> proyek · dikelompokkan per kategori produk</p>
     </div>
-    <a href="../gallery.php" target="_blank" class="font-jakarta text-[12px] text-brand tracking-[1px] uppercase border border-brand/30 px-4 py-2 rounded-[4px] hover:bg-brand/5 transition-colors">
-      Lihat Galeri Publik ↗
-    </a>
+    <div class="flex items-center gap-2">
+      <a href="../gallery.php" target="_blank" class="font-jakarta text-[12px] text-brand tracking-[1px] uppercase border border-brand/30 px-4 py-2.5 rounded-[4px] hover:bg-brand/5 transition-colors">
+        Lihat Galeri Publik ↗
+      </a>
+      <button type="button" data-modal-open="add-project"
+              class="bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-2.5 rounded-[4px] hover:bg-[#6a041c] transition-colors shadow-sm">
+        + Tambah Proyek
+      </button>
+    </div>
   </div>
 
-  <div class="grid grid-cols-12 gap-6">
+  <?php if ($uncategorized): ?>
+  <div class="mb-5 bg-amber-50 border border-amber-200 text-amber-800 font-jakarta text-[13px] px-4 py-3 rounded-[4px]">
+    <?= $uncategorized ?> proyek belum punya kategori produk dan hanya tampil di tab "Semua Proyek" pada galeri publik.
+    <a href="gallery.php?cat=none" class="underline font-semibold">Lihat &amp; atur kategorinya</a>
+  </div>
+  <?php endif; ?>
 
-    <!-- LEFT: Upload Form -->
-    <div class="col-span-12 lg:col-span-4">
-      <div class="bg-white border border-border rounded-[6px] p-6 flex flex-col gap-4 sticky top-6">
-        <h2 class="font-jakarta font-semibold text-dark text-[14px] border-b border-border pb-3">Upload Foto Baru</h2>
+  <!-- Filter per kategori produk -->
+  <div class="flex flex-wrap gap-2 mb-5">
+    <?php
+    $tabs = ['' => ['Semua', $total_all]];
+    foreach ($product_categories as $cid => $name) $tabs[(string)$cid] = [$name, $counts[$cid] ?? 0];
+    if ($uncategorized) $tabs['none'] = ['Tanpa kategori', $uncategorized];
+    foreach ($tabs as $key => [$label, $n]):
+        $active = ($filter === (string)$key);
+    ?>
+    <a href="gallery.php<?= $key !== '' ? '?cat=' . urlencode((string)$key) : '' ?>"
+       class="px-3.5 py-1.5 rounded-full border font-jakarta text-[12px] font-medium transition-colors <?= $active ? 'bg-brand text-white border-brand' : 'bg-white text-muted border-border hover:border-brand/40' ?>">
+      <?= htmlspecialchars($label) ?> <span class="opacity-70"><?= $n ?></span>
+    </a>
+    <?php endforeach; ?>
+  </div>
 
-        <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
-          <?= csrf_field() ?>
-          <input type="hidden" name="_action" value="upload"/>
-
-          <div>
-            <label class="label">Judul Foto <span class="text-red-500">*</span></label>
-            <input type="text" name="title" class="input" required
-                   placeholder="cth. Ripple Fold Linen — Grand Penthouse PIK"/>
-          </div>
-
-          <div>
-            <label class="label">Kategori <span class="text-red-500">*</span></label>
-            <select name="category" class="input" required>
-              <option value="">— Pilih Kategori —</option>
-              <?php foreach($categories as $cat): ?>
-              <option value="<?= $cat ?>"><?= $cat ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-
-          <div>
-            <label class="label">File Foto <span class="text-red-500">*</span></label>
-            <div class="border-2 border-dashed border-border rounded-[4px] p-5 text-center hover:border-brand/40 transition-colors cursor-pointer" onclick="document.getElementById('photo-input').click()">
-              <svg class="size-8 text-muted mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75L7.409 10.591a2.25 2.25 0 013.182 0l5.159 5.159M14.25 12.75l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 19.5h16.5M6.75 6.75h.008v.008H6.75V6.75z"/></svg>
-              <p class="font-jakarta text-muted text-[12px]">Klik untuk pilih foto</p>
-              <p class="font-jakarta text-muted text-[10px] mt-1">JPG, PNG, WEBP · maks 8MB · bisa multiple</p>
-            </div>
-            <input type="file" id="photo-input" name="photo[]" accept="image/*" multiple class="hidden" onchange="previewPhotos(event)"/>
-          </div>
-
-          <!-- Preview -->
-          <div id="photo-previews" class="grid grid-cols-3 gap-2 hidden"></div>
-
-          <button type="submit" class="w-full bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase py-3 rounded-[4px] hover:bg-[#6a041c] transition-colors">
-            UPLOAD FOTO
-          </button>
-        </form>
-
-        <!-- Category Stats -->
-        <div class="border-t border-border pt-4 mt-2">
-          <p class="font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase mb-3">Statistik Kategori</p>
-          <div class="flex flex-col gap-2">
-            <?php foreach($categories as $cat):
-              $cnt = $cat_counts[$cat] ?? 0;
-              $pct = $total_all > 0 ? round($cnt/$total_all*100) : 0;
-            ?>
-            <div>
-              <div class="flex justify-between mb-1">
-                <span class="font-jakarta text-dark text-[11px]"><?= htmlspecialchars($cat) ?></span>
-                <span class="font-jakarta text-muted text-[11px]"><?= $cnt ?></span>
-              </div>
-              <div class="h-1 bg-border rounded-full"><div class="h-1 bg-brand rounded-full" style="width:<?= $pct ?>%"></div></div>
-            </div>
-            <?php endforeach; ?>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT: Gallery Grid -->
-    <div class="col-span-12 lg:col-span-8">
-
-      <!-- Filter Tabs -->
-      <div class="bg-white border border-border rounded-[6px] overflow-x-auto mb-5">
-        <div class="flex items-center">
-          <?php
-          $tabs = array_merge(['Semua'], $categories);
-          foreach($tabs as $tab):
-            $is_active = ($filter_cat === $tab || ($tab === 'Semua' && $filter_cat === 'Semua'));
-            $tab_count = $tab === 'Semua' ? $total_all : ($cat_counts[$tab] ?? 0);
-          ?>
-          <a href="gallery.php?cat=<?= urlencode($tab) ?>"
-             class="shrink-0 font-jakarta font-semibold text-[11px] tracking-[1.2px] uppercase whitespace-nowrap px-4 py-3.5 border-b-2 transition-all duration-200
-                    <?= $is_active ? 'border-brand text-brand' : 'border-transparent text-muted hover:text-dark' ?>">
-            <?= htmlspecialchars($tab) ?> <span class="text-[10px] opacity-60 ml-1">(<?= $tab_count ?>)</span>
-          </a>
-          <?php endforeach; ?>
-        </div>
-      </div>
-
-      <!-- Photo Grid -->
-      <?php if (empty($items)): ?>
-      <div class="bg-white border border-border rounded-[6px] py-16 text-center">
-        <p class="font-playfair text-dark text-[20px] mb-2">Belum ada foto</p>
-        <p class="font-jakarta text-muted text-[13px]">Upload foto baru menggunakan form di samping.</p>
-      </div>
-      <?php else: ?>
-      <div class="columns-2 lg:columns-3 gap-4">
-        <?php foreach($items as $item): ?>
-        <div class="break-inside-avoid mb-4 bg-white border border-border rounded-[4px] overflow-hidden group">
-          <!-- Image -->
-          <div class="relative overflow-hidden">
-            <img src="<?= htmlspecialchars(asset_url($item['image_url'])) ?>"
-                 alt="<?= htmlspecialchars($item['title']) ?>"
-                 class="w-full object-cover transition-transform duration-500 group-hover:scale-105"/>
-            <!-- Hover overlay with delete -->
-            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-              <form method="POST" onsubmit="return confirm('Hapus foto ini dari galeri?')" class="z-10">
+  <!-- Tabel proyek -->
+  <div class="bg-white border border-border rounded-[6px] overflow-x-auto">
+    <table class="w-full min-w-[760px]">
+      <thead class="bg-cream-dark">
+        <tr>
+          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-[96px]">Cover</th>
+          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Judul Proyek</th>
+          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-52">Kategori Produk</th>
+          <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-20">Foto</th>
+          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-32">Ditambahkan</th>
+          <th class="px-4 py-3 text-right font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-40">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php foreach ($items as $item):
+            $n_photos = 1 + count($extras[$item['id']] ?? []);
+        ?>
+        <tr class="border-t border-border hover:bg-cream/50 transition-colors">
+          <td class="px-4 py-3">
+            <img src="<?= htmlspecialchars(asset_url($item['image_url'])) ?>" alt="" loading="lazy"
+                 class="w-16 h-12 object-cover rounded-[3px] border border-border bg-cream-dark"/>
+          </td>
+          <td class="px-4 py-3 font-jakarta text-dark text-[13px] font-medium"><?= htmlspecialchars($item['title']) ?></td>
+          <td class="px-4 py-3 font-jakarta text-[12px]">
+            <?php if ($item['category_name']): ?>
+            <span class="inline-block bg-cream-dark border border-border text-dark px-2 py-0.5 rounded-[2px]"><?= htmlspecialchars($item['category_name']) ?></span>
+            <?php else: ?>
+            <span class="inline-block bg-amber-50 border border-amber-200 text-amber-800 px-2 py-0.5 rounded-[2px]">Belum diatur</span>
+            <?php endif; ?>
+          </td>
+          <td class="px-4 py-3 font-jakarta text-dark text-[13px] text-center"><?= $n_photos ?></td>
+          <td class="px-4 py-3 font-jakarta text-muted text-[12px] whitespace-nowrap"><?= htmlspecialchars(date('d M Y', strtotime($item['created_at']))) ?></td>
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-end gap-2">
+              <button type="button" data-modal-open="edit-<?= (int)$item['id'] ?>"
+                      class="font-jakarta text-[11px] tracking-[0.5px] uppercase text-brand border border-brand/30 px-3 py-1.5 rounded-[3px] hover:bg-brand/5 transition-colors">Edit</button>
+              <form method="POST" onsubmit="return confirm('Hapus proyek ini beserta semua fotonya?')">
                 <?= csrf_field() ?>
                 <input type="hidden" name="_action" value="delete"/>
-                <input type="hidden" name="gallery_id" value="<?= $item['id'] ?>"/>
-                <button type="submit" class="bg-red-500 text-white font-jakarta font-semibold text-[11px] tracking-[1px] uppercase px-4 py-2 rounded-[3px] hover:bg-red-600 transition-colors">
-                  Hapus
-                </button>
+                <input type="hidden" name="gallery_id" value="<?= (int)$item['id'] ?>"/>
+                <button type="submit" class="font-jakarta text-[11px] text-red-500 border border-red-200 px-3 py-1.5 rounded-[3px] hover:bg-red-50 transition-colors">Hapus</button>
               </form>
             </div>
-          </div>
-          <!-- Info + Quick Edit -->
-          <div class="p-3">
-            <p class="font-jakarta text-dark text-[12px] font-semibold leading-[16px] mb-1"><?= htmlspecialchars($item['title']) ?></p>
-            <span class="inline-block bg-cream-dark border border-border font-jakarta text-muted text-[10px] tracking-[0.5px] uppercase px-2 py-0.5 rounded-[2px]"><?= htmlspecialchars($item['category']) ?></span>
-            <!-- Quick edit toggle -->
-            <button onclick="toggleEdit(<?= $item['id'] ?>)" class="block mt-2 font-jakarta text-brand text-[11px] tracking-[0.5px] uppercase hover:underline">Edit Info</button>
-            <form method="POST" id="edit-form-<?= $item['id'] ?>" class="hidden mt-2 flex flex-col gap-2">
+          </td>
+        </tr>
+        <?php endforeach; ?>
+        <?php if (!$items): ?>
+        <tr><td colspan="6" class="px-5 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada proyek<?= $filter !== '' ? ' di kategori ini' : '' ?>.</td></tr>
+        <?php endif; ?>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===== MODAL: TAMBAH PROYEK ===== -->
+  <?php admin_modal_start('add-project', 'Tambah Proyek Portofolio', 'max-w-[520px]'); ?>
+    <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
+      <?= csrf_field() ?>
+      <input type="hidden" name="_action" value="upload"/>
+      <div>
+        <label class="label" for="add-title">Judul Proyek <span class="text-red-500">*</span></label>
+        <input id="add-title" type="text" name="title" class="input" required maxlength="255"
+               value="<?= htmlspecialchars($reopen === 'add-project' ? ($_POST['title'] ?? '') : '') ?>"
+               placeholder="cth. Ripple Fold Linen — Grand Penthouse PIK"/>
+      </div>
+      <div>
+        <label class="label" for="add-cat">Kategori Produk <span class="text-red-500">*</span></label>
+        <?= category_select($product_categories, $reopen === 'add-project' ? $posted_cat : null, 'add-cat') ?>
+        <p class="font-jakarta text-muted text-[10px] mt-1.5">Produk yang dipasang di proyek ini. Kategori baru dibuat di menu <a href="categories.php" class="underline">Kategori</a>.</p>
+      </div>
+      <div>
+        <label class="label">Foto Proyek <span class="text-red-500">*</span></label>
+        <?= image_dropzone(['name' => 'photo', 'multiple' => true, 'required' => true, 'max_files' => MAX_PROJECT_PHOTOS]) ?>
+        <p class="font-jakarta text-muted text-[10px] mt-1.5">Foto pertama jadi cover proyek.</p>
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button type="button" data-modal-close class="flex-1 border border-border text-muted font-jakarta font-semibold text-[12px] tracking-[1.2px] uppercase py-3 rounded-[4px] hover:text-dark transition-colors">Batal</button>
+        <button type="submit" class="flex-[2] bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase py-3 rounded-[4px] hover:bg-[#6a041c] transition-colors shadow-sm">Simpan Proyek</button>
+      </div>
+    </form>
+  <?php admin_modal_end(); ?>
+
+  <!-- ===== MODAL: EDIT PROYEK (satu per baris) ===== -->
+  <?php foreach ($items as $item):
+      $gid = (int)$item['id'];
+      $photos = array_merge(
+          [['id' => null, 'image_url' => $item['image_url']]],
+          $extras[$gid] ?? []
+      );
+  ?>
+  <?php admin_modal_start('edit-' . $gid, 'Edit Proyek', 'max-w-[640px]'); ?>
+    <!-- Info proyek -->
+    <form method="POST" class="flex flex-col gap-4">
+      <?= csrf_field() ?>
+      <input type="hidden" name="_action" value="update"/>
+      <input type="hidden" name="gallery_id" value="<?= $gid ?>"/>
+      <div>
+        <label class="label" for="edit-title-<?= $gid ?>">Judul Proyek <span class="text-red-500">*</span></label>
+        <input id="edit-title-<?= $gid ?>" type="text" name="title" class="input" required maxlength="255" value="<?= htmlspecialchars($item['title']) ?>"/>
+      </div>
+      <div>
+        <label class="label" for="edit-cat-<?= $gid ?>">Kategori Produk <span class="text-red-500">*</span></label>
+        <?= category_select($product_categories, $item['category_id'] !== null ? (int)$item['category_id'] : null, 'edit-cat-' . $gid) ?>
+      </div>
+      <div class="flex justify-end">
+        <button type="submit" class="bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-6 py-2.5 rounded-[4px] hover:bg-[#6a041c] transition-colors">Simpan Info</button>
+      </div>
+    </form>
+
+    <!-- Foto proyek (form terpisah, tidak bersarang) -->
+    <div class="border-t border-border mt-6 pt-5">
+      <p class="label">Foto Proyek (<?= count($photos) ?>/<?= MAX_PROJECT_PHOTOS ?>)</p>
+      <?php if (count($photos) < MAX_PROJECT_PHOTOS): ?>
+        <form method="POST" enctype="multipart/form-data" class="mb-3">
+          <?= csrf_field() ?>
+          <input type="hidden" name="_action" value="add_photos"/>
+          <input type="hidden" name="gallery_id" value="<?= $gid ?>"/>
+          <?= image_dropzone(['name' => 'photo', 'multiple' => true, 'max_files' => MAX_PROJECT_PHOTOS - count($photos), 'auto_submit' => true, 'compact' => true, 'title' => 'Tambah foto — seret & lepas atau klik']) ?>
+        </form>
+      <?php endif; ?>
+      <div class="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+        <?php foreach ($photos as $k => $ph): ?>
+        <div class="relative aspect-[4/3] rounded-[3px] overflow-hidden border <?= $k === 0 ? 'border-2 border-brand' : 'border-border' ?> group">
+          <img src="<?= htmlspecialchars(asset_url($ph['image_url'])) ?>" alt="" loading="lazy" class="w-full h-full object-cover"/>
+          <?php if ($k === 0): ?>
+          <span class="absolute top-1 left-1 bg-brand text-white font-jakarta font-semibold text-[9px] tracking-[1px] uppercase px-1.5 py-0.5 rounded-[2px]">Cover</span>
+          <?php else: ?>
+          <div class="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
+            <form method="POST">
               <?= csrf_field() ?>
-              <input type="hidden" name="_action" value="update"/>
-              <input type="hidden" name="gallery_id" value="<?= $item['id'] ?>"/>
-              <input type="text" name="title" value="<?= htmlspecialchars($item['title']) ?>" class="input text-[12px] py-1.5" required/>
-              <select name="category" class="input text-[12px] py-1.5" required>
-                <?php foreach($categories as $cat): ?>
-                <option value="<?= $cat ?>" <?= $item['category'] === $cat ? 'selected' : '' ?>><?= $cat ?></option>
-                <?php endforeach; ?>
-              </select>
-              <button type="submit" class="bg-brand text-white font-jakarta text-[11px] tracking-[1px] uppercase py-1.5 rounded-[3px] hover:bg-[#6a041c] transition-colors">Simpan</button>
+              <input type="hidden" name="_action" value="make_cover"/>
+              <input type="hidden" name="photo_id" value="<?= (int)$ph['id'] ?>"/>
+              <button type="submit" class="font-jakarta text-white text-[10px] uppercase tracking-[0.5px] bg-brand/90 hover:bg-brand px-2.5 py-1 rounded-[2px]">Jadikan Cover</button>
+            </form>
+            <form method="POST" onsubmit="return confirm('Hapus foto ini?')">
+              <?= csrf_field() ?>
+              <input type="hidden" name="_action" value="del_photo"/>
+              <input type="hidden" name="photo_id" value="<?= (int)$ph['id'] ?>"/>
+              <button type="submit" class="font-jakarta text-white text-[10px] uppercase tracking-[0.5px] bg-red-500/90 hover:bg-red-600 px-2.5 py-1 rounded-[2px]">Hapus</button>
             </form>
           </div>
+          <?php endif; ?>
         </div>
         <?php endforeach; ?>
       </div>
-      <p class="text-center font-jakarta text-muted text-[11px] tracking-[1px] uppercase mt-4">Menampilkan <?= count($items) ?> foto</p>
-      <?php endif; ?>
-
+      <p class="font-jakarta text-muted text-[11px] mt-2.5">Foto cover tampil pertama di galeri; foto lain bisa digeser (slider). Untuk mengganti cover, arahkan kursor ke foto lalu pilih "Jadikan Cover".</p>
     </div>
-  </div>
+  <?php admin_modal_end(); ?>
+  <?php endforeach; ?>
+
 </main>
 
-<script>
-function previewPhotos(e) {
-  const container = document.getElementById('photo-previews');
-  container.innerHTML = '';
-  container.classList.remove('hidden');
-  Array.from(e.target.files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const div = document.createElement('div');
-      div.className = 'aspect-square rounded-[3px] overflow-hidden border border-border';
-      div.innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover"/>`;
-      container.appendChild(div);
-    };
-    reader.readAsDataURL(file);
-  });
-}
-function toggleEdit(id) {
-  const form = document.getElementById('edit-form-' + id);
-  form.classList.toggle('hidden');
-}
-</script>
+<?php image_upload_script(); ?>
+<?php admin_modal_script($reopen); ?>
 </body>
 </html>

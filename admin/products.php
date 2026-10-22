@@ -2,12 +2,15 @@
 // admin/products.php — Manajemen Produk CRUD (Variant System Overhaul)
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/image-upload.php';
 require_login();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') csrf_check();
 
 $db  = get_db();
 $msg = '';
 $err = '';
+
+const MAX_EXTRA_VARIANTS = 5;   // varian selain Ukuran (Warna, Kontrol, dll.)
 
 /* ============================================================
    HELPERS
@@ -21,24 +24,6 @@ function slugify(string $text): string {
     return trim($text, '-');
 }
 
-function upload_image(array $file, string $subdir): string|false {
-    if ($file['error'] !== UPLOAD_ERR_OK) return false;
-    if ($file['size'] > 5 * 1024 * 1024) return false;
-    // Server-side MIME validation; ignore client type
-    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-    $ext_map = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    if (!isset($ext_map[$mime])) return false;
-    // Validate image integrity
-    if (!getimagesize($file['tmp_name'])) return false;
-    $ext  = $ext_map[$mime];
-    $name = uniqid('img_', true) . '.' . $ext;
-    $dir  = __DIR__ . '/../uploads/' . $subdir;
-    if (!is_dir($dir)) mkdir($dir, 0755, true);
-    $dest = $dir . '/' . $name;
-    if (!move_uploaded_file($file['tmp_name'], $dest)) return false;
-    return '/uploads/' . $subdir . '/' . $name;
-}
-
 function delete_file(string $url): void {
     if (str_starts_with($url, '/uploads/')) {
         $path = __DIR__ . '/..' . $url;
@@ -46,6 +31,18 @@ function delete_file(string $url): void {
         $base = realpath(__DIR__ . '/../uploads') . DIRECTORY_SEPARATOR;
         if ($real && strpos($real, $base) === 0 && file_exists($real)) unlink($real);
     }
+}
+
+/**
+ * Cover produk = foto galeri bertanda is_cover. Jika belum ada (produk baru / cover dihapus),
+ * foto pertama otomatis jadi cover. products.cover_image disinkronkan untuk kartu & daftar produk.
+ */
+function sync_cover(PDO $db, int $pid): void {
+    $cur = $db->prepare("SELECT id, image_url FROM product_images WHERE product_id = ? ORDER BY is_cover DESC, sort_order ASC, id ASC LIMIT 1");
+    $cur->execute([$pid]);
+    $img = $cur->fetch();
+    $db->prepare("UPDATE product_images SET is_cover = (id = ?) WHERE product_id = ?")->execute([$img['id'] ?? 0, $pid]);
+    $db->prepare("UPDATE products SET cover_image = ? WHERE id = ?")->execute([$img['image_url'] ?? null, $pid]);
 }
 
 /* ============================================================
@@ -100,9 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'del_
         if ($row) {
             $url = $row['image_url'];
             delete_file($url);
-            // If this image is the cover, set cover_image to NULL
-            $db->prepare("UPDATE products SET cover_image = NULL WHERE id = ? AND cover_image = ?")->execute([$pid_for_del, $url]);
             $db->prepare("DELETE FROM product_images WHERE id=?")->execute([$del_img_id]);
+            sync_cover($db, $pid_for_del);   // cover terhapus -> foto berikutnya jadi cover
         }
     }
     header("Location: products.php?edit=$pid_for_del&msg=img_deleted"); exit;
@@ -151,17 +147,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
     $category     = trim($_POST['category'] ?? '');
     $badge        = trim($_POST['badge'] ?? '');
     $ref_code     = trim($_POST['ref_code'] ?? '');
-    $price        = (int)preg_replace('/\D/', '', $_POST['price'] ?? '0');
-    $orig_price   = (int)preg_replace('/\D/', '', $_POST['original_price'] ?? '0');
-    $price_unit   = trim($_POST['price_unit'] ?? '/ meter');
     $description  = trim($_POST['description'] ?? '');
     $features_raw = trim($_POST['features'] ?? '');
     $features     = implode('|', array_filter(array_map('trim', explode("\n", $features_raw))));
     $is_active    = (int)($_POST['is_active'] ?? 1);
+    // Harga: ikut kategori (default) atau custom per produk
+    $use_cat_price = isset($_POST['use_category_price']) ? 1 : 0;
+    $custom_price  = (int)preg_replace('/\D/', '', (string)($_POST['custom_price'] ?? ''));
+    $custom_unit   = trim(ltrim((string)($_POST['custom_unit'] ?? ''), "/ \t")) ?: 'unit';   // "/" ditampilkan otomatis
     $stock        = trim($_POST['stock'] ?? '') === '' ? null : (int)$_POST['stock'];
 
-    if (!$name || !$category || !$price) {
-        $err = 'Nama, kategori, dan harga wajib diisi.';
+    // Harga tidak lagi per produk: yang dipakai harga per meter kategori (admin › Kategori).
+    if (!$name || !$category) {
+        $err = 'Nama dan kategori wajib diisi.';
+    } elseif (!$use_cat_price && $custom_price <= 0) {
+        $err = 'Isi harga custom (lebih dari 0), atau centang "Ikuti harga kategori".';
+    } elseif (mb_strlen($custom_unit) > 50) {
+        $err = 'Satuan harga maksimal 50 karakter.';
+    } elseif ($pid === 0 && !has_uploaded_file($_FILES['gallery_images'] ?? null)) {
+        $err = 'Upload minimal satu foto produk (foto pertama otomatis jadi cover).';
     } else {
         $slug = slugify($name);
         if ($pid === 0) {
@@ -171,11 +175,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
                 $slug = $base_slug . '-' . $i++;
             }
         } else {
-            // On update, ensure uniqueness excluding own id
-            $chk = $db->prepare("SELECT id FROM products WHERE slug=? AND id != ?");
-            if ($chk->execute([$slug, $pid]) && $chk->fetchColumn()) {
-                $err = 'Slug sudah digunakan produk lain.';
-            }
+            // Saat edit, slug lama dipertahankan agar URL produk (link yang sudah dibagikan) tidak berubah
+            $cur_slug = $db->prepare("SELECT slug FROM products WHERE id=?");
+            $cur_slug->execute([$pid]);
+            $slug = (string)$cur_slug->fetchColumn() ?: $slug;
         }
 
         // Validate category exists
@@ -203,104 +206,119 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
             $db->beginTransaction();
             try {
 
-        // Cover image (for new products)
-        $cover_url = '';
-        if (!empty($_FILES['cover_image']['name'])) {
-            $cover_url = upload_image($_FILES['cover_image'], 'products');
-            if (!$cover_url) $err = 'Gagal upload cover image (maks 5MB, JPG/PNG/WEBP).';
-        }
-
         if (!$err) {
             if ($pid === 0) {
-                // INSERT
-                if (!$cover_url) { $err = 'Cover image wajib untuk produk baru.'; }
-                else {
-                    $ins = $db->prepare("INSERT INTO products (slug,name,category_id,badge,ref_code,price,original_price,price_unit,description,features,cover_image,is_active,stock) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
-                    $ins->execute([$slug,$name,$category_id,$badge,$ref_code,$price,$orig_price ?: null,$price_unit,$description,$features,$cover_url,$is_active,$stock]);
-                    $pid = (int)$db->lastInsertId();
-                    // Also add cover as first gallery image
-                    $db->prepare("INSERT INTO product_images (product_id, image_url, sort_order, is_cover) VALUES (?,?,0,1)")->execute([$pid, $cover_url]);
-                    $msg = 'Produk berhasil ditambahkan.';
-                }
+                // INSERT — kolom harga lama diisi nilai netral (tidak ditampilkan lagi)
+                $ins = $db->prepare("INSERT INTO products (slug,name,category_id,badge,ref_code,price,original_price,price_unit,use_category_price,description,features,cover_image,is_active,stock) VALUES (?,?,?,?,?,?,NULL,?,?,?,?,NULL,?,?)");
+                $ins->execute([$slug,$name,$category_id,$badge,$ref_code,
+                               $use_cat_price ? 0 : $custom_price, $use_cat_price ? '/ meter' : $custom_unit, $use_cat_price,
+                               $description,$features,$is_active,$stock]);
+                $pid = (int)$db->lastInsertId();
+                $msg = 'Produk berhasil ditambahkan.';
             } else {
-                // UPDATE
-                if ($cover_url) {
-                    $old = $db->prepare("SELECT cover_image FROM products WHERE id=?");
-                    $old->execute([$pid]); $r = $old->fetch();
-                    if ($r) {
-                        $old_url = $r['cover_image'];
-                        // Only delete if no other product_images row references it
-                        $ref_chk = $db->prepare("SELECT id FROM product_images WHERE image_url=?");
-                        if (!($ref_chk->execute([$old_url]) && $ref_chk->fetchColumn())) {
-                            delete_file($old_url);
-                        }
-                    }
-                    $db->prepare("UPDATE products SET slug=?,name=?,category_id=?,badge=?,ref_code=?,price=?,original_price=?,price_unit=?,description=?,features=?,cover_image=?,is_active=?,stock=? WHERE id=?")
-                       ->execute([$slug,$name,$category_id,$badge,$ref_code,$price,$orig_price ?: null,$price_unit,$description,$features,$cover_url,$is_active,$stock,$pid]);
-                } else {
-                    $db->prepare("UPDATE products SET slug=?,name=?,category_id=?,badge=?,ref_code=?,price=?,original_price=?,price_unit=?,description=?,features=?,is_active=?,stock=? WHERE id=?")
-                       ->execute([$slug,$name,$category_id,$badge,$ref_code,$price,$orig_price ?: null,$price_unit,$description,$features,$is_active,$stock,$pid]);
+                $db->prepare("UPDATE products SET slug=?,name=?,category_id=?,badge=?,ref_code=?,description=?,features=?,is_active=?,stock=?,use_category_price=? WHERE id=?")
+                   ->execute([$slug,$name,$category_id,$badge,$ref_code,$description,$features,$is_active,$stock,$use_cat_price,$pid]);
+                if (!$use_cat_price) {   // harga lama disimpan apa adanya saat kembali ke harga kategori
+                    $db->prepare("UPDATE products SET price=?, original_price=NULL, price_unit=? WHERE id=?")->execute([$custom_price, $custom_unit, $pid]);
                 }
                 $msg = 'Produk berhasil diperbarui.';
             }
         }
 
         // Upload additional gallery images
-        if ($pid > 0 && !$err && !empty($_FILES['gallery_images']['name'][0])) {
+        $upload_errors = [];
+        if ($pid > 0 && !$err && has_uploaded_file($_FILES['gallery_images'] ?? null)) {
             $ins_img = $db->prepare("INSERT INTO product_images (product_id, image_url, sort_order) VALUES (?,?,?)");
-            $existing_count = (int)$db->query("SELECT COUNT(*) FROM product_images WHERE product_id=$pid")->fetchColumn();
-            foreach ($_FILES['gallery_images']['tmp_name'] as $i => $tmp) {
-                if ($_FILES['gallery_images']['error'][$i] !== UPLOAD_ERR_OK) continue;
-                $single = [
-                    'name'     => $_FILES['gallery_images']['name'][$i],
-                    'type'     => $_FILES['gallery_images']['type'][$i],
-                    'tmp_name' => $tmp,
-                    'error'    => $_FILES['gallery_images']['error'][$i],
-                    'size'     => $_FILES['gallery_images']['size'][$i],
-                ];
-                $url = upload_image($single, 'products');
-                if ($url) $ins_img->execute([$pid, $url, $existing_count + $i]);
+            $next = (int)$db->query("SELECT COALESCE(MAX(sort_order), -1) + 1 FROM product_images WHERE product_id=$pid")->fetchColumn();
+            foreach (uploaded_files($_FILES['gallery_images']) as $f) {
+                if ($f['error'] === UPLOAD_ERR_NO_FILE) continue;
+                $url = store_uploaded_image($f, 'products', $e);   // validasi 5 MB + kompres standar
+                if ($url) $ins_img->execute([$pid, $url, $next++]);
+                elseif ($e) $upload_errors[] = $f['name'] . ': ' . $e;
+            }
+        }
+
+        // Cover dari foto galeri (foto pertama bila belum dipilih)
+        if ($pid > 0 && !$err) {
+            sync_cover($db, $pid);
+            $has_img = $db->prepare("SELECT COUNT(*) FROM product_images WHERE product_id = ?");
+            $has_img->execute([$pid]);
+            if (!$has_img->fetchColumn()) {
+                $err = 'Gagal upload foto produk. ' . implode('; ', $upload_errors);
             }
         }
 
         // =====================================================
-        // SAVE VARIANTS (from dynamic JS builder)
+        // SAVE VARIANTS
+        // 1) "Ukuran" — parameter tetap: daftar lebar × tinggi (cm). "Custom" otomatis di halaman produk.
+        // 2) Varian lain (Warna, Kontrol, dll.) — maksimal MAX_EXTRA_VARIANTS.
         // =====================================================
         if ($pid > 0 && !$err) {
-            // Delete existing variants for clean re-insert
             $db->prepare("DELETE FROM product_variants WHERE product_id = ?")->execute([$pid]);
 
+            // --- Ukuran ---
+            $sizes = [];
+            $size_w = $_POST['size_w'] ?? [];
+            $size_h = $_POST['size_h'] ?? [];
+            foreach ($size_w as $si => $w_raw) {
+                $w_raw = trim(str_replace(',', '.', (string)$w_raw));
+                $h_raw = trim(str_replace(',', '.', (string)($size_h[$si] ?? '')));
+                if ($w_raw === '' && $h_raw === '') continue;
+                $ok = fn($v) => preg_match('/^\d{1,5}(\.\d)?$/', $v) && (float)$v > 0 && (float)$v <= 10000;
+                if (!$ok($w_raw) || !$ok($h_raw)) {
+                    $err = 'Ukuran #' . ($si + 1) . ': lebar & tinggi harus angka 1–10.000 cm.';
+                    break;
+                }
+                $key = (float)$w_raw . 'x' . (float)$h_raw;
+                $sizes[$key] = [(float)$w_raw, (float)$h_raw];   // duplikat otomatis diabaikan
+            }
+            if (!$err && $sizes) {
+                $db->prepare("INSERT INTO product_variants (product_id, label, is_image_linked, is_size, sort_order) VALUES (?, 'Ukuran', 0, 1, 0)")
+                   ->execute([$pid]);
+                $size_vid = (int)$db->lastInsertId();
+                $ins_size = $db->prepare("INSERT INTO product_variant_options (variant_id, value, width_cm, height_cm, sort_order) VALUES (?, ?, ?, ?, ?)");
+                $so = 0;
+                foreach ($sizes as [$w, $h]) {
+                    $ins_size->execute([$size_vid, format_size_label($w, $h), $w, $h, $so++]);
+                }
+            }
+
+            // --- Varian lain ---
             $variant_labels = $_POST['variant_label'] ?? [];
             $variant_image_linked = $_POST['variant_image_linked'] ?? [];
             $variant_options = $_POST['variant_options'] ?? [];
+            $filled = array_filter($variant_labels, fn($l) => trim((string)$l) !== '');
 
-            // Validate max 4 variants
-            if (count($variant_labels) > 4) {
-                $err = 'Maksimum 4 varian.';
-            } else {
+            if (!$err && count($filled) > MAX_EXTRA_VARIANTS) {
+                $err = 'Maksimum ' . MAX_EXTRA_VARIANTS . ' varian selain Ukuran.';
+            } elseif (!$err) {
                 $valid_images = $db->prepare("SELECT id FROM product_images WHERE product_id = ?");
                 $valid_images->execute([$pid]);
                 $valid_img_ids = array_column($valid_images->fetchAll(), 'id');
+                $ins_var = $db->prepare("INSERT INTO product_variants (product_id, label, is_image_linked, is_size, sort_order) VALUES (?, ?, ?, 0, ?)");
+                $ins_opt = $db->prepare("INSERT INTO product_variant_options (variant_id, value, linked_image_id, sort_order) VALUES (?, ?, ?, ?)");
+                $sort = 1;
 
                 foreach ($variant_labels as $vi => $label) {
                     $label = trim($label);
                     if (!$label) continue;
+                    if (in_array(mb_strtolower($label), ['ukuran', 'size'], true)) {
+                        $err = 'Label "' . $label . '" dipakai varian Ukuran tetap. Gunakan nama lain.';
+                        break;
+                    }
                     $is_img_linked = in_array((string)$vi, $variant_image_linked) ? 1 : 0;
-                    $ins_var = $db->prepare("INSERT INTO product_variants (product_id, label, is_image_linked, sort_order) VALUES (?, ?, ?, ?)");
-                    $ins_var->execute([$pid, $label, $is_img_linked, $vi]);
+                    $ins_var->execute([$pid, $label, $is_img_linked, $sort++]);
                     $vid = (int)$db->lastInsertId();
 
                     $options = $variant_options[$vi] ?? [];
                     foreach ($options as $oi => $opt_val) {
                         $opt_val = trim($opt_val);
                         if (!$opt_val) continue;
-                        // Check for linked image
                         $linked_img_id = null;
-                        $link_val = (int)($_POST['variant_opt_image'][$vi][$oi] ?? 0);
+                        $link_val = $is_img_linked ? (int)($_POST['variant_opt_image'][$vi][$oi] ?? 0) : 0;
                         if ($link_val > 0 && in_array($link_val, $valid_img_ids)) {
                             $linked_img_id = $link_val;
                         }
-                        $ins_opt = $db->prepare("INSERT INTO product_variant_options (variant_id, value, linked_image_id, sort_order) VALUES (?, ?, ?, ?)");
                         $ins_opt->execute([$vid, $opt_val, $linked_img_id, $oi]);
                     }
                 }
@@ -319,6 +337,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
                 $err = 'Gagal menyimpan produk. Coba lagi.';
             }
             if ($db->inTransaction()) { $err ? $db->rollBack() : $db->commit(); }
+            if ($err) $msg = '';
+            elseif (!empty($upload_errors)) $msg .= ' Foto dilewati: ' . implode('; ', $upload_errors);
         }
     }
 }
@@ -328,7 +348,7 @@ if (isset($_GET['msg'])) $msg = ['img_deleted' => 'Foto dihapus', 'cover_set' =>
 /* ============================================================
    LOAD PRODUCTS LIST
    ============================================================ */
-$products = $db->query("SELECT p.*, c.name AS category FROM products p JOIN categories c ON c.id = p.category_id ORDER BY p.created_at DESC")->fetchAll();
+$products = $db->query("SELECT p.*, c.name AS category, c.price_per_meter FROM products p JOIN categories c ON c.id = p.category_id ORDER BY p.created_at DESC")->fetchAll();
 
 // Load gallery images and variants for editing product
 $edit_images   = [];
@@ -438,10 +458,10 @@ select.input{appearance:auto;}
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="label">Kategori <span class="text-red-500">*</span></label>
-            <select name="category" class="input" required>
+            <select name="category" id="product-category" class="input" required onchange="showCategoryPrice()">
               <option value="">— Pilih Kategori —</option>
               <?php foreach($categories as $cat): ?>
-              <option value="<?= htmlspecialchars($cat['name']) ?>" <?= ($editing['category'] ?? '') === $cat['name'] ? 'selected' : '' ?>><?= htmlspecialchars($cat['name']) ?></option>
+              <option value="<?= htmlspecialchars($cat['name']) ?>" data-ppm="<?= (int)$cat['price_per_meter'] ?>" <?= ($editing['category'] ?? '') === $cat['name'] ? 'selected' : '' ?>><?= htmlspecialchars($cat['name']) ?></option>
               <?php endforeach; ?>
             </select>
           </div>
@@ -468,33 +488,52 @@ select.input{appearance:auto;}
         </div>
       </div>
 
-      <!-- Pricing -->
+      <!-- Harga: ikut harga per meter kategori (default) atau harga custom produk -->
+      <?php
+      $is_save_post = ($_POST['_action'] ?? '') === 'save' && $err;   // tampilkan ulang isian saat validasi gagal
+      $f_use_cat = $is_save_post ? isset($_POST['use_category_price']) : (int)($editing['use_category_price'] ?? 1) === 1;
+      $f_price   = $is_save_post ? (string)($_POST['custom_price'] ?? '') : (!$f_use_cat && !empty($editing['price']) ? (string)(int)$editing['price'] : '');
+      $f_unit    = ltrim($is_save_post ? (string)($_POST['custom_unit'] ?? 'unit') : (!$f_use_cat ? (string)($editing['price_unit'] ?? 'unit') : 'unit'), "/ \t");
+      ?>
       <div class="bg-white border border-border rounded-[6px] p-6 flex flex-col gap-4">
         <h2 class="font-jakarta font-semibold text-dark text-[14px] border-b border-border pb-3">Harga</h2>
-        <div class="grid grid-cols-3 gap-4">
-          <div>
-            <label class="label">Harga Jual <span class="text-red-500">*</span></label>
-            <input type="number" name="price" required min="0"
-                   value="<?= $editing['price'] ?? '' ?>" class="input" placeholder="385000"/>
+
+        <label class="flex items-start gap-2.5 cursor-pointer select-none">
+          <input type="checkbox" name="use_category_price" id="use-category-price" value="1" <?= $f_use_cat ? 'checked' : '' ?>
+                 onchange="togglePriceMode()" class="mt-0.5 size-4 accent-[#860524]"/>
+          <span>
+            <span class="block font-jakarta text-dark text-[13px] font-medium">Ikuti harga kategori</span>
+            <span class="block font-jakarta text-muted text-[11px] mt-0.5">Hapus centang untuk memasang harga custom khusus produk ini.</span>
+          </span>
+        </label>
+
+        <!-- Mode kategori -->
+        <div id="price-mode-category" class="bg-cream border border-border rounded-[4px] px-4 py-3">
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <p class="font-jakarta text-muted text-[12px]">Harga per meter kategori <strong id="cat-price-name" class="text-dark">—</strong></p>
+            <p id="cat-price-value" class="font-playfair font-semibold text-dark text-[20px]">—</p>
           </div>
-          <div>
-            <label class="label">Harga Coret</label>
-            <input type="number" name="original_price" min="0"
-                   value="<?= $editing['original_price'] ?? '' ?>" class="input" placeholder="450000"/>
-          </div>
-          <div>
-            <label class="label">Satuan Harga</label>
-            <input type="text" name="price_unit" value="<?= htmlspecialchars($editing['price_unit'] ?? '/ meter') ?>" class="input" placeholder="/ meter"/>
-          </div>
+          <p class="font-jakarta text-muted text-[11px] mt-1">Dipakai kartu, detail produk &amp; kalkulator harga. Ubah lewat menu <a href="categories.php" class="text-brand underline">Kategori</a>.</p>
         </div>
-        <?php if (!empty($editing['price']) && !empty($editing['original_price']) && $editing['original_price'] > $editing['price']): ?>
-        <div class="bg-green-50 border border-green-200 rounded-[4px] px-4 py-2">
-          <p class="font-jakarta text-green-700 text-[12px]">
-            Diskon: <strong><?= round((1 - $editing['price']/$editing['original_price'])*100) ?>%</strong>
-            (hemat <?= fmt_price($editing['original_price'] - $editing['price']) ?>)
-          </p>
+
+        <!-- Mode custom -->
+        <div id="price-mode-custom" class="flex flex-col gap-3">
+          <div class="grid grid-cols-3 gap-4">
+            <div class="col-span-2">
+              <label class="label" for="custom-price">Harga Custom (Rp) <span class="text-red-500">*</span></label>
+              <input type="number" id="custom-price" name="custom_price" min="1" step="1" value="<?= htmlspecialchars($f_price) ?>" class="input" placeholder="Contoh: 2750000"/>
+            </div>
+            <div>
+              <label class="label" for="custom-unit">Satuan</label>
+              <div class="flex items-stretch">
+                <span class="inline-flex items-center px-3 border border-r-0 border-border rounded-l-[4px] bg-cream font-jakarta text-muted text-[13px]" aria-hidden="true">/</span>
+                <input type="text" id="custom-unit" name="custom_unit" maxlength="48" list="price-units" value="<?= htmlspecialchars($f_unit) ?>" class="input !rounded-l-none" placeholder="unit"/>
+              </div>
+              <datalist id="price-units"><option value="unit"><option value="set"><option value="set track"><option value="meter"><option value="m²"></datalist>
+            </div>
+          </div>
+          <p class="font-jakarta text-amber-700 text-[11px] bg-amber-50 border border-amber-200 rounded-[4px] px-3 py-2">Produk berharga custom tidak menampilkan kalkulator harga di halaman produk. Pengunjung tetap bisa memilih ukuran &amp; minta penawaran.</p>
         </div>
-        <?php endif; ?>
       </div>
 
       <!-- ==========================================
@@ -503,7 +542,21 @@ select.input{appearance:auto;}
       <div class="bg-white border border-border rounded-[6px] p-6 flex flex-col gap-4">
         <div class="flex items-center justify-between border-b border-border pb-3">
           <h2 class="font-jakarta font-semibold text-dark text-[14px]">Varian Produk</h2>
-          <span class="font-jakarta text-muted text-[11px]" id="variant-count-label">Maksimal 4 varian (1 ukuran + 3 kustom)</span>
+          <span class="font-jakarta text-muted text-[11px]" id="variant-count-label">Ukuran + maksimal <?= MAX_EXTRA_VARIANTS ?> varian lain</span>
+        </div>
+
+        <!-- Ukuran: parameter tetap (tidak bisa diganti nama / dihapus) -->
+        <div class="variant-card is-size">
+          <div class="flex items-start justify-between gap-3 mb-1">
+            <div>
+              <p class="font-jakarta font-semibold text-dark text-[13px]">Ukuran <span class="font-normal text-muted text-[11px]">· parameter tetap</span></p>
+              <p class="font-jakarta text-muted text-[11px] mt-0.5 leading-[16px]">Lebar × tinggi dalam cm. Di halaman produk, ukuran yang dipilih customer langsung mengisi kalkulator harga. Opsi <strong>Custom</strong> ditambahkan otomatis.</p>
+            </div>
+          </div>
+          <div id="size-rows"></div>
+          <button type="button" onclick="addSizeRow()" class="btn-sm border border-brand/30 text-brand hover:bg-brand/5 mt-2 w-full py-1.5">
+            + Tambah Ukuran
+          </button>
         </div>
 
         <div id="variants-container">
@@ -512,7 +565,7 @@ select.input{appearance:auto;}
 
         <button type="button" id="add-variant-btn" onclick="addVariant()"
                 class="btn-sm border border-dashed border-brand/40 text-brand hover:bg-brand/5 w-full py-2.5 font-semibold">
-          + TAMBAH VARIAN KUSTOM
+          + TAMBAH VARIAN
         </button>
       </div>
 
@@ -548,29 +601,10 @@ select.input{appearance:auto;}
         </div>
       </div>
 
-      <!-- Cover Image -->
-      <div class="bg-white border border-border rounded-[6px] p-6 flex flex-col gap-3">
-        <h2 class="font-jakarta font-semibold text-dark text-[14px] border-b border-border pb-3">Cover Image <?= !$editing ? '<span class="text-red-500">*</span>' : '' ?></h2>
-        <?php if ($editing && $editing['cover_image']): ?>
-        <div class="aspect-[3/4] rounded-[4px] overflow-hidden bg-cream-dark border border-border">
-          <img src="<?= htmlspecialchars(asset_url($editing['cover_image'])) ?>" alt="Cover" class="w-full h-full object-cover"/>
-        </div>
-        <p class="font-jakarta text-muted text-[11px]">Upload baru untuk mengganti cover, atau pilih dari galeri di bawah.</p>
-        <?php endif; ?>
-        <div class="border-2 border-dashed border-border rounded-[4px] p-4 text-center hover:border-brand/40 transition-colors cursor-pointer" onclick="document.getElementById('cover_image').click()">
-          <svg class="size-8 text-muted mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>
-          <p class="font-jakarta text-muted text-[12px]">Klik untuk upload cover</p>
-          <p class="font-jakarta text-muted text-[11px] mt-1">JPG, PNG, WEBP — maks 5MB</p>
-        </div>
-        <input type="file" id="cover_image" name="cover_image" accept="image/*" class="hidden" onchange="previewCover(event)"/>
-        <div id="cover-preview" class="hidden aspect-[3/4] rounded-[4px] overflow-hidden border border-border">
-          <img id="cover-preview-img" src="" class="w-full h-full object-cover"/>
-        </div>
-      </div>
-
       <!-- Gallery Images with Cover Picker -->
       <div class="bg-white border border-border rounded-[6px] p-6 flex flex-col gap-3">
-        <h2 class="font-jakarta font-semibold text-dark text-[14px] border-b border-border pb-3">Foto Galeri Detail</h2>
+        <h2 class="font-jakarta font-semibold text-dark text-[14px] border-b border-border pb-3">Foto Produk <?= !$editing ? '<span class="text-red-500">*</span>' : '' ?></h2>
+        <p class="font-jakarta text-muted text-[11px] leading-[16px]">Foto bertanda <strong class="text-brand">COVER</strong> tampil di katalog. <?= $editing ? 'Arahkan kursor ke foto lain lalu pilih "Jadikan Cover" untuk menggantinya.' : 'Foto pertama yang diupload otomatis jadi cover.' ?></p>
         <?php if (!empty($edit_images)): ?>
         <div class="grid grid-cols-2 gap-2">
           <?php foreach($edit_images as $gi): ?>
@@ -581,37 +615,22 @@ select.input{appearance:auto;}
             <?php endif; ?>
             <!-- Hover overlay -->
             <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+              <!-- Tombol ini mengirim form terpisah di luar #product-form (form tidak boleh bersarang) -->
               <?php if (!$gi['is_cover']): ?>
-              <form method="POST" style="display:inline;">
-                <input type="hidden" name="_action" value="set_cover"/>
-                <input type="hidden" name="product_id" value="<?= $editing['id'] ?>"/>
-                <input type="hidden" name="image_id" value="<?= $gi['id'] ?>"/>
-                <?= csrf_field() ?>
-                <button type="submit" class="text-white text-[10px] tracking-[0.8px] uppercase font-semibold bg-brand/80 hover:bg-brand px-3 py-1.5 rounded-[2px] transition-colors border-0 cursor-pointer">
-                  ⭐ Jadikan Cover
-                </button>
-              </form>
+              <button type="submit" form="img-cover-<?= (int)$gi['id'] ?>" class="text-white text-[10px] tracking-[0.8px] uppercase font-semibold bg-brand/80 hover:bg-brand px-3 py-1.5 rounded-[2px] transition-colors border-0 cursor-pointer">
+                ⭐ Jadikan Cover
+              </button>
               <?php endif; ?>
-              <form method="POST" style="display:inline;" onsubmit="return confirm('Hapus foto ini?')">
-                <input type="hidden" name="_action" value="del_img"/>
-                <input type="hidden" name="product_id" value="<?= $editing['id'] ?>"/>
-                <input type="hidden" name="image_id" value="<?= $gi['id'] ?>"/>
-                <?= csrf_field() ?>
-                <button type="submit" class="text-white text-[10px] tracking-[0.8px] uppercase font-semibold bg-red-500/80 hover:bg-red-600 px-3 py-1.5 rounded-[2px] transition-colors border-0 cursor-pointer">
-                  🗑️ Hapus
-                </button>
-              </form>
+              <button type="submit" form="img-del-<?= (int)$gi['id'] ?>" class="text-white text-[10px] tracking-[0.8px] uppercase font-semibold bg-red-500/80 hover:bg-red-600 px-3 py-1.5 rounded-[2px] transition-colors border-0 cursor-pointer">
+                🗑️ Hapus
+              </button>
             </div>
           </div>
           <?php endforeach; ?>
         </div>
         <?php endif; ?>
-        <div class="border-2 border-dashed border-border rounded-[4px] p-4 text-center hover:border-brand/40 transition-colors cursor-pointer" onclick="document.getElementById('gallery_images').click()">
-          <svg class="size-6 text-muted mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-          <p class="font-jakarta text-muted text-[12px]">Tambah foto galeri (bisa multiple)</p>
-        </div>
-        <input type="file" id="gallery_images" name="gallery_images[]" accept="image/*" multiple class="hidden"/>
-        <div id="gallery-preview" class="grid grid-cols-2 gap-2"></div>
+        <?= image_dropzone(['name' => 'gallery_images', 'multiple' => true, 'required' => !$editing, 'max_files' => 12, 'compact' => (bool)$editing,
+                            'title' => $editing ? 'Tambah foto — seret & lepas atau klik' : 'Seret & lepas foto produk, atau klik untuk memilih']) ?>
       </div>
 
       <!-- Save Button -->
@@ -627,6 +646,22 @@ select.input{appearance:auto;}
     </div><!-- /RIGHT -->
 
   </form>
+
+  <?php // Form aksi foto: di luar #product-form agar tidak ikut terkirim saat "Simpan Perubahan" ?>
+  <?php foreach ($edit_images as $gi): ?>
+  <form method="POST" id="img-cover-<?= (int)$gi['id'] ?>" class="hidden">
+    <input type="hidden" name="_action" value="set_cover"/>
+    <input type="hidden" name="product_id" value="<?= (int)$editing['id'] ?>"/>
+    <input type="hidden" name="image_id" value="<?= (int)$gi['id'] ?>"/>
+    <?= csrf_field() ?>
+  </form>
+  <form method="POST" id="img-del-<?= (int)$gi['id'] ?>" class="hidden" onsubmit="return confirm('Hapus foto ini?')">
+    <input type="hidden" name="_action" value="del_img"/>
+    <input type="hidden" name="product_id" value="<?= (int)$editing['id'] ?>"/>
+    <input type="hidden" name="image_id" value="<?= (int)$gi['id'] ?>"/>
+    <?= csrf_field() ?>
+  </form>
+  <?php endforeach; ?>
 
   <?php else: ?>
   <!-- ===================================================
@@ -689,10 +724,13 @@ select.input{appearance:auto;}
             <span class="font-jakarta text-muted text-[12px]"><?= $p['stock'] !== null ? $p['stock'] : '—' ?></span>
           </td>
           <td class="px-4 py-3 text-right">
-            <p class="font-playfair font-semibold text-dark text-[14px]"><?= fmt_price($p['price']) ?></p>
-            <?php if ($p['original_price']): ?>
-            <p class="font-jakarta text-muted text-[11px] line-through"><?= fmt_price($p['original_price']) ?></p>
+            <?php $pp = product_price($p); ?>
+            <?php if ($pp['amount'] > 0): ?>
+            <p class="font-playfair font-semibold text-dark text-[14px] whitespace-nowrap"><?= fmt_price($pp['amount']) ?> <span class="font-jakarta font-normal text-muted text-[11px]"><?= htmlspecialchars($pp['unit']) ?></span></p>
+            <?php else: ?>
+            <p class="font-jakarta text-amber-700 text-[12px]">Belum diatur</p>
             <?php endif; ?>
+            <p class="font-jakarta text-[10px] <?= $pp['custom'] ? 'text-brand' : 'text-muted' ?>"><?= $pp['custom'] ? 'harga custom' : 'dari kategori' ?></p>
           </td>
           <td class="px-4 py-3">
             <div class="flex items-center justify-center gap-2">
@@ -727,33 +765,47 @@ select.input{appearance:auto;}
 /* ==========================================================
    VARIANT BUILDER — Dynamic JS
    ========================================================== */
-const MAX_CUSTOM_VARIANTS = 3;
+const MAX_CUSTOM_VARIANTS = <?= MAX_EXTRA_VARIANTS ?>;
 let variantIndex = 0;
 
 // Gallery images for image-linking dropdown
 const galleryImages = <?= json_encode(array_map(fn($img) => ['id' => $img['id'], 'url' => $img['image_url']], $edit_images), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
 
-// Existing variants for edit mode
+// Varian tersimpan: Ukuran (lebar × tinggi) dipisah dari varian lain
+<?php
+$size_variant  = current(array_filter($edit_variants, fn($v) => !empty($v['is_size']))) ?: null;
+$extra_variants = array_values(array_filter($edit_variants, fn($v) => empty($v['is_size'])));
+?>
+const existingSizes = <?= json_encode($size_variant ? array_map(fn($o) => ['w' => (float)$o['width_cm'], 'h' => (float)$o['height_cm']], $size_variant['options']) : [], JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
 const existingVariants = <?= json_encode(array_map(fn($v) => [
     'label' => $v['label'],
     'is_image_linked' => (bool)$v['is_image_linked'],
     'options' => array_map(fn($o) => ['value' => $o['value'], 'linked_image_id' => $o['linked_image_id']], $v['options']),
-], $edit_variants), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
+], $extra_variants), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?>;
 
 function getVariantCount() {
-    return document.querySelectorAll('.variant-card').length;
+    return document.querySelectorAll('#variants-container .variant-card').length;
 }
 
 function updateAddButton() {
     const btn = document.getElementById('add-variant-btn');
     const count = getVariantCount();
-    if (count >= MAX_CUSTOM_VARIANTS + 1) { // +1 for Ukuran
-        btn.style.display = 'none';
-    } else {
-        btn.style.display = 'block';
-    }
+    btn.style.display = count >= MAX_CUSTOM_VARIANTS ? 'none' : 'block';
     document.getElementById('variant-count-label').textContent =
-        `${count}/4 varian digunakan (1 ukuran + ${Math.max(0, count - 1)} kustom)`;
+        `Ukuran + ${count}/${MAX_CUSTOM_VARIANTS} varian lain`;
+}
+
+function addSizeRow(w = '', h = '') {
+    const row = document.createElement('div');
+    row.className = 'opt-row';
+    row.innerHTML = `
+        <input type="number" name="size_w[]" value="${escHtml(w)}" min="1" max="10000" step="0.1" class="opt-input" placeholder="Lebar (cm)" inputmode="decimal"/>
+        <span class="font-jakarta text-muted text-[12px] shrink-0">×</span>
+        <input type="number" name="size_h[]" value="${escHtml(h)}" min="1" max="10000" step="0.1" class="opt-input" placeholder="Tinggi (cm)" inputmode="decimal"/>
+        <span class="font-jakarta text-muted text-[11px] shrink-0">cm</span>
+        <button type="button" onclick="this.closest('.opt-row').remove()" class="btn-sm border border-red-200 text-red-500 hover:bg-red-50 shrink-0">×</button>
+    `;
+    document.getElementById('size-rows').appendChild(row);
 }
 
 function createOptionRow(vi, oi, value = '', linkedImageId = null) {
@@ -764,7 +816,7 @@ function createOptionRow(vi, oi, value = '', linkedImageId = null) {
     let imgSelect = '';
     if (galleryImages.length > 0) {
         imgSelect = `
-            <select name="variant_opt_image[${vi}][]" class="opt-input" style="max-width:140px;" title="Link ke gambar galeri">
+            <select name="variant_opt_image[${vi}][]" class="opt-input img-link-select" style="max-width:140px;" title="Link ke gambar galeri">
                 <option value="">— Tanpa link —</option>
                 ${galleryImages.map(img => `<option value="${img.id}" ${img.id == linkedImageId ? 'selected' : ''}>Foto #${img.id}</option>`).join('')}
             </select>
@@ -780,7 +832,7 @@ function createOptionRow(vi, oi, value = '', linkedImageId = null) {
 }
 
 function addVariant(label = '', isSize = false, isImageLinked = false, options = []) {
-    if (!isSize && getVariantCount() >= MAX_CUSTOM_VARIANTS + 1) return;
+    if (getVariantCount() >= MAX_CUSTOM_VARIANTS) return;
 
     const vi = variantIndex++;
     const card = document.createElement('div');
@@ -828,12 +880,14 @@ function addVariant(label = '', isSize = false, isImageLinked = false, options =
     }
 
     updateAddButton();
+    syncImageLinkSelects();
 }
 
 function addOption(vi) {
     const container = document.querySelector(`.options-container[data-vi="${vi}"]`);
     const oi = container.children.length;
     container.appendChild(createOptionRow(vi, oi));
+    syncImageLinkSelects();
 }
 
 function removeVariant(btn) {
@@ -848,6 +902,19 @@ function handleImageLinkToggle(checkbox) {
             if (cb !== checkbox) cb.checked = false;
         });
     }
+    syncImageLinkSelects();
+}
+
+// Dropdown "link ke foto" hanya tampil pada varian yang dicentang "Link gambar"
+function syncImageLinkSelects() {
+    document.querySelectorAll('#variants-container .variant-card').forEach(card => {
+        const cb = card.querySelector('input[name="variant_image_linked[]"]');
+        const on = !!(cb && cb.checked);
+        card.querySelectorAll('.img-link-select').forEach(sel => {
+            sel.style.display = on ? '' : 'none';
+            sel.disabled = !on;   // tidak ikut terkirim bila tidak aktif
+        });
+    });
 }
 
 function escHtml(str) {
@@ -857,45 +924,43 @@ function escHtml(str) {
 
 // Initialize variants on page load
 document.addEventListener('DOMContentLoaded', () => {
-    if (existingVariants.length > 0) {
-        existingVariants.forEach((v, i) => {
-            const isSize = v.label === 'Ukuran' || v.label === 'Panjang Track';
-            addVariant(v.label, isSize && i === 0, v.is_image_linked, v.options);
-        });
-    } else {
-        // Default: add "Ukuran" as first variant
-        addVariant('Ukuran', true, false, []);
-    }
+    if (existingSizes.length) existingSizes.forEach(sz => addSizeRow(sz.w, sz.h));
+    else addSizeRow();
+    existingVariants.forEach(v => addVariant(v.label, false, v.is_image_linked, v.options));
+    updateAddButton();
 });
 
 /* ==========================================================
    IMAGE PREVIEWS
    ========================================================== */
-function previewCover(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    document.getElementById('cover-preview').classList.remove('hidden');
-    document.getElementById('cover-preview-img').src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
+// Harga produk = harga per meter kategori yang dipilih
+function togglePriceMode() {
+  const useCat = document.getElementById('use-category-price').checked;
+  document.getElementById('price-mode-category').style.display = useCat ? '' : 'none';
+  document.getElementById('price-mode-custom').style.display = useCat ? 'none' : '';
+  const price = document.getElementById('custom-price');
+  price.required = !useCat;
+  if (!useCat && !price.value) price.focus();
 }
+document.getElementById('use-category-price') && (function () {
+  // inisialisasi tanpa memindahkan fokus
+  const useCat = document.getElementById('use-category-price').checked;
+  document.getElementById('price-mode-category').style.display = useCat ? '' : 'none';
+  document.getElementById('price-mode-custom').style.display = useCat ? 'none' : '';
+  document.getElementById('custom-price').required = !useCat;
+})();
 
-document.getElementById('gallery_images')?.addEventListener('change', function(e) {
-  const container = document.getElementById('gallery-preview');
-  container.innerHTML = '';
-  Array.from(e.target.files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const div = document.createElement('div');
-      div.className = 'aspect-square rounded-[3px] overflow-hidden border border-border';
-      div.innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover"/>`;
-      container.appendChild(div);
-    };
-    reader.readAsDataURL(file);
-  });
-});
+function showCategoryPrice() {
+  const sel = document.getElementById('product-category');
+  if (!sel) return;
+  const opt = sel.selectedOptions[0];
+  const ppm = opt && opt.value ? parseInt(opt.dataset.ppm, 10) || 0 : null;
+  document.getElementById('cat-price-name').textContent = opt && opt.value ? opt.value : '—';
+  document.getElementById('cat-price-value').textContent =
+    ppm === null ? '—' : (ppm > 0 ? 'Rp ' + ppm.toLocaleString('id-ID') + ' / meter' : 'Belum diatur');
+}
+showCategoryPrice();
 </script>
+<?php image_upload_script(); ?>
 </body>
 </html>
