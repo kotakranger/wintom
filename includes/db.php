@@ -2,6 +2,7 @@
 // Wintom Curtain — Database Connection & Schema Initialization (MySQL / MariaDB)
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/image.php';
 
 function get_db(): PDO {
     static $pdo = null;

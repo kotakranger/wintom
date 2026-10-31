@@ -123,8 +123,9 @@ foreach ($gallery_images as $gi) {
 
       <!-- Main Viewport -->
       <div class="bg-[#efeeeb] border border-[#e2ddd5] rounded-[2px] overflow-hidden relative" id="main-viewport">
-        <img id="main-img"
-             src="<?= htmlspecialchars($gallery_urls[0]) ?>"
+        <?php $main = img_parts($gallery_urls[0]); ?>
+        <img id="main-img" sizes="(min-width:1024px) 600px, 100vw"
+             src="<?= htmlspecialchars($main['src']) ?>"<?= $main['srcset'] !== '' ? ' srcset="' . htmlspecialchars($main['srcset']) . '"' : '' ?>
              alt="<?= htmlspecialchars($product['name']) ?>"
              class="w-full aspect-[3/4] object-cover transition-opacity duration-300" />
       </div>
@@ -134,9 +135,10 @@ foreach ($gallery_images as $gi) {
         <?php foreach ($gallery_urls as $i => $url): ?>
         <button onclick="switchImg(<?= htmlspecialchars(json_encode($url), ENT_QUOTES) ?>, this)"
                 data-img-url="<?= htmlspecialchars($url) ?>"
+                <?php $main = img_parts($url); ?>data-src="<?= htmlspecialchars($main['src']) ?>" data-srcset="<?= htmlspecialchars($main['srcset']) ?>"
                 class="thumbnail-btn shrink-0 bg-[#efeeeb] border rounded-[2px] overflow-hidden p-[3px] transition-all duration-200 <?= $i === 0 ? 'border-2 border-[#860524]' : 'border border-[#e2ddd5]' ?>"
                 style="width: calc(25% - 9px); min-width: 72px">
-          <img src="<?= htmlspecialchars($url) ?>" alt="Photo <?= $i+1 ?>" class="w-full aspect-square object-cover rounded-[2px]" />
+          <img <?= img_attrs($url, '120px', [240]) ?> alt="Photo <?= $i+1 ?>" loading="lazy" class="w-full aspect-square object-cover rounded-[2px]" />
         </button>
         <?php endforeach; ?>
       </div>
@@ -410,7 +412,17 @@ document.addEventListener('DOMContentLoaded', () => {
 function switchImg(url, btn) {
   const img = document.getElementById('main-img');
   img.style.opacity = '0';
-  setTimeout(() => { img.src = url; img.style.opacity = '1'; }, 200);
+  setTimeout(() => {
+    // Pakai versi responsif (srcset) dari tombol thumbnail bila ada
+    if (btn && btn.dataset.src) {
+      if (btn.dataset.srcset) img.srcset = btn.dataset.srcset; else img.removeAttribute('srcset');
+      img.src = btn.dataset.src;
+    } else {
+      img.removeAttribute('srcset');
+      img.src = url;
+    }
+    img.style.opacity = '1';
+  }, 200);
   document.querySelectorAll('.thumbnail-btn').forEach(b => {
     b.className = b.className.replace('border-2 border-[#860524]', 'border border-[#e2ddd5]');
   });

@@ -26,7 +26,7 @@ $order_steps = [
       <?php foreach ($order_steps as $i => $step): ?>
       <li class="min-w-0 group" data-reveal style="--d:<?= $i * 100 ?>ms">
         <div class="bg-[#ece8e1] aspect-[4/3] overflow-hidden rounded-[2px] w-full mb-4">
-          <img src="<?= $step['img'] ?>" alt="<?= htmlspecialchars($step['alt']) ?>" loading="lazy"
+          <img <?= img_attrs($step['img'], '(min-width:1024px) 25vw, (min-width:640px) 50vw, 100vw', [480, 800]) ?> alt="<?= htmlspecialchars($step['alt']) ?>" loading="lazy"
                class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]" />
         </div>
         <span class="block font-playfair font-normal text-dark text-[24px] leading-[32px]"><?= $step['num'] ?></span>

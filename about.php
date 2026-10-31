@@ -30,7 +30,7 @@ include_once __DIR__ . '/includes/header.php';
     </div>
     <!-- Image -->
     <div class="wt-in relative aspect-[4/3] rounded-[6px] overflow-hidden bg-border" style="--d:300ms">
-      <img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1400&q=85"
+      <img <?= img_attrs('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6', '(min-width:1024px) 50vw, 100vw') ?>
            alt="Wintom Curtain Atelier"
            class="wt-zoom w-full h-full object-cover" />
       <div class="absolute inset-0 bg-gradient-to-br from-transparent to-[rgba(34,34,32,0.2)]"></div>
@@ -90,7 +90,7 @@ $team = [
               data-reveal style="--d:<?= ($i % 6) * 70 ?>ms">
         <div class="relative aspect-square overflow-hidden rounded-[2px] bg-[#ece8e1]">
           <?php if ($m['photo']): ?>
-          <img src="<?= htmlspecialchars(asset_url($m['photo'])) ?>" alt="<?= htmlspecialchars($m['name'] . ', ' . $m['role']) ?>" loading="lazy"
+          <img <?= img_attrs($m['photo'], '(min-width:1024px) 200px, (min-width:640px) 33vw, 50vw', [240, 480]) ?> alt="<?= htmlspecialchars($m['name'] . ', ' . $m['role']) ?>" loading="lazy"
                class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.05]"/>
           <?php else: ?>
           <!-- Placeholder siluet sampai foto asli tersedia -->

@@ -29,7 +29,7 @@ function delete_gal_file(string $url): void {
     if (str_starts_with($url, '/uploads/')) {
         $base = realpath(__DIR__ . '/../uploads') . DIRECTORY_SEPARATOR;
         $path = realpath(__DIR__ . '/..' . $url);
-        if ($path && str_starts_with($path, $base)) @unlink($path);
+        if ($path && str_starts_with($path, $base)) image_delete_with_variants($path);
     }
 }
 
@@ -287,7 +287,7 @@ function category_select(array $cats, ?int $selected, string $id): string {
         ?>
         <tr class="border-t border-border hover:bg-cream/50 transition-colors">
           <td class="px-4 py-3">
-            <img src="<?= htmlspecialchars(asset_url($item['image_url'])) ?>" alt="" loading="lazy"
+            <img src="<?= htmlspecialchars(img_src($item['image_url'], 480)) ?>" alt="" loading="lazy"
                  class="w-16 h-12 object-cover rounded-[3px] border border-border bg-cream-dark"/>
           </td>
           <td class="px-4 py-3 font-jakarta text-dark text-[13px] font-medium"><?= htmlspecialchars($item['title']) ?></td>
@@ -390,7 +390,7 @@ function category_select(array $cats, ?int $selected, string $id): string {
       <div class="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
         <?php foreach ($photos as $k => $ph): ?>
         <div class="relative aspect-[4/3] rounded-[3px] overflow-hidden border <?= $k === 0 ? 'border-2 border-brand' : 'border-border' ?> group">
-          <img src="<?= htmlspecialchars(asset_url($ph['image_url'])) ?>" alt="" loading="lazy" class="w-full h-full object-cover"/>
+          <img src="<?= htmlspecialchars(img_src($ph['image_url'], 480)) ?>" alt="" loading="lazy" class="w-full h-full object-cover"/>
           <?php if ($k === 0): ?>
           <span class="absolute top-1 left-1 bg-brand text-white font-jakarta font-semibold text-[9px] tracking-[1px] uppercase px-1.5 py-0.5 rounded-[2px]">Cover</span>
           <?php else: ?>
