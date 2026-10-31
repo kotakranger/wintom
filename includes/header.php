@@ -24,45 +24,17 @@ $quote_categories = $quote_categories
   <link rel="apple-touch-icon" href="<?= BASE_URL ?>/assets/images/favicon.png" />
   <meta name="description" content="Wintom Curtain — Spesialis gorden premium, roller blind, dan motorized smart system untuk hunian dan komersial di Jabodetabek." />
 
-  <!-- Google Fonts: Libre Caslon Text untuk judul (teks tetap Arial) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Font judul (Libre Caslon Text) di-host sendiri: tidak memblokir render & tanpa koneksi ke Google -->
+  <link rel="preload" href="<?= BASE_URL ?>/assets/fonts/libre-caslon-text-400.woff2" as="font" type="font/woff2" crossorigin />
 
   <!-- Penanda JS aktif: konten [data-reveal] hanya disembunyikan bila script animasi bisa berjalan -->
   <script>document.documentElement.classList.add('js');</script>
 
-  <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            'playfair': ['"Libre Caslon Text"','Georgia','serif'],
-            'jakarta': ['Arial','Helvetica','sans-serif'],
-          },
-          colors: {
-            'brand': {
-              DEFAULT: '#860524',
-              dark: '#6a041c',
-            },
-            'dark': '#242424',
-            'muted': '#686561',
-            'cream': '#faf8f5',
-            'cream-dark': '#f4f1ea',
-            'border': '#ece8e1',
-          },
-          letterSpacing: {
-            'widest-2': '1.65px',
-            'widest-3': '1.8px',
-            'widest-4': '2.64px',
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Tailwind CSS hasil build (tailwind.config.js -> npm run build:css) -->
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/site.css?v=<?= @filemtime(__DIR__ . '/../assets/css/site.css') ?>" />
   <style>
+    @font-face { font-family: 'Libre Caslon Text'; font-style: normal; font-weight: 400; font-display: swap; src: url(<?= BASE_URL ?>/assets/fonts/libre-caslon-text-400.woff2) format('woff2'); }
+    @font-face { font-family: 'Libre Caslon Text'; font-style: normal; font-weight: 700; font-display: swap; src: url(<?= BASE_URL ?>/assets/fonts/libre-caslon-text-700.woff2) format('woff2'); }
     * { box-sizing: border-box; }
     :root { --wt-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23860524' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E"); }
     /* Semua dropdown: panah chevron seragam & seimbang (sama dengan pemilih bahasa) */
@@ -114,11 +86,12 @@ $quote_categories = $quote_categories
     #gt-wrap { display: flex; align-items: center; margin-left: 16px; flex-shrink: 0; }
     [data-gt-reset][hidden] { display: none !important; }
     #google_translate_element { line-height: 0; }
+    #google_translate_element .gt-ph { text-align: left; }
     #google_translate_element .goog-te-gadget { font-size: 0; color: transparent; line-height: 0; }
     #google_translate_element .goog-te-gadget > span,
     #google_translate_element .goog-te-gadget > div:not(:first-child),
     #google_translate_element .goog-logo-link { display: none !important; }
-    #google_translate_element .goog-te-combo {
+    #google_translate_element :is(.goog-te-combo, .gt-ph) {
       appearance: none; -webkit-appearance: none;
       margin: 0; width: 132px; max-width: 100%; height: 38px;
       font: 600 11px/1 Arial, Helvetica, sans-serif; letter-spacing: 0.06em; text-transform: uppercase;
@@ -126,18 +99,18 @@ $quote_categories = $quote_categories
       border: 1px solid #ece8e1; border-radius: 3px; padding: 0 30px 0 12px; cursor: pointer;
       transition: border-color .2s;
     }
-    #google_translate_element .goog-te-combo:hover,
-    #google_translate_element .goog-te-combo:focus { border-color: #860524; outline: none; }
+    #google_translate_element :is(.goog-te-combo, .gt-ph):hover,
+    #google_translate_element :is(.goog-te-combo, .gt-ph):focus { border-color: #860524; outline: none; }
     /* Sembunyikan banner/tooltip bawaan Google & cegah layout bergeser */
     body { top: 0 !important; }
     .skiptranslate > iframe, iframe.goog-te-banner-frame, #goog-gt-tt, .goog-tooltip { display: none !important; }
     .goog-text-highlight { background: none !important; box-shadow: none !important; }
     @media (max-width: 1023px) {
       #gt-wrap { margin-left: 8px; }
-      #google_translate_element .goog-te-combo { width: 120px; padding: 0 26px 0 10px; font-size: 10px; background-position: right 10px center; }
+      #google_translate_element :is(.goog-te-combo, .gt-ph) { width: 120px; padding: 0 26px 0 10px; font-size: 10px; background-position: right 10px center; }
     }
     @media (max-width: 479px) {
-      #google_translate_element .goog-te-combo { width: 116px; padding: 0 24px 0 9px; letter-spacing: 0.02em; background-position: right 9px center; }
+      #google_translate_element :is(.goog-te-combo, .gt-ph) { width: 116px; padding: 0 24px 0 9px; letter-spacing: 0.02em; background-position: right 9px center; }
     }
   </style>
 </head>
@@ -181,7 +154,10 @@ foreach ($nav_links as $label => [$href, $key]):
     </button>
 
     <div id="gt-wrap" class="notranslate" translate="no">
-      <div id="google_translate_element" aria-label="Pilih bahasa"></div>
+      <div id="google_translate_element" aria-label="Pilih bahasa">
+        <!-- Pengganti sementara: script Google Translate (±110 KB) baru dimuat saat pengunjung berinteraksi -->
+        <button type="button" class="gt-ph" data-gt-load>Pilih Bahasa</button>
+      </div>
       <!-- Muncul setelah pengunjung memilih bahasa lain: kembali ke Bahasa Indonesia (bawaan) -->
       <button type="button" data-gt-reset hidden title="Kembali ke Bahasa Indonesia" aria-label="Kembali ke Bahasa Indonesia"
               class="ml-1.5 size-[38px] shrink-0 flex items-center justify-center rounded-[3px] border border-[#ece8e1] bg-white text-dark hover:border-brand hover:text-brand transition-colors">
@@ -225,8 +201,25 @@ foreach ($nav_links as $label => [$href, $key]):
       layout: google.translate.TranslateElement.InlineLayout.VERTICAL,
       autoDisplay: false
     }, 'google_translate_element');
+    var ph = document.querySelector('#google_translate_element .gt-ph');
+    if (ph) ph.remove();
     var combo = document.querySelector('#google_translate_element .goog-te-combo');
-    if (combo) combo.addEventListener('change', function () { setTimeout(gtSyncReset, 300); });
+    if (combo) {
+      combo.addEventListener('change', function () { setTimeout(gtSyncReset, 300); });
+      if (gtWantsPicker) { combo.focus(); try { combo.showPicker(); } catch (e) {} }
+    }
+  }
+
+  // Muat script Google Translate hanya bila perlu: langsung bila bahasa lain sedang aktif,
+  // selain itu saat pengunjung pertama kali berinteraksi (scroll, sentuh, klik, keyboard).
+  var gtLoaded = false, gtWantsPicker = false;
+  function gtLoad() {
+    if (gtLoaded) return;
+    gtLoaded = true;
+    var s = document.createElement('script');
+    s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+    s.async = true;
+    document.head.appendChild(s);
   }
 
   // Tombol reset bahasa: tampil hanya bila cookie "googtrans" berisi bahasa selain Indonesia
@@ -251,7 +244,13 @@ foreach ($nav_links as $label => [$href, $key]):
   document.querySelectorAll('[data-gt-reset]').forEach(function (b) { b.addEventListener('click', gtReset); });
   gtSyncReset();
 </script>
-<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
+<script>
+  if (gtCurrentLang()) gtLoad();
+  else ['pointerdown', 'touchstart', 'keydown', 'scroll', 'mousemove'].forEach(function (ev) {
+    addEventListener(ev, gtLoad, { once: true, passive: true });
+  });
+  document.querySelector('[data-gt-load]').addEventListener('click', function () { gtWantsPicker = true; gtLoad(); });
+</script>
 
 <script>
   // Mobile menu toggle

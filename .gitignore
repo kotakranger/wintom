@@ -28,3 +28,6 @@ Thumbs.db
 !/uploads/**/
 !/uploads/.htaccess
 !/uploads/**/.gitkeep
+
+# Node (hanya untuk build CSS)
+/node_modules/
