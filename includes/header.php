@@ -112,6 +112,7 @@ $quote_categories = $quote_categories
 
     /* ===== Google Translate widget (header, kanan atas) ===== */
     #gt-wrap { display: flex; align-items: center; margin-left: 16px; flex-shrink: 0; }
+    [data-gt-reset][hidden] { display: none !important; }
     #google_translate_element { line-height: 0; }
     #google_translate_element .goog-te-gadget { font-size: 0; color: transparent; line-height: 0; }
     #google_translate_element .goog-te-gadget > span,
@@ -148,7 +149,7 @@ $quote_categories = $quote_categories
 
     <!-- Brand Logo -->
     <a href="<?= BASE_URL ?>/" translate="no" class="notranslate flex flex-col items-start shrink-0 no-underline">
-      <img src="<?= BASE_URL ?>/assets/images/wintom-logo.png" alt="Wintom Curtain" width="1286" height="465" class="h-[36px] sm:h-[44px] w-auto block">
+      <picture><source srcset="<?= BASE_URL ?>/assets/images/wintom-logo-480.webp" type="image/webp"><img src="<?= BASE_URL ?>/assets/images/wintom-logo-480.png" alt="Wintom Curtain" width="480" height="174" class="h-[36px] sm:h-[44px] w-auto block"></picture>
     </a>
 
     <!-- Primary Navigation -->
@@ -181,6 +182,11 @@ foreach ($nav_links as $label => [$href, $key]):
 
     <div id="gt-wrap" class="notranslate" translate="no">
       <div id="google_translate_element" aria-label="Pilih bahasa"></div>
+      <!-- Muncul setelah pengunjung memilih bahasa lain: kembali ke Bahasa Indonesia (bawaan) -->
+      <button type="button" data-gt-reset hidden title="Kembali ke Bahasa Indonesia" aria-label="Kembali ke Bahasa Indonesia"
+              class="ml-1.5 size-[38px] shrink-0 flex items-center justify-center rounded-[3px] border border-[#ece8e1] bg-white text-dark hover:border-brand hover:text-brand transition-colors">
+        <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+      </button>
     </div>
 
     <!-- Hamburger (mobile / tablet) -->
@@ -199,6 +205,11 @@ foreach ($nav_links as $label => [$href, $key]):
     <?php endforeach; ?>
     <button type="button" data-open-quote
        class="md:hidden mt-3 block w-full text-center bg-brand text-white font-semibold text-[12px] tracking-[1.8px] uppercase px-5 py-3 rounded-[3px]">MINTA PENAWARAN</button>
+    <button type="button" data-gt-reset hidden translate="no"
+       class="notranslate mt-2 w-full flex items-center justify-center gap-2 border border-[#ece8e1] bg-white text-dark font-semibold text-[12px] tracking-[0.04em] px-5 py-3 rounded-[3px]">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+      Kembali ke Bahasa Indonesia
+    </button>
   </div>
 </header>
 
@@ -214,7 +225,31 @@ foreach ($nav_links as $label => [$href, $key]):
       layout: google.translate.TranslateElement.InlineLayout.VERTICAL,
       autoDisplay: false
     }, 'google_translate_element');
+    var combo = document.querySelector('#google_translate_element .goog-te-combo');
+    if (combo) combo.addEventListener('change', function () { setTimeout(gtSyncReset, 300); });
   }
+
+  // Tombol reset bahasa: tampil hanya bila cookie "googtrans" berisi bahasa selain Indonesia
+  function gtCurrentLang() {
+    var m = document.cookie.match(/(?:^|;\s*)googtrans=([^;]*)/);
+    var lang = m ? decodeURIComponent(m[1]).split('/').pop() : '';
+    return lang && lang !== 'id' ? lang : '';
+  }
+  function gtSyncReset() {
+    var on = !!gtCurrentLang();
+    document.querySelectorAll('[data-gt-reset]').forEach(function (b) { b.hidden = !on; });
+  }
+  function gtReset() {
+    // Google menyimpan cookie di host & domain induknya (mis. .hostingersite.com) — hapus semuanya
+    var parts = location.hostname.split('.'), domains = ['', location.hostname];
+    for (var i = 0; i < parts.length - 1; i++) domains.push('.' + parts.slice(i).join('.'));
+    domains.forEach(function (d) {
+      document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/' + (d ? '; domain=' + d : '');
+    });
+    location.reload();
+  }
+  document.querySelectorAll('[data-gt-reset]').forEach(function (b) { b.addEventListener('click', gtReset); });
+  gtSyncReset();
 </script>
 <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
 

@@ -53,6 +53,7 @@ function store_uploaded_image(array $file, string $subdir, ?string &$error = nul
         $error = 'Gagal menyimpan foto.';
         return false;
     }
+    image_make_variants($dest);   // versi WebP 480/960/1600 untuk srcset
     return '/uploads/' . $subdir . '/' . $name;
 }
 

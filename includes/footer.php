@@ -12,7 +12,7 @@ require_once __DIR__ . '/config.php';
       <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
         <!-- Brand Logo -->
         <div class="flex flex-col items-start shrink-0">
-          <img src="<?= BASE_URL ?>/assets/images/wintom-logo.png" alt="Wintom Curtain" width="1286" height="465" class="h-[48px] md:h-[56px] w-auto block">
+          <picture><source srcset="<?= BASE_URL ?>/assets/images/wintom-logo-480.webp" type="image/webp"><img src="<?= BASE_URL ?>/assets/images/wintom-logo-480.png" alt="Wintom Curtain" width="480" height="174" class="h-[48px] md:h-[56px] w-auto block"></picture>
         </div>
         <!-- Vertical Divider -->
         <div class="hidden sm:block w-px h-[40px] bg-[rgba(34,34,32,0.2)]"></div>

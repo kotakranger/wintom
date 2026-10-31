@@ -15,7 +15,7 @@ function render_product_card(array $prod, int $delay = 0): void
 
       <!-- Foto (rasio 3/4) + label kategori -->
       <a href="<?= $detail_url ?>" class="relative aspect-[3/4] overflow-hidden bg-cream block" tabindex="-1" aria-hidden="true">
-        <img src="<?= htmlspecialchars($prod['cover_image']) ?>" alt="" loading="lazy"
+        <img <?= img_attrs($prod['cover_image'], '(min-width:1024px) 400px, (min-width:640px) 50vw, 100vw', [400, 600, 800, 1200]) ?> alt="" loading="lazy"
              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
         <div class="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-black/10 opacity-60 group-hover:opacity-80 transition-opacity"></div>
         <span class="absolute top-3.5 left-3.5 bg-white/95 backdrop-blur-[4px] text-dark font-jakarta font-semibold text-[10px] tracking-[1.2px] uppercase px-2.5 py-1 rounded-[2px] shadow-sm">

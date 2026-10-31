@@ -26,10 +26,20 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
 <section class="relative bg-[#242424] min-h-[calc(100svh-81px)] md:min-h-[640px] lg:min-h-[720px] flex items-center overflow-hidden">
 
   <!-- Background video -->
-  <video class="wt-zoom absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline preload="metadata"
-         poster="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=85&fit=crop" aria-hidden="true">
-    <source src="<?= BASE_URL ?>/assets/video/hero.mp4" type="video/mp4">
-  </video>
+  <!-- Video (4,9 MB) hanya dimuat di layar ≥768px & bila pengunjung tidak mengaktifkan mode hemat data;
+       HP cukup menampilkan poster yang ringan. -->
+  <video id="hero-video" class="wt-zoom absolute inset-0 w-full h-full object-cover" muted loop playsinline preload="none"
+         poster="<?= htmlspecialchars(img_unsplash('https://images.unsplash.com/photo-1558618666-fcd25c85cd64', 1280)) ?>" aria-hidden="true"
+         data-src="<?= BASE_URL ?>/assets/video/hero.mp4"></video>
+  <script>
+    (function () {
+      var v = document.getElementById('hero-video'), c = navigator.connection || {};
+      if (!v || c.saveData || /(^|-)2g$/.test(c.effectiveType || '') || !matchMedia('(min-width:768px)').matches
+          || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      v.src = v.dataset.src; v.preload = 'auto'; v.autoplay = true;
+      var p = v.play(); if (p && p.catch) p.catch(function () {});
+    })();
+  </script>
 
   <!-- Dual scrim overlay -->
   <div class="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[rgba(23,22,21,0.88)] via-[rgba(27,26,24,0.62)] to-[rgba(0,0,0,0.25)]"></div>
@@ -106,7 +116,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
        class="group bg-white border border-[rgba(236,232,225,0.8)] rounded-[2px] overflow-hidden flex flex-col p-px hover:shadow-[0_24px_48px_-24px_rgba(34,34,32,0.4)] transition-shadow duration-300">
       <div class="bg-[#ece8e1] aspect-[4/3] relative overflow-hidden">
         <?php if ($img): ?>
-        <img src="<?= htmlspecialchars(asset_url($img)) ?>" alt="<?= htmlspecialchars($cat['name']) ?>" loading="lazy"
+        <img <?= img_attrs($img, '(min-width:1024px) 400px, (min-width:640px) 50vw, 100vw', [480, 800, 1200]) ?> alt="<?= htmlspecialchars($cat['name']) ?>" loading="lazy"
              class="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.06]" />
         <?php else: ?>
         <span class="absolute inset-0 flex items-center justify-center font-playfair font-normal text-brand/25 text-[64px] uppercase"><?= htmlspecialchars(mb_substr($cat['name'], 0, 1)) ?></span>
@@ -155,7 +165,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
         ];
         foreach ($macro_tiles as $i => $tile): ?>
         <div class="group bg-[#ece8e1] aspect-square sm:aspect-auto sm:h-[208px] overflow-hidden rounded-[2px] relative min-w-0" data-reveal style="--d:<?= $i * 90 ?>ms">
-          <img src="<?= $tile['url'] ?>" alt="<?= htmlspecialchars($tile['alt']) ?>" loading="lazy"
+          <img <?= img_attrs($tile['url'], '(min-width:640px) 25vw, 50vw', [300, 600]) ?> alt="<?= htmlspecialchars($tile['alt']) ?>" loading="lazy"
                class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
           <div class="absolute inset-0 bg-[rgba(0,0,0,0.1)]"></div>
         </div>
@@ -390,7 +400,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
           <!-- Photo -->
           <div class="bg-[#ece8e1] h-[200px] md:h-[176px] overflow-hidden rounded-[2px] w-full relative">
             <img
-              src="<?= $t['img'] ?>"
+              <?= img_attrs($t['img'], '(min-width:768px) 33vw, 100vw', [480, 800]) ?>
               alt="<?= htmlspecialchars($t['alt']) ?>"
               loading="lazy"
               class="absolute inset-0 w-full h-full object-cover"

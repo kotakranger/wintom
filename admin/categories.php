@@ -26,7 +26,7 @@ function delete_category_image(?string $url): void {
     if ($url && str_starts_with($url, '/uploads/')) {
         $base = realpath(__DIR__ . '/../uploads') . DIRECTORY_SEPARATOR;
         $path = realpath(__DIR__ . '/..' . $url);
-        if ($path && str_starts_with($path, $base)) @unlink($path);
+        if ($path && str_starts_with($path, $base)) image_delete_with_variants($path);
     }
 }
 
@@ -176,7 +176,7 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
         <label class="<?= $label ?>">Foto Kategori <span class="normal-case tracking-normal font-normal">(untuk kartu landing page)</span></label>
         <?php if ($c && !empty($c['image_url'])): ?>
         <div class="flex items-center gap-3 mb-2.5">
-          <img src="<?= htmlspecialchars(asset_url($c['image_url'])) ?>" alt="" class="w-24 h-16 object-cover rounded-[3px] border border-border"/>
+          <img src="<?= htmlspecialchars(img_src($c['image_url'], 480)) ?>" alt="" class="w-24 h-16 object-cover rounded-[3px] border border-border"/>
           <label class="inline-flex items-center gap-2 font-jakarta text-[12px] text-red-600 cursor-pointer">
             <input type="checkbox" name="remove_image" value="1" class="accent-red-600"/> Hapus foto ini
           </label>
@@ -264,7 +264,7 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
           </td>
           <td class="px-4 py-3">
             <?php if ($cat['image_url']): ?>
-            <img src="<?= htmlspecialchars(asset_url($cat['image_url'])) ?>" alt="" loading="lazy" class="w-16 h-12 object-cover rounded-[3px] border border-border"/>
+            <img src="<?= htmlspecialchars(img_src($cat['image_url'], 480)) ?>" alt="" loading="lazy" class="w-16 h-12 object-cover rounded-[3px] border border-border"/>
             <?php else: ?>
             <span class="w-16 h-12 flex items-center justify-center rounded-[3px] border border-dashed border-amber-300 bg-amber-50 font-jakarta text-amber-700 text-[9px] text-center leading-tight">Belum ada foto</span>
             <?php endif; ?>

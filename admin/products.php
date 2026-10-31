@@ -29,7 +29,7 @@ function delete_file(string $url): void {
         $path = __DIR__ . '/..' . $url;
         $real = realpath($path);
         $base = realpath(__DIR__ . '/../uploads') . DIRECTORY_SEPARATOR;
-        if ($real && strpos($real, $base) === 0 && file_exists($real)) unlink($real);
+        if ($real && strpos($real, $base) === 0) image_delete_with_variants($real);
     }
 }
 
@@ -609,7 +609,7 @@ select.input{appearance:auto;}
         <div class="grid grid-cols-2 gap-2">
           <?php foreach($edit_images as $gi): ?>
           <div class="relative group aspect-square rounded-[3px] overflow-hidden border <?= $gi['is_cover'] ? 'border-2 border-brand' : 'border-border' ?>">
-            <img src="<?= htmlspecialchars(asset_url($gi['image_url'])) ?>" class="w-full h-full object-cover"/>
+            <img src="<?= htmlspecialchars(img_src($gi['image_url'], 480)) ?>" class="w-full h-full object-cover"/>
             <?php if ($gi['is_cover']): ?>
             <div class="cover-badge">COVER</div>
             <?php endif; ?>
@@ -695,7 +695,7 @@ select.input{appearance:auto;}
         <tr class="border-t border-border hover:bg-cream/50 transition-colors <?= !$p['is_active'] ? 'opacity-60' : '' ?>">
           <td class="px-4 py-3">
             <div class="size-12 rounded-[3px] overflow-hidden border border-border bg-cream-dark shrink-0">
-              <img src="<?= htmlspecialchars(asset_url($p['cover_image'])) ?>" alt="" class="w-full h-full object-cover"/>
+              <img src="<?= htmlspecialchars(img_src($p['cover_image'], 480)) ?>" alt="" class="w-full h-full object-cover"/>
             </div>
           </td>
           <td class="px-4 py-3">

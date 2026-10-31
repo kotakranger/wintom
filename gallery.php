@@ -110,7 +110,8 @@ include_once __DIR__ . '/includes/header.php';
     <?php else: ?>
     <div class="columns-2 lg:columns-3 gap-3 sm:gap-5" id="gallery-grid">
       <?php foreach ($galleries as $gi => $item):
-          $imgs = array_map('asset_url', $photos[$item['id']]);
+          $raw  = $photos[$item['id']];
+          $imgs = array_map(fn($u) => img_src($u, 1600), $raw);   // versi besar untuk lightbox
           $multi = count($imgs) > 1;
       ?>
       <figure data-reveal style="--d:<?= ($gi % 3) * 80 ?>ms"
@@ -119,9 +120,9 @@ include_once __DIR__ . '/includes/header.php';
               data-images="<?= htmlspecialchars(json_encode($imgs, JSON_UNESCAPED_SLASHES)) ?>">
         <!-- Slider: foto pertama menentukan tinggi kartu, foto lain mengisi ruang yang sama -->
         <div class="g-track flex overflow-x-auto snap-x snap-mandatory no-scrollbar cursor-zoom-in" tabindex="-1">
-          <?php foreach ($imgs as $k => $src): ?>
+          <?php foreach ($raw as $k => $src): ?>
           <div class="relative shrink-0 w-full snap-start">
-            <img src="<?= htmlspecialchars($src) ?>" alt="<?= htmlspecialchars($item['title']) . ($multi ? ' — foto ' . ($k + 1) : '') ?>" loading="lazy" draggable="false"
+            <img <?= img_attrs($src, '(min-width:1024px) 400px, 50vw', [400, 600, 800]) ?> alt="<?= htmlspecialchars($item['title']) . ($multi ? ' — foto ' . ($k + 1) : '') ?>" loading="lazy" draggable="false"
                  class="<?= $k === 0 ? 'block w-full' : 'absolute inset-0 w-full h-full' ?> object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
           </div>
           <?php endforeach; ?>
