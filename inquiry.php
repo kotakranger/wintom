@@ -88,7 +88,7 @@ $category = null;
 if ($category_id <= 0) {
     $errors['category_id'] = 'Pilih jenis produk.';
 } else {
-    $st = $db->prepare('SELECT id, name FROM categories WHERE id = ?');
+    $st = $db->prepare('SELECT id, name, whatsapp FROM categories WHERE id = ?');
     $st->execute([$category_id]);
     $category = $st->fetch();
     if (!$category) {
@@ -146,10 +146,13 @@ if ((int)$rl->fetchColumn() >= INQUIRY_MAX_PER_WINDOW) {
     inquiry_respond($wants_json, 429, ['ok' => false, 'message' => 'Terlalu banyak pengiriman. Silakan coba lagi beberapa menit lagi.']);
 }
 
+// Tujuan WhatsApp: admin penjualan kategori terpilih (fallback nomor utama)
+$target_wa = category_wa_number($category['whatsapp'] ?? null);
+
 try {
     $ins = $db->prepare(
-        'INSERT INTO inquiries (full_name, whatsapp, category_id, curtain_type, estimated_size, width_cm, height_cm, quantity, notes, ip_address)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO inquiries (full_name, whatsapp, category_id, curtain_type, estimated_size, width_cm, height_cm, quantity, routed_whatsapp, notes, ip_address)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $ins->execute([
         $full_name,
@@ -160,6 +163,7 @@ try {
         $width,
         $height,
         $quantity,
+        $target_wa,
         $notes !== '' ? $notes : null,
         $ip !== '' ? $ip : null,
     ]);
@@ -181,6 +185,6 @@ $lines = [
     '',
     '(Ref. inquiry #' . $inquiry_id . ')',
 ];
-$wa_url = WA_URL . '?text=' . rawurlencode(implode("\n", $lines));
+$wa_url = 'https://wa.me/' . $target_wa . '?text=' . rawurlencode(implode("\n", $lines));
 
 inquiry_respond($wants_json, 200, ['ok' => true, 'id' => $inquiry_id, 'wa_url' => $wa_url]);

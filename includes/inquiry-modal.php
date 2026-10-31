@@ -14,7 +14,7 @@ require_once __DIR__ . '/inquiry-form.php';
       <div class="sticky top-0 z-10 bg-white border-b border-border px-5 sm:px-7 py-4 flex items-start justify-between gap-4">
         <div>
           <p class="font-jakarta font-semibold text-brand text-[10px] tracking-[2.2px] uppercase mb-1">PENAWARAN GRATIS</p>
-          <h2 id="quote-modal-title" class="font-playfair font-bold text-dark text-[20px] sm:text-[22px] leading-[1.25] m-0">Dapatkan Penawaran Gratis</h2>
+          <h2 id="quote-modal-title" class="font-playfair font-normal text-dark text-[22px] sm:text-[24px] leading-[1.25] m-0">Dapatkan Penawaran Gratis</h2>
         </div>
         <button type="button" data-quote-close aria-label="Tutup form"
                 class="shrink-0 size-10 -mr-2 flex items-center justify-center rounded-full text-muted hover:text-dark hover:bg-cream transition-colors">

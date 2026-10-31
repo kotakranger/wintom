@@ -12,7 +12,7 @@ if (!$slug) {
     include_once __DIR__ . '/includes/header.php';
     ?>
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12 py-16 text-center">
-      <h1 class="font-playfair text-4xl font-bold text-dark mb-4">Produk Tidak Ditemukan</h1>
+      <h1 class="font-playfair font-normal text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] text-dark mb-4">Produk Tidak Ditemukan</h1>
       <p class="font-jakarta text-muted text-lg mb-8">Maaf, produk yang Anda cari tidak ada atau telah dihapus.</p>
       <a href="<?= BASE_URL ?>/products.php" class="inline-block bg-brand text-white px-6 py-3 rounded hover:bg-[#6a041c]">Kembali ke Katalog</a>
     </div>
@@ -21,7 +21,7 @@ if (!$slug) {
     exit;
 }
 
-$stmt = $db->prepare("SELECT p.*, c.name AS category, c.price_per_meter FROM products p JOIN categories c ON c.id = p.category_id WHERE p.slug = ? AND p.is_active = 1");
+$stmt = $db->prepare("SELECT p.*, c.name AS category, c.price_per_meter, c.whatsapp AS category_whatsapp FROM products p JOIN categories c ON c.id = p.category_id WHERE p.slug = ? AND p.is_active = 1");
 $stmt->execute([$slug]);
 $product = $stmt->fetch();
 if (!$product) {
@@ -29,7 +29,7 @@ if (!$product) {
     include_once __DIR__ . '/includes/header.php';
     ?>
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12 py-16 text-center">
-      <h1 class="font-playfair text-4xl font-bold text-dark mb-4">Produk Tidak Ditemukan</h1>
+      <h1 class="font-playfair font-normal text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] text-dark mb-4">Produk Tidak Ditemukan</h1>
       <p class="font-jakarta text-muted text-lg mb-8">Maaf, produk yang Anda cari tidak ada atau telah dihapus.</p>
       <a href="<?= BASE_URL ?>/products.php" class="inline-block bg-brand text-white px-6 py-3 rounded hover:bg-[#6a041c]">Kembali ke Katalog</a>
     </div>
@@ -165,8 +165,8 @@ foreach ($gallery_images as $gi) {
         <!-- Category -->
         <span class="font-jakarta font-semibold text-[#860524] text-[11px] tracking-[1.1px] uppercase"><?= htmlspecialchars(strtoupper($product['category'])) ?></span>
         <!-- Product Name H1 -->
-        <h1 class="font-playfair font-medium text-[#242424] text-[28px] sm:text-[36px] leading-[1.2] tracking-[-0.5px] sm:tracking-[-0.9px] break-words">
-          <?= htmlspecialchars(strtoupper($product['name'])) ?>
+        <h1 class="font-playfair font-normal text-[#242424] text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] break-words">
+          <?= htmlspecialchars($product['name']) ?>
         </h1>
       </div>
 
@@ -194,7 +194,7 @@ foreach ($gallery_images as $gi) {
               <p class="font-jakarta font-medium text-[#5f5e5a] text-[12px] tracking-[0.6px] uppercase leading-[22px]">
                 <?= htmlspecialchars(strtoupper($variant['label'])) ?>
               </p>
-              <p class="font-playfair font-semibold text-[#242424] text-[16px] tracking-[0.16px] leading-[26px] variant-selected-label"
+              <p class="font-playfair font-normal text-[#242424] text-[16px] tracking-[0.16px] leading-[26px] variant-selected-label"
                  data-variant-idx="<?= $vi ?>">
                 <?= htmlspecialchars($first_option ?: 'Pilih ' . $variant['label']) ?>
               </p>
@@ -259,11 +259,11 @@ foreach ($gallery_images as $gi) {
             <p class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.55px] uppercase leading-[16px]"><?= $pp['custom'] ? 'Harga' : 'Harga per meter · ' . htmlspecialchars($product['category']) ?></p>
             <?php if ($pp['amount'] > 0): ?>
             <div class="flex flex-wrap items-baseline gap-x-2">
-              <span class="font-playfair font-semibold text-[#860524] text-[30px] sm:text-[36px] leading-[1.2] tracking-[1px] sm:tracking-[1.44px]"><?= fmt_price($pp['amount']) ?></span>
+              <span class="font-playfair font-normal text-[#860524] text-[30px] sm:text-[36px] leading-[1.2] tracking-[1px] sm:tracking-[1.44px]"><?= fmt_price($pp['amount']) ?></span>
               <span class="font-jakarta text-[#564242] text-[13px]"><?= htmlspecialchars($pp['unit']) ?></span>
             </div>
             <?php else: ?>
-            <p class="font-playfair font-semibold text-[#242424] text-[20px] leading-[1.3] mt-1">Harga dikonfirmasi saat konsultasi</p>
+            <p class="font-playfair font-normal text-[#242424] text-[20px] leading-[1.3] mt-1">Harga dikonfirmasi saat konsultasi</p>
             <?php endif; ?>
           </div>
           <div class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.275px] uppercase leading-[16px] text-right" id="conv-summary">
@@ -280,7 +280,7 @@ foreach ($gallery_images as $gi) {
         <!-- Kalkulator Estimasi Harga -->
         <div id="price-calc" class="border-b border-[rgba(226,221,213,0.8)] pb-5" data-ppm="<?= $ppm ?>">
           <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-3">
-            <h3 class="font-jakarta font-semibold text-[#242424] text-[12px] tracking-[1.1px] uppercase">Kalkulator Estimasi Harga</h3>
+            <h3 class="font-jakarta font-bold text-[#242424] text-[12px] tracking-[1.8px] uppercase">Kalkulator Estimasi Harga</h3>
           </div>
 
           <?php if ($ppm > 0): ?>
@@ -310,7 +310,7 @@ foreach ($gallery_images as $gi) {
             <div id="calc-output" class="hidden">
               <div class="flex flex-wrap items-baseline justify-between gap-x-3">
                 <span class="font-jakarta text-[#5f5e5a] text-[11px] tracking-[0.55px] uppercase">Total Estimasi</span>
-                <span id="calc-total" class="font-playfair font-semibold text-[#860524] text-[22px] sm:text-[26px] leading-[32px]">Rp 0</span>
+                <span id="calc-total" class="font-playfair font-normal text-[#860524] text-[22px] sm:text-[26px] leading-[32px]">Rp 0</span>
               </div>
             </div>
           </div>
@@ -330,7 +330,7 @@ foreach ($gallery_images as $gi) {
             MINTA PENAWARAN GRATIS
             <span class="transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span>
           </button>
-          <a href="<?= WA_URL ?>?text=<?= $wa_msg ?>" target="_blank" rel="noopener" id="wa-cta-btn"
+          <a href="https://wa.me/<?= htmlspecialchars(category_wa_number($product['category_whatsapp'] ?? null)) ?>?text=<?= $wa_msg ?>" target="_blank" rel="noopener" id="wa-cta-btn"
              data-product-name="<?= htmlspecialchars($product['name']) ?>"
              data-product-cat="<?= htmlspecialchars($product['category']) ?>"
              data-product-url="<?= htmlspecialchars($product_url) ?>"
@@ -357,7 +357,7 @@ foreach ($gallery_images as $gi) {
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3" data-reveal>
       <div class="flex flex-col gap-1">
         <p class="font-jakarta font-semibold text-[#5f5e5a] text-[11px] tracking-[1.65px] uppercase">KOLEKSI PENDAMPING</p>
-        <h2 class="font-playfair font-medium text-[#242424] text-[24px] leading-[32px] tracking-[1.2px]">Eksplorasi Kurasi Tekstil Lainnya</h2>
+        <h2 class="font-playfair font-normal text-[#242424] text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px]">Eksplorasi Kurasi Tekstil Lainnya</h2>
       </div>
       <a href="<?= BASE_URL ?>/products.php" class="flex items-center gap-1.5 font-jakarta font-semibold text-[#860524] text-[12px] tracking-[1.2px] uppercase hover:gap-2.5 transition-all duration-200">
         LIHAT SELURUH KATALOG

@@ -151,6 +151,9 @@ $inquiries = $stmt->fetchAll();
           <td class="px-4 py-3.5 font-jakarta text-[12px]">
             <p class="font-medium text-dark"><?= htmlspecialchars($q['curtain_type']) ?></p>
             <p class="text-muted mt-0.5"><?= $q['estimated_size'] ? htmlspecialchars($q['estimated_size']) : '—' ?></p>
+            <?php if (!empty($q['routed_whatsapp'])): ?>
+            <p class="text-muted mt-1 text-[11px]">Dikirim ke <span class="text-dark">+<?= htmlspecialchars($q['routed_whatsapp']) ?></span><?= $q['routed_whatsapp'] === WA_NUMBER ? ' (nomor utama)' : '' ?></p>
+            <?php endif; ?>
           </td>
           <td class="px-4 py-3.5 font-jakarta text-muted text-[12px] max-w-[280px] whitespace-pre-line break-words"><?= $q['notes'] ? htmlspecialchars($q['notes']) : '—' ?></td>
           <td class="px-4 py-3.5">

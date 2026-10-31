@@ -33,10 +33,18 @@ $selected_cat = $cat_aliases[$normalized_key] ?? $raw_cat;
 
 // Load categories from database (dynamic)
 $pdo = get_db();
-$db_cats = $pdo->query("SELECT name FROM categories ORDER BY sort_order ASC, name ASC")->fetchAll();
+$db_cats = $pdo->query("SELECT name, tagline FROM categories ORDER BY sort_order ASC, name ASC")->fetchAll();
 $categories = ['Semua Koleksi' => ''];
+$active_category = null;   // kategori terpilih -> judul & deskripsi hero mengikuti kategori
 foreach ($db_cats as $c) {
     $categories[$c['name']] = $c['name'];
+    if ($selected_cat !== '' && strcasecmp($c['name'], $selected_cat) === 0) {
+        $active_category = $c;
+        $selected_cat = $c['name'];   // pakai ejaan resmi dari master kategori
+    }
+}
+if ($active_category) {
+    $page_title = $active_category['name'] . ' — Katalog Gorden & Blinds';
 }
 
 $products = [];
@@ -90,7 +98,7 @@ include_once __DIR__ . '/includes/header.php';
 
 <!-- ===== HERO HEADER KATALOG ===== -->
 <section class="relative bg-cream-dark/60 border-b border-border py-12 md:py-20">
-  <div class="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
+  <div class="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12" id="catalog-hero">
     <div class="max-w-3xl">
       <!-- Eyebrow -->
       <div class="wt-in flex items-center gap-3 mb-4" style="--d:60ms">
@@ -100,17 +108,22 @@ include_once __DIR__ . '/includes/header.php';
       </div>
 
       <!-- Main Heading -->
-      <h1 class="wt-in font-playfair text-3xl md:text-5xl font-bold text-dark leading-tight mb-5" style="--d:160ms">
-        Kurasi Tirai & Blinds Arsitektural
+      <h1 class="wt-in font-playfair font-normal text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] tracking-[-0.5px] text-dark mb-5" style="--d:160ms">
+        <?= $active_category ? htmlspecialchars($active_category['name']) : 'Kurasi Tirai &amp; Blinds Arsitektural' ?>
       </h1>
 
       <!-- Description -->
       <p class="wt-in font-jakarta text-[15px] md:text-[16px] text-muted leading-relaxed mb-8" style="--d:260ms">
+        <?php if ($active_category): ?>
+        <?= htmlspecialchars($active_category['tagline']
+              ?: 'Jelajahi koleksi ' . $active_category['name'] . ' Wintom — tersedia siap pasang maupun custom sesuai ukuran jendela Anda.') ?>
+        <?php else: ?>
         Kombinasi material berstandar internasional, presisi hemming atelier, dan sistem rel silent mekanik bergaransi. Sempurna untuk hunian residensial mewah, apartemen, maupun ruang komersial.
+        <?php endif; ?>
       </p>
 
       <!-- Search & Sort Filter Bar -->
-      <form action="<?= BASE_URL ?>/products.php" method="GET" class="wt-in flex flex-col sm:flex-row gap-3" style="--d:360ms">
+      <form action="<?= BASE_URL ?>/products.php" method="GET" data-catalog-form class="wt-in flex flex-col sm:flex-row gap-3" style="--d:360ms">
         <?php if (!empty($selected_cat)): ?>
           <input type="hidden" name="category" value="<?= htmlspecialchars($selected_cat) ?>">
         <?php endif; ?>
@@ -133,7 +146,7 @@ include_once __DIR__ . '/includes/header.php';
         <div class="flex gap-2">
           <select
             name="sort"
-            onchange="this.form.submit()"
+            onchange="this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit()"
             class="flex-1 sm:flex-none min-w-0 bg-white border border-border rounded-[3px] px-4 py-3 text-[16px] sm:text-[13px] font-jakarta focus:outline-none focus:border-brand text-dark cursor-pointer"
           >
             <option value="newest" <?= $sort_by === 'newest' ? 'selected' : '' ?>>Koleksi Terbaru</option>
@@ -155,7 +168,7 @@ include_once __DIR__ . '/includes/header.php';
 </section>
 
 <!-- ===== CATEGORY FILTER TABS ===== -->
-<section class="bg-cream sticky top-[80px] z-30 border-b border-border shadow-sm">
+<section class="bg-cream sticky top-[80px] z-30 border-b border-border shadow-sm" id="catalog-tabs">
   <div class="max-w-[1280px] mx-auto">
     <div class="flex items-center gap-2 md:gap-3 overflow-x-auto py-3.5 px-4 sm:px-6 md:px-12 no-scrollbar">
       <?php foreach ($categories as $label => $val):
@@ -179,7 +192,7 @@ include_once __DIR__ . '/includes/header.php';
 </section>
 
 <!-- ===== PRODUCT LISTING GRID ===== -->
-<section class="py-10 md:py-24 bg-cream">
+<section class="py-10 md:py-24 bg-cream scroll-mt-[150px] transition-opacity duration-200" id="catalog-results">
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-12">
 
     <!-- Active Filters Summary -->
@@ -212,7 +225,7 @@ include_once __DIR__ . '/includes/header.php';
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
         </div>
-        <h3 class="font-playfair text-2xl font-bold text-dark mb-2">Koleksi Tidak Ditemukan</h3>
+        <h3 class="font-playfair font-normal text-[22px] sm:text-[24px] leading-[1.25] text-dark mb-2">Koleksi Tidak Ditemukan</h3>
         <p class="font-jakarta text-[14px] text-muted mb-6 leading-relaxed">
           Tidak ada produk yang cocok dengan pencarian Anda. Coba gunakan kata kunci lain atau lihat seluruh koleksi kami.
         </p>
@@ -246,7 +259,7 @@ include_once __DIR__ . '/includes/header.php';
             LAYANAN ATELIER LANGSUNG KE LOKASI
           </span>
         </div>
-        <h2 class="font-playfair text-2xl md:text-4xl font-bold leading-tight mb-4">
+        <h2 class="font-playfair font-normal text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] mb-4">
           Bingung Menentukan Material & Ukuran Jendela?
         </h2>
         <p class="font-jakarta text-[14px] md:text-[15px] text-gray-300 leading-relaxed max-w-2xl">
@@ -277,5 +290,85 @@ include_once __DIR__ . '/includes/header.php';
     </div>
   </div>
 </section>
+
+<script>
+// Pindah kategori / urutkan / cari tanpa reload halaman penuh:
+// ambil HTML halaman tujuan, tukar hanya hero, tab & daftar produk. Hasil di-prefetch saat hover.
+(function () {
+  if (!window.fetch || !window.DOMParser || !history.pushState) return;
+  const IDS = ['catalog-hero', 'catalog-tabs', 'catalog-results'];
+  const cache = new Map();
+  let current = null;
+
+  const sameCatalog = url => url.origin === location.origin && url.pathname === location.pathname;
+  const load = href => {
+    if (!cache.has(href)) {
+      cache.set(href, fetch(href, { headers: { 'X-Requested-With': 'fetch' }, credentials: 'same-origin' })
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+        .catch(e => { cache.delete(href); throw e; }));
+    }
+    return cache.get(href);
+  };
+
+  async function go(href, push) {
+    current = href;
+    const results = document.getElementById('catalog-results');
+    const slow = setTimeout(() => results.style.opacity = '0.45', 120);   // indikator hanya bila lambat
+    let html;
+    try { html = await load(href); }
+    catch (e) { location.href = href; return; }                        // gagal -> navigasi biasa
+    finally { clearTimeout(slow); }
+    if (current !== href) return;                                      // klik lain sudah menyusul
+
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    IDS.forEach(id => {
+      const next = doc.getElementById(id), now = document.getElementById(id);
+      if (!next || !now) return;
+      // konten baru tampil langsung: tanpa animasi masuk ulang
+      next.querySelectorAll('.wt-in').forEach(el => { el.classList.remove('wt-in'); el.style.removeProperty('--d'); });
+      next.querySelectorAll('[data-reveal]').forEach(el => { el.removeAttribute('data-reveal'); el.style.removeProperty('--d'); });
+      now.replaceChildren(...next.childNodes);
+    });
+    results.style.opacity = '';
+    document.title = doc.title;
+    if (push) history.pushState({ catalog: true }, '', href);
+
+    // Jika bar tab sedang menempel (sudah scroll ke bawah), bawa pengunjung ke awal daftar produk
+    const tabs = document.getElementById('catalog-tabs');
+    if (tabs.getBoundingClientRect().top <= 81 && results.getBoundingClientRect().top < 0) {
+      results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  // Tab kategori, "Reset Filter", "Lihat Semua Koleksi"
+  document.addEventListener('click', function (e) {
+    const a = e.target.closest('#catalog-tabs a, #catalog-results a[href*="products.php"]:not([href*="product-detail"])');
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0 || a.target === '_blank') return;
+    const url = new URL(a.href, location.href);
+    if (!sameCatalog(url)) return;
+    e.preventDefault();
+    if (url.href !== location.href) go(url.href, true);
+  });
+  // Prefetch saat kursor/jari menyentuh tab
+  ['mouseover', 'touchstart', 'focusin'].forEach(ev => document.addEventListener(ev, function (e) {
+    const a = e.target.closest && e.target.closest('#catalog-tabs a');
+    if (a) load(new URL(a.href, location.href).href).catch(() => {});
+  }, { passive: true }));
+
+  // Cari & urutkan
+  document.addEventListener('submit', function (e) {
+    const form = e.target.closest('[data-catalog-form]');
+    if (!form) return;
+    e.preventDefault();
+    const url = new URL(form.action, location.href);
+    new FormData(form).forEach((v, k) => { if (String(v).trim() !== '') url.searchParams.set(k, v); });
+    if (url.searchParams.get('sort') === 'newest') url.searchParams.delete('sort');
+    go(url.href, true);
+  });
+
+  history.replaceState({ catalog: true }, '', location.href);
+  window.addEventListener('popstate', function () { go(location.href, false); });
+})();
+</script>
 
 <?php include_once __DIR__ . '/includes/footer.php'; ?>

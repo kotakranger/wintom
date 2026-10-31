@@ -16,8 +16,8 @@ $order_steps = [
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12 flex flex-col gap-10 md:gap-14">
 
     <div class="flex flex-col gap-3 items-center w-full" data-reveal>
-      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] tracking-[1.8px] uppercase text-center leading-[1.15] m-0">
-        CARA PESAN
+      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] tracking-[-0.5px] text-center leading-[1.2] m-0">
+        Cara Pesan
       </h2>
       <div class="bg-brand h-[2px] w-12"></div>
     </div>
@@ -29,7 +29,7 @@ $order_steps = [
           <img src="<?= $step['img'] ?>" alt="<?= htmlspecialchars($step['alt']) ?>" loading="lazy"
                class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]" />
         </div>
-        <span class="block font-playfair font-semibold text-dark text-[24px] leading-[32px]"><?= $step['num'] ?></span>
+        <span class="block font-playfair font-normal text-dark text-[24px] leading-[32px]"><?= $step['num'] ?></span>
         <h3 class="font-jakarta font-bold text-dark text-[12px] tracking-[1.8px] uppercase leading-[16px] mt-1 mb-2"><?= $step['title'] ?></h3>
         <p class="font-jakarta font-normal text-muted text-[14px] leading-[1.5] m-0"><?= $step['desc'] ?></p>
       </li>

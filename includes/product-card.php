@@ -25,7 +25,7 @@ function render_product_card(array $prod, int $delay = 0): void
 
       <div class="p-5 sm:p-6 flex-1 flex flex-col justify-between">
         <div>
-          <h3 class="font-playfair text-[19px] md:text-[20px] font-bold text-dark leading-snug mb-2 group-hover:text-brand transition-colors">
+          <h3 class="font-playfair font-normal text-[20px] sm:text-[22px] leading-[1.3] text-dark mb-2 group-hover:text-brand transition-colors">
             <a href="<?= $detail_url ?>"><?= htmlspecialchars($prod['name']) ?></a>
           </h3>
           <?php if (!empty($prod['description'])): ?>
@@ -49,7 +49,7 @@ function render_product_card(array $prod, int $delay = 0): void
             <div class="text-[11px] font-jakarta tracking-wider uppercase text-muted mb-0.5"><?= $pp['custom'] ? 'Harga' : 'Harga per meter' ?></div>
             <?php if ($pp['amount'] > 0): ?>
             <div class="flex flex-wrap items-baseline gap-x-1.5">
-              <span class="font-playfair font-bold text-[22px] sm:text-2xl text-brand">Rp <?= number_format($pp['amount'], 0, ',', '.') ?></span>
+              <span class="font-playfair font-normal text-[22px] sm:text-2xl text-brand">Rp <?= number_format($pp['amount'], 0, ',', '.') ?></span>
               <span class="text-[11px] font-jakarta text-muted"><?= htmlspecialchars($pp['unit']) ?></span>
             </div>
             <?php else: ?>

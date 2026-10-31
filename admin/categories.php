@@ -44,6 +44,8 @@ if ($action === 'add' || $action === 'update') {
     $ppm     = parse_price($_POST['price_per_meter'] ?? '0');
     $tagline = trim(preg_replace('/\s+/u', ' ', (string)($_POST['tagline'] ?? '')));
     $sort    = (int) ($_POST['sort_order'] ?? 0);
+    $wa_raw  = trim((string)($_POST['whatsapp'] ?? ''));
+    $wa      = $wa_raw === '' ? null : normalize_wa_number($wa_raw);   // kosong = pakai nomor utama
     $reopen  = $action === 'add' ? 'add-category' : 'edit-cat-' . $cat_id;
 
     $current = null;
@@ -61,6 +63,8 @@ if ($action === 'add' || $action === 'update') {
         $err = 'Harga per meter harus berupa angka (0 atau lebih).';
     } elseif (mb_strlen($tagline) > 120) {
         $err = 'Tagline maksimal 120 karakter.';
+    } elseif ($wa_raw !== '' && $wa === null) {
+        $err = 'Nomor WhatsApp tidak valid. Contoh: 0812 3456 7890.';
     } else {
         $dup = $db->prepare('SELECT id FROM categories WHERE name = ? AND id != ?');
         $dup->execute([$name, $cat_id]);
@@ -87,13 +91,13 @@ if ($action === 'add' || $action === 'update') {
         }
         if ($action === 'add') {
             $sort = (int) $db->query('SELECT COALESCE(MAX(sort_order), -1) + 1 FROM categories')->fetchColumn();
-            $db->prepare('INSERT INTO categories (name, price_per_meter, image_url, tagline, sort_order) VALUES (?, ?, ?, ?, ?)')
-               ->execute([$name, $ppm, $image_url, $tagline ?: null, $sort]);
+            $db->prepare('INSERT INTO categories (name, price_per_meter, image_url, tagline, whatsapp, sort_order) VALUES (?, ?, ?, ?, ?, ?)')
+               ->execute([$name, $ppm, $image_url, $tagline ?: null, $wa, $sort]);
             $msg = 'Kategori "' . $name . '" berhasil ditambahkan.';
         } else {
             // Produk & portofolio merujuk ke category_id, jadi nama/harga baru langsung berlaku.
-            $db->prepare('UPDATE categories SET name = ?, price_per_meter = ?, image_url = ?, tagline = ?, sort_order = ? WHERE id = ?')
-               ->execute([$name, $ppm, $image_url, $tagline ?: null, $sort, $cat_id]);
+            $db->prepare('UPDATE categories SET name = ?, price_per_meter = ?, image_url = ?, tagline = ?, whatsapp = ?, sort_order = ? WHERE id = ?')
+               ->execute([$name, $ppm, $image_url, $tagline ?: null, $wa, $sort, $cat_id]);
             $msg = 'Kategori "' . $name . '" berhasil diperbarui.';
         }
         $reopen = null;
@@ -157,6 +161,12 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
         <input type="number" name="sort_order" step="1" value="<?= (int)$v('sort_order', 0) ?>" class="<?= $field ?>"/>
       </div>
       <?php endif; ?>
+      <div class="col-span-2">
+        <label class="<?= $label ?>">WhatsApp Admin Penjualan <span class="normal-case tracking-normal font-normal">(opsional)</span></label>
+        <input type="tel" name="whatsapp" inputmode="tel" maxlength="25" placeholder="Contoh: 0812 3456 7890"
+               value="<?= htmlspecialchars((string)($repost ? ($_POST['whatsapp'] ?? '') : (!empty($c['whatsapp']) ? '+' . $c['whatsapp'] : ''))) ?>" class="<?= $field ?>"/>
+        <p class="font-jakarta text-muted text-[10.5px] mt-1">Tujuan form penawaran &amp; tombol WhatsApp di produk kategori ini. Kosongkan untuk memakai nomor utama (<?= htmlspecialchars(SITE_PHONE) ?>).</p>
+      </div>
       <div class="col-span-2">
         <label class="<?= $label ?>">Tagline <span class="normal-case tracking-normal font-normal">(opsional)</span></label>
         <input type="text" name="tagline" maxlength="120" placeholder="cth. Elevate your every space" value="<?= htmlspecialchars((string)$v('tagline')) ?>" class="<?= $field ?>"/>
@@ -232,13 +242,14 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
   </div>
 
   <div class="bg-white border border-border rounded-[6px] overflow-x-auto">
-    <table class="w-full min-w-[820px]">
+    <table class="w-full min-w-[960px]">
       <thead class="bg-cream-dark">
         <tr>
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-12">#</th>
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-[96px]">Foto</th>
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Nama Kategori</th>
           <th class="px-4 py-3 text-right font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-36">Harga / meter</th>
+          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-40">WhatsApp</th>
           <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-20">Produk</th>
           <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-24">Portofolio</th>
           <th class="px-4 py-3 text-right font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-40">Aksi</th>
@@ -263,6 +274,13 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
             <?php if ($cat['tagline']): ?><p class="font-jakarta text-muted text-[11px] mt-0.5"><?= htmlspecialchars($cat['tagline']) ?></p><?php endif; ?>
           </td>
           <td class="px-4 py-3 text-right font-jakarta text-dark text-[13px] whitespace-nowrap">Rp <?= number_format((int) $cat['price_per_meter'], 0, ',', '.') ?></td>
+          <td class="px-4 py-3 font-jakarta text-[12px] whitespace-nowrap">
+            <?php if ($cat['whatsapp']): ?>
+            <a href="https://wa.me/<?= htmlspecialchars($cat['whatsapp']) ?>" target="_blank" rel="noopener" class="text-[#128c4a] hover:underline">+<?= htmlspecialchars($cat['whatsapp']) ?></a>
+            <?php else: ?>
+            <span class="text-muted">Nomor utama</span>
+            <?php endif; ?>
+          </td>
           <td class="px-4 py-3 text-center font-jakarta text-dark text-[13px]"><?= (int)$cat['product_count'] ?></td>
           <td class="px-4 py-3 text-center font-jakarta text-dark text-[13px]"><?= (int)$cat['gallery_count'] ?></td>
           <td class="px-4 py-3">
@@ -284,7 +302,7 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
         </tr>
         <?php endforeach; ?>
         <?php if (empty($categories)): ?>
-        <tr><td colspan="7" class="px-5 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada kategori.</td></tr>
+        <tr><td colspan="8" class="px-5 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada kategori.</td></tr>
         <?php endif; ?>
       </tbody>
     </table>

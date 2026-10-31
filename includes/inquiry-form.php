@@ -20,7 +20,7 @@ function render_inquiry_form(string $prefix, array $categories, bool $compact = 
     <form action="<?= BASE_URL ?>/inquiry.php" method="POST" novalidate data-inquiry-form
           class="relative <?= $compact ? '' : 'p-5 sm:p-7 bg-white border border-border rounded-[6px] shadow-sm' ?>">
       <?php if (!$compact): ?>
-      <h3 class="font-playfair font-bold text-dark text-[22px] sm:text-[24px] leading-[30px] mb-1">Dapatkan Penawaran Gratis</h3>
+      <h3 class="font-playfair font-normal text-dark text-[22px] sm:text-[24px] leading-[1.25] mb-1">Dapatkan Penawaran Gratis</h3>
       <p class="font-jakarta text-muted text-[13px] leading-[20px] mb-5">Isi detail singkat di bawah. Data Anda kami simpan, lalu Anda langsung terhubung dengan tim kami di WhatsApp.</p>
       <?php endif; ?>
 
