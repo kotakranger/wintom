@@ -28,8 +28,10 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
   <!-- Background video -->
   <!-- Video (4,9 MB) hanya dimuat di layar ≥768px & bila pengunjung tidak mengaktifkan mode hemat data;
        HP cukup menampilkan poster yang ringan. -->
-  <video id="hero-video" class="wt-zoom absolute inset-0 w-full h-full object-cover" muted loop playsinline preload="none"
-         poster="<?= htmlspecialchars(img_unsplash('https://images.unsplash.com/photo-1558618666-fcd25c85cd64', 1280)) ?>" aria-hidden="true"
+  <!-- Gambar hero = elemen terbesar (LCP): responsif & diprioritaskan; video menimpanya bila dimuat -->
+  <img <?= img_attrs('https://images.unsplash.com/photo-1558618666-fcd25c85cd64', '100vw', [640, 960, 1280, 1920]) ?>
+       alt="" fetchpriority="high" decoding="async" class="wt-zoom absolute inset-0 w-full h-full object-cover" />
+  <video id="hero-video" class="wt-zoom absolute inset-0 w-full h-full object-cover" muted loop playsinline preload="none" aria-hidden="true"
          data-src="<?= BASE_URL ?>/assets/video/hero.mp4"></video>
   <script>
     (function () {

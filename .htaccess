@@ -4,7 +4,7 @@ DirectoryIndex index.php index.html
 Options -Indexes
 
 # Deny access to sensitive files
-<FilesMatch "\.(md|sqlite|sqlite3|db|php-cs-fixer)$">
+<FilesMatch "\.(md|sqlite|sqlite3|db|php-cs-fixer)$|^(package(-lock)?\.json|tailwind\.config\.js)$">
     Require all denied
 </FilesMatch>
 
@@ -24,5 +24,9 @@ Options -Indexes
     # Gambar, video, ikon, font di assets/: 30 hari
     <FilesMatch "\.(jpe?g|png|webp|gif|svg|ico|avif|mp4|webm|woff2?)$">
         Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+    # CSS/JS hasil build: dipanggil dengan ?v=<waktu ubah file>, jadi aman di-cache 1 tahun
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "public, max-age=31536000"
     </FilesMatch>
 </IfModule>
