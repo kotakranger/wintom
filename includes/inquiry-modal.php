@@ -183,6 +183,9 @@ require_once __DIR__ . '/inquiry-form.php';
         try { data = await res.json(); } catch (_) {}
 
         if (res.ok && data && data.ok && data.wa_url) {
+          const cat = form.elements['category_id'];
+          wtTrack('generate_lead', { form_location: form.closest('#quote-modal') ? 'modal' : 'page',
+                                     product_category: cat && cat.selectedIndex > 0 ? cat.options[cat.selectedIndex].text : '' });
           setLoading(true, 'MEMBUKA WHATSAPP…');
           showAlert('Terima kasih! Data Anda sudah kami terima. Mengalihkan ke WhatsApp…', true);
           window.setTimeout(function () { window.location.href = data.wa_url; }, 900);

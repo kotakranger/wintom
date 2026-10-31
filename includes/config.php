@@ -61,3 +61,7 @@ foreach ([
         define($const, $val !== false ? $val : $default);
     }
 }
+
+// Google Analytics 4 — Measurement ID "G-XXXXXXXXXX" (Admin GA › Aliran data › Web).
+// Kosong = GA tidak dimuat. Bisa juga di-override di config.local.php.
+if (!defined('GA_MEASUREMENT_ID')) define('GA_MEASUREMENT_ID', '');
