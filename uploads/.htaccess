@@ -11,3 +11,11 @@ Options -Indexes -ExecCGI
 <IfModule mod_php7.c>
     php_flag engine off
 </IfModule>
+
+# Foto upload admin selalu bernama unik (tidak pernah ditimpa dengan nama sama),
+# jadi aman di-cache CDN & browser selama 1 tahun.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(jpe?g|png|webp|gif)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>

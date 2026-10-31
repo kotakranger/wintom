@@ -12,3 +12,17 @@ Options -Indexes
 <FilesMatch "^\.">
     Require all denied
 </FilesMatch>
+
+# ---------------------------------------------------------------------------
+# Cache untuk CDN Hostinger & browser
+# File statis boleh di-cache lama oleh CDN (edge) dan browser. Halaman PHP tidak:
+# PHP mengirim "Cache-Control: no-store" karena setiap halaman punya sesi + token
+# CSRF form, jadi HTML selalu diambil segar dari server (status CDN: DYNAMIC).
+# Ganti file di assets/ dengan nama yang sama? Purge cache CDN di hPanel.
+# ---------------------------------------------------------------------------
+<IfModule mod_headers.c>
+    # Gambar, video, ikon, font di assets/: 30 hari
+    <FilesMatch "\.(jpe?g|png|webp|gif|svg|ico|avif|mp4|webm|woff2?)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+</IfModule>
