@@ -95,22 +95,6 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
         <p class="wt-in font-jakarta text-[13px] text-[rgba(255,255,255,0.75)] leading-[1.5] pt-3 m-0" style="--d:640ms">Respon cepat di jam operasional.</p>
       </div>
 
-      <!-- Right: Floating Manifesto Badge (desktop) -->
-      <div class="hidden lg:flex lg:col-span-4 items-center justify-end">
-        <div class="wt-in backdrop-blur-[6px] bg-[rgba(255,255,255,0.85)] border border-[rgba(255,255,255,0.7)] rounded-[2px] shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)] px-[25px] py-[29px] w-[210px]" style="--d:760ms">
-          <div class="flex flex-col items-end gap-[6px]">
-            <span class="font-jakarta font-semibold text-dark text-[9px] tracking-[1.98px] uppercase leading-[11.25px]">CAHAYA</span>
-            <span class="font-jakarta font-semibold text-dark text-[9px] tracking-[1.98px] uppercase leading-[11.25px]">PRIVASI</span>
-            <span class="font-jakarta font-semibold text-dark text-[9px] tracking-[1.98px] uppercase leading-[11.25px]">KENYAMANAN</span>
-            <div class="bg-brand h-[1.5px] w-7 self-end mt-1"></div>
-            <div class="text-right">
-              <span class="font-jakarta font-bold text-brand text-[9px] tracking-[1.98px] uppercase leading-[11.25px] block">HARI ESOK</span>
-              <span class="font-jakarta font-bold text-brand text-[9px] tracking-[1.98px] uppercase leading-[11.25px] block">LEBIH CERAH</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 </section>
@@ -271,7 +255,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
         </div>
         <div class="flex sm:flex-col items-center sm:items-start gap-4 sm:gap-0 min-w-0 sm:pr-6 sm:border-l sm:border-[rgba(34,34,32,0.15)] sm:pl-6">
           <div class="flex items-center justify-center size-10 shrink-0 sm:mb-2">
-            <svg class="size-7" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 1.667v16.666M6.667 5h5a1.667 1.667 0 0 1 0 3.333H8.333A1.667 1.667 0 0 0 8.333 11.667h6.25" stroke="#242424" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg class="size-7" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 10.2V4.17c0-.92.75-1.67 1.67-1.67h6.03c.44 0 .87.18 1.18.49l6.46 6.46a1.67 1.67 0 0 1 0 2.36l-5.64 5.64a1.67 1.67 0 0 1-2.36 0L2.99 11.38a1.67 1.67 0 0 1-.49-1.18Z" stroke="#242424" stroke-width="1.25" stroke-linejoin="round"/><circle cx="6.67" cy="6.67" r="1.04" stroke="#242424" stroke-width="1.25"/></svg>
           </div>
           <div class="min-w-0">
             <span class="block font-jakarta font-bold text-dark text-[12px] tracking-[1.8px] uppercase leading-[16px]">HARGA</span>
