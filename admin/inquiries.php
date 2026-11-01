@@ -66,7 +66,7 @@ admin_page_start('Inquiry', 'inquiries', '');
 
   <div class="mb-6">
     <h1 class="font-playfair font-semibold text-dark text-[26px]">Inquiry</h1>
-    <p class="font-jakarta text-muted text-[13px] mt-0.5">Dari form “Kontak Kami” — <?= $total ?> total<?php if ($counts['new']): ?>, <b class="text-amber-700"><?= $counts['new'] ?> belum dihubungi</b><?php endif; ?></p>
+    <p class="font-jakarta text-muted text-[13px] mt-0.5">Permintaan penawaran yang masuk dari form di website.</p>
   </div>
   <?php admin_flash($msg, $err); ?>
 

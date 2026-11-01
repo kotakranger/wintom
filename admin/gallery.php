@@ -216,7 +216,7 @@ function category_select(array $cats, ?int $selected, string $id): string {
   <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
     <div>
       <h1 class="font-playfair font-semibold text-dark text-[26px]">Galeri Portofolio</h1>
-      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= $total_all ?> proyek · dikelompokkan per kategori produk</p>
+      <p class="font-jakarta text-muted text-[13px] mt-0.5">Proyek pemasangan, dikelompokkan per kategori produk.</p>
     </div>
     <div class="flex items-center gap-2">
       <a href="../gallery.php" target="_blank" class="font-jakarta text-[12px] text-brand tracking-[1px] uppercase border border-brand/30 px-4 py-2.5 rounded-[4px] hover:bg-brand/5 transition-colors">

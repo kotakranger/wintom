@@ -655,7 +655,7 @@ select.input{appearance:auto;}
   <div class="mb-6 flex items-center justify-between">
     <div>
       <h1 class="font-playfair font-semibold text-dark text-[26px]">Manajemen Produk</h1>
-      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= $pg['total'] ?> produk terdaftar</p>
+      <p class="font-jakarta text-muted text-[13px] mt-0.5">Kelola semua produk yang tampil di katalog.</p>
     </div>
     <div class="flex items-center gap-3">
       <a href="products-import.php" class="bg-white text-brand border border-brand/40 font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-brand/5 transition-colors">

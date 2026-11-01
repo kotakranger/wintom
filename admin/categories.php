@@ -216,7 +216,7 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
   <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
     <div>
       <h1 class="font-playfair font-semibold text-dark text-[26px]">Manajemen Kategori</h1>
-      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= count($categories) ?> kategori · <?= LANDING_CATEGORY_SLOTS ?> urutan teratas tampil sebagai kartu di landing page</p>
+      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= LANDING_CATEGORY_SLOTS ?> urutan teratas tampil sebagai kartu di landing page.</p>
     </div>
     <button type="button" data-modal-open="add-category"
             class="bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-2.5 rounded-[4px] hover:bg-[#6a041c] transition-colors shadow-sm">

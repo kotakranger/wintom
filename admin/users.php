@@ -86,7 +86,7 @@ admin_page_start('Pengguna', 'users');
   <div class="mb-6 flex items-center justify-between gap-4">
     <div>
       <h1 class="font-playfair font-semibold text-dark text-[26px]">Pengguna</h1>
-      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= $pg['total'] ?> akun · hanya Super Admin yang bisa menambah, menghapus, dan mengatur ulang password Admin.</p>
+      <p class="font-jakarta text-muted text-[13px] mt-0.5">Hanya Super Admin yang bisa menambah, menghapus, dan mengatur ulang password Admin.</p>
     </div>
     <button type="button" data-modal-open="add-user" class="bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-[#6a041c] transition-colors">+ Tambah Admin</button>
   </div>

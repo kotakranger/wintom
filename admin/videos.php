@@ -89,7 +89,7 @@ $videos = $db->query('SELECT * FROM content_videos ORDER BY sort_order ASC, id A
 
   <div class="mb-6">
     <h1 class="font-playfair font-semibold text-dark text-[26px]">Konten Video</h1>
-    <p class="font-jakarta text-muted text-[13px] mt-0.5">Video / Shorts YouTube yang tampil di section “Konten Wintom” pada homepage. <?= $pg['total'] ?> video terdaftar.</p>
+    <p class="font-jakarta text-muted text-[13px] mt-0.5">Video / Shorts YouTube yang tampil di section “Konten Wintom” pada homepage.</p>
   </div>
 
   <div class="grid grid-cols-12 gap-6">
