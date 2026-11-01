@@ -2,6 +2,8 @@
 // admin/videos.php — Konten video YouTube untuk homepage
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/admin-table.php';
+require_once __DIR__ . '/../includes/admin-sidebar.php';
 require_once __DIR__ . '/../includes/youtube.php';
 require_login();
 
@@ -61,7 +63,8 @@ if ($action === 'delete') {
     }
 }
 
-$videos = $db->query('SELECT * FROM content_videos ORDER BY sort_order ASC, id ASC')->fetchAll();
+$pg = admin_paginate((int)$db->query('SELECT COUNT(*) FROM content_videos')->fetchColumn());
+$videos = $db->query('SELECT * FROM content_videos ORDER BY sort_order ASC, id ASC LIMIT ' . (int)$pg['per'] . ' OFFSET ' . (int)$pg['offset'])->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -76,26 +79,7 @@ $videos = $db->query('SELECT * FROM content_videos ORDER BY sort_order ASC, id A
 <body class="font-jakarta bg-[#f5f3f0] text-dark antialiased flex min-h-screen">
 
 <!-- SIDEBAR -->
-<aside class="w-[220px] shrink-0 bg-white border-r border-border flex flex-col min-h-screen fixed top-0 left-0 h-full z-20">
-  <div class="p-6 border-b border-border">
-    <a href="../" target="_blank" class="block"><img src="../assets/images/wintom-logo.png" alt="Wintom Curtain" class="h-10 w-auto"></a>
-    <span class="font-jakarta font-semibold text-muted text-[8px] tracking-[2.5px] uppercase mt-2 block">ADMIN</span>
-  </div>
-  <nav class="flex flex-col p-4 gap-1 flex-1">
-    <a href="index.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Dashboard</a>
-    <a href="inquiries.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Inquiry</a>
-    <a href="products.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Produk</a>
-    <a href="categories.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Kategori</a>
-    <a href="gallery.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Galeri Portofolio</a>
-    <a href="videos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium bg-brand/10 text-brand">Konten Video</a>
-  </nav>
-  <div class="p-4 border-t border-border">
-    <form method="POST" action="logout.php" class="inline">
-      <?= csrf_field() ?>
-      <button type="submit" class="block px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors bg-none border-none cursor-pointer">Logout</button>
-    </form>
-  </div>
-</aside>
+<?php admin_sidebar('videos'); ?>
 
 <!-- MAIN -->
 <main class="ml-[220px] flex-1 p-8 min-h-screen min-w-0">
@@ -105,7 +89,7 @@ $videos = $db->query('SELECT * FROM content_videos ORDER BY sort_order ASC, id A
 
   <div class="mb-6">
     <h1 class="font-playfair font-semibold text-dark text-[26px]">Konten Video</h1>
-    <p class="font-jakarta text-muted text-[13px] mt-0.5">Video / Shorts YouTube yang tampil di section “Konten Wintom” pada homepage. <?= count($videos) ?> video terdaftar.</p>
+    <p class="font-jakarta text-muted text-[13px] mt-0.5">Video / Shorts YouTube yang tampil di section “Konten Wintom” pada homepage.</p>
   </div>
 
   <div class="grid grid-cols-12 gap-6">
@@ -147,6 +131,7 @@ $videos = $db->query('SELECT * FROM content_videos ORDER BY sort_order ASC, id A
       <?php if (!$videos): ?>
       <div class="bg-white border border-border rounded-[6px] px-5 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada video. Tambahkan link YouTube di panel kanan.</div>
       <?php endif; ?>
+      <?php admin_pagination($pg, false); ?>
     </div>
 
     <!-- ADD -->

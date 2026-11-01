@@ -2,6 +2,8 @@
 // admin/index.php — Admin Dashboard Wintom Curtain
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/admin-sidebar.php';
+require_once __DIR__ . '/../includes/admin-table.php';
 require_login();
 
 $db = get_db();
@@ -33,44 +35,10 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
 <body class="font-jakarta bg-[#f5f3f0] text-dark antialiased flex min-h-screen">
 
 <!-- SIDEBAR -->
-<aside class="w-[220px] shrink-0 bg-white border-r border-border flex flex-col min-h-screen">
-  <div class="p-6 border-b border-border">
-    <a href="../" class="flex flex-col">
-      <span class="font-playfair font-bold text-brand text-[22px] leading-[28px]">wintom</span>
-      <span class="font-jakarta font-semibold text-dark text-[8px] tracking-[2.5px] uppercase">CURTAIN ADMIN</span>
-    </a>
-  </div>
-  <nav class="flex flex-col p-4 gap-1 flex-1">
-    <?php
-    $nav = [
-      ['href'=>'index.php','label'=>'Dashboard','active'=>true],
-      ['href'=>'inquiries.php','label'=>'Inquiry','active'=>false],
-      ['href'=>'products.php','label'=>'Produk','active'=>false],
-      ['href'=>'categories.php','label'=>'Kategori','active'=>false],
-      ['href'=>'gallery.php','label'=>'Galeri Portofolio','active'=>false],
-      ['href'=>'videos.php','label'=>'Konten Video','active'=>false],
-    ];
-    foreach($nav as $n):
-    ?>
-    <a href="<?= $n['href'] ?>"
-       class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium transition-colors duration-200
-              <?= $n['active'] ? 'bg-brand/10 text-brand' : 'text-muted hover:bg-cream hover:text-dark' ?>">
-      <?= $n['label'] ?>
-    </a>
-    <?php endforeach; ?>
-  </nav>
-  <div class="p-4 border-t border-border">
-    <form method="POST" action="logout.php" class="inline">
-      <?= csrf_field() ?>
-      <button type="submit" class="flex items-center gap-2 px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors bg-none border-none cursor-pointer w-full">
-        Logout
-      </button>
-    </form>
-  </div>
-</aside>
+<?php admin_sidebar('dashboard'); ?>
 
 <!-- MAIN -->
-<main class="flex-1 p-8">
+<main class="ml-[220px] flex-1 p-8 min-w-0">
   <div class="mb-8">
     <h1 class="font-playfair font-semibold text-dark text-[28px] leading-[36px]">Dashboard</h1>
     <p class="font-jakarta text-muted text-[14px] mt-1">Selamat datang di panel admin Wintom Curtain.</p>
@@ -104,14 +72,21 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
     </div>
     <table class="w-full">
       <tbody>
-        <?php foreach($recent_inquiries as $q): ?>
-        <tr class="border-t border-border first:border-t-0 hover:bg-cream transition-colors">
-          <td class="px-5 py-3.5 font-jakarta text-dark text-[13px]"><?= htmlspecialchars($q['full_name']) ?><span class="block text-muted text-[11px]">+<?= htmlspecialchars($q['whatsapp']) ?></span></td>
-          <td class="px-5 py-3.5 font-jakarta text-muted text-[12px]"><?= htmlspecialchars($q['curtain_type']) ?></td>
-          <td class="px-5 py-3.5 font-jakarta text-muted text-[12px] text-right"><?= $q['status'] === 'new' ? '<span class="text-brand font-semibold">Baru</span> · ' : '' ?><?= htmlspecialchars(date('d M H:i', strtotime($q['created_at']))) ?></td>
+        <?php foreach($recent_inquiries as $q): [$t1, $t2] = admin_time_lines($q['created_at']); ?>
+        <tr class="border-t border-border first:border-t-0 hover:bg-cream transition-colors cursor-pointer" onclick="location.href='inquiries.php'">
+          <td class="px-5 py-3.5 <?= $q['status'] === 'new' ? 'shadow-[inset_3px_0_0_#f59e0b]' : '' ?>">
+            <p class="font-jakarta font-semibold text-dark text-[13px]"><?= htmlspecialchars($q['full_name']) ?></p>
+            <p class="font-jakarta text-muted text-[12px] tabular-nums"><?= htmlspecialchars(admin_phone($q['whatsapp'])) ?></p>
+          </td>
+          <td class="px-5 py-3.5"><span class="inline-block rounded-[4px] border border-border bg-cream-dark px-2 py-0.5 font-jakarta font-semibold text-[12px] text-dark"><?= htmlspecialchars($q['curtain_type']) ?></span></td>
+          <td class="px-5 py-3.5"><?= admin_status_pill($q['status']) ?></td>
+          <td class="px-5 py-3.5 text-right whitespace-nowrap">
+            <p class="font-jakarta font-semibold text-dark text-[12px]"><?= htmlspecialchars($t1) ?></p>
+            <p class="font-jakarta text-muted text-[11px]"><?= htmlspecialchars($t2) ?></p>
+          </td>
         </tr>
         <?php endforeach; ?>
-        <?php if (!$recent_inquiries): ?><tr><td class="px-5 py-8 text-center font-jakarta text-muted text-[13px]">Belum ada inquiry.</td></tr><?php endif; ?>
+        <?php if (!$recent_inquiries): ?><?php admin_empty_row(4, 'Belum ada inquiry', 'Inquiry dari form “Minta Penawaran” akan muncul di sini.'); ?><?php endif; ?>
       </tbody>
     </table>
   </div>
@@ -149,7 +124,7 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
           </td>
         </tr>
         <?php endforeach; ?>
-        <?php if (!$category_rows): ?><tr><td colspan="3" class="px-5 py-8 text-center font-jakarta text-muted text-[13px]">Belum ada kategori.</td></tr><?php endif; ?>
+        <?php if (!$category_rows): ?><?php admin_empty_row(3, 'Belum ada kategori'); ?><?php endif; ?>
       </tbody>
     </table>
   </div>

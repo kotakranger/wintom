@@ -2,7 +2,10 @@
 // admin/products.php — Manajemen Produk CRUD (Variant System Overhaul)
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/admin-sidebar.php';
 require_once __DIR__ . '/../includes/image-upload.php';
+require_once __DIR__ . '/../includes/admin-actions.php';
+require_once __DIR__ . '/../includes/admin-table.php';
 require_login();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') csrf_check();
 
@@ -62,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'dele
         $cover = $db->prepare("SELECT cover_image FROM products WHERE id = ?");
         $cover->execute([$id]);
         $row = $cover->fetch();
-        if ($row) delete_file($row['cover_image']);
+        if ($row && $row['cover_image']) delete_file($row['cover_image']);   // produk hasil impor bisa belum punya foto
         $db->prepare("DELETE FROM products WHERE id = ?")->execute([$id]);
         $msg = 'Produk berhasil dihapus.';
     }
@@ -243,8 +246,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
             sync_cover($db, $pid);
             $has_img = $db->prepare("SELECT COUNT(*) FROM product_images WHERE product_id = ?");
             $has_img->execute([$pid]);
-            if (!$has_img->fetchColumn()) {
-                $err = 'Gagal upload foto produk. ' . implode('; ', $upload_errors);
+            if (!$has_img->fetchColumn() && $is_active) {
+                // Produk tanpa foto boleh disimpan selama Nonaktif (mis. hasil impor CSV); aktif butuh minimal 1 foto
+                $err = 'Produk aktif butuh minimal satu foto. Tambahkan foto, atau ubah status menjadi Nonaktif.'
+                     . ($upload_errors ? ' (' . implode('; ', $upload_errors) . ')' : '');
             }
         }
 
@@ -348,7 +353,8 @@ if (isset($_GET['msg'])) $msg = ['img_deleted' => 'Foto dihapus', 'cover_set' =>
 /* ============================================================
    LOAD PRODUCTS LIST
    ============================================================ */
-$products = $db->query("SELECT p.*, c.name AS category, c.price_per_meter FROM products p JOIN categories c ON c.id = p.category_id ORDER BY p.created_at DESC")->fetchAll();
+$pg = admin_paginate((int)$db->query("SELECT COUNT(*) FROM products")->fetchColumn());
+$products = $db->query("SELECT p.*, c.name AS category, c.price_per_meter FROM products p JOIN categories c ON c.id = p.category_id ORDER BY p.created_at DESC, p.id DESC LIMIT " . (int)$pg['per'] . " OFFSET " . (int)$pg['offset'])->fetchAll();
 
 // Load gallery images and variants for editing product
 $edit_images   = [];
@@ -384,6 +390,8 @@ if ($editing) {
 .input{display:block;width:100%;border:1px solid #ece8e1;border-radius:4px;padding:9px 12px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#242424;background:#fff;transition:border-color 0.15s;}
 .input:focus{border-color:#860524;}
 select.input{appearance:auto;}
+.peer:checked + .sw-track{background:#10b981;}
+.peer:checked + .sw-track .sw-knob{transform:translateX(20px);}
 .variant-card{border:1px solid #ece8e1;border-radius:6px;background:#fff;padding:16px;margin-bottom:12px;}
 .variant-card.is-size{border-left:3px solid #860524;}
 .opt-row{display:flex;gap:8px;align-items:center;margin-top:6px;}
@@ -395,29 +403,7 @@ select.input{appearance:auto;}
 </head>
 <body class="font-jakarta bg-[#f5f3f0] text-dark antialiased flex min-h-screen">
 
-<!-- ===== SIDEBAR ===== -->
-<aside class="w-[220px] shrink-0 bg-white border-r border-border flex flex-col min-h-screen fixed top-0 left-0 h-full z-20">
-  <div class="p-6 border-b border-border">
-    <a href="../" target="_blank" class="flex flex-col group">
-      <span class="font-playfair font-bold text-brand text-[22px] leading-[28px]">wintom</span>
-      <span class="font-jakarta font-semibold text-muted text-[8px] tracking-[2.5px] uppercase group-hover:text-brand transition-colors">CURTAIN ADMIN</span>
-    </a>
-  </div>
-  <nav class="flex flex-col p-4 gap-1 flex-1">
-    <a href="index.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Dashboard</a>
-    <a href="inquiries.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Inquiry</a>
-    <a href="products.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium bg-brand/10 text-brand">Produk</a>
-    <a href="categories.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Kategori</a>
-    <a href="gallery.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Galeri Portofolio</a>
-    <a href="videos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Konten Video</a>
-  </nav>
-  <div class="p-4 border-t border-border">
-    <form method="POST" action="logout.php">
-      <?= csrf_field() ?>
-      <button type="submit" class="block w-full text-left px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors bg-transparent border-0 cursor-pointer">Logout</button>
-    </form>
-  </div>
-</aside>
+<?php admin_sidebar('products'); ?>
 
 <!-- ===== MAIN ===== -->
 <main class="ml-[220px] flex-1 p-8 min-h-screen">
@@ -580,16 +566,15 @@ select.input{appearance:auto;}
 
         <div>
           <label class="label">Status Produk</label>
-          <div class="flex items-center gap-4">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="is_active" value="1" <?= ($editing['is_active'] ?? 1) == 1 ? 'checked' : '' ?> class="accent-[#860524]"/>
-              <span class="font-jakarta text-[13px] text-dark">Aktif <span class="text-green-600 text-[11px]">●</span></span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="is_active" value="0" <?= ($editing['is_active'] ?? 1) == 0 ? 'checked' : '' ?> class="accent-[#860524]"/>
-              <span class="font-jakarta text-[13px] text-dark">Nonaktif <span class="text-red-500 text-[11px]">●</span></span>
-            </label>
-          </div>
+          <input type="hidden" name="is_active" value="0"/>
+          <label class="flex items-center gap-3 cursor-pointer select-none rounded-[6px] border border-border bg-cream/60 px-4 py-3">
+            <input type="checkbox" name="is_active" value="1" <?= ($editing['is_active'] ?? 1) == 1 ? 'checked' : '' ?> class="peer sr-only"/>
+            <span class="sw-track relative inline-block h-[24px] w-[44px] shrink-0 rounded-full bg-[#cfcac2] transition-colors duration-200 peer-focus-visible:ring-2 peer-focus-visible:ring-brand/40">
+              <span class="sw-knob absolute top-[3px] left-[3px] size-[18px] rounded-full bg-white shadow transition-transform duration-200"></span>
+            </span>
+            <span class="font-jakarta font-semibold text-[13px] text-muted leading-tight peer-checked:hidden">Nonaktif <span class="block font-normal text-[11px] text-muted">Disembunyikan dari katalog</span></span>
+            <span class="hidden font-jakarta font-semibold text-[13px] text-emerald-700 leading-tight peer-checked:inline">Aktif <span class="block font-normal text-[11px] text-muted">Tampil di katalog</span></span>
+          </label>
           <p class="font-jakarta text-muted text-[10px] mt-1.5">Nonaktif = tersembunyi dari katalog publik</p>
         </div>
 
@@ -670,11 +655,16 @@ select.input{appearance:auto;}
   <div class="mb-6 flex items-center justify-between">
     <div>
       <h1 class="font-playfair font-semibold text-dark text-[26px]">Manajemen Produk</h1>
-      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= count($products) ?> produk terdaftar</p>
+      <p class="font-jakarta text-muted text-[13px] mt-0.5">Kelola semua produk yang tampil di katalog.</p>
     </div>
-    <a href="products.php?add=1" class="bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-[#6a041c] transition-colors">
-      + TAMBAH PRODUK
-    </a>
+    <div class="flex items-center gap-3">
+      <a href="products-import.php" class="bg-white text-brand border border-brand/40 font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-brand/5 transition-colors">
+        ⬆ IMPOR CSV
+      </a>
+      <a href="products.php?add=1" class="bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-[#6a041c] transition-colors">
+        + TAMBAH PRODUK
+      </a>
+    </div>
   </div>
 
   <div class="bg-white border border-border rounded-[6px] overflow-hidden">
@@ -684,18 +674,22 @@ select.input{appearance:auto;}
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-16">Cover</th>
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Nama Produk</th>
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase hidden lg:table-cell">Kategori</th>
-          <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-20">Status</th>
+          <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-36">Status</th>
           <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-20 hidden lg:table-cell">Stok</th>
           <th class="px-4 py-3 text-right font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Harga</th>
-          <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-44">Aksi</th>
+          <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-48">Aksi</th>
         </tr>
       </thead>
       <tbody>
         <?php foreach($products as $p): ?>
-        <tr class="border-t border-border hover:bg-cream/50 transition-colors <?= !$p['is_active'] ? 'opacity-60' : '' ?>">
+        <tr class="border-t border-border hover:bg-cream/50 transition-colors <?= !$p['is_active'] ? '[&>td:not(:last-child)]:opacity-60' : '' ?>">
           <td class="px-4 py-3">
-            <div class="size-12 rounded-[3px] overflow-hidden border border-border bg-cream-dark shrink-0">
-              <img src="<?= htmlspecialchars(img_src($p['cover_image'], 480)) ?>" alt="" class="w-full h-full object-cover"/>
+            <div class="size-12 rounded-[3px] overflow-hidden border border-border bg-cream-dark shrink-0 flex items-center justify-center">
+              <?php if ($p['cover_image']): ?>
+              <img src="<?= htmlspecialchars(img_src((string)$p['cover_image'], 480)) ?>" alt="" class="w-full h-full object-cover"/>
+              <?php else: ?>
+              <span class="font-jakarta text-[9px] leading-[11px] text-center text-muted px-1">Tanpa foto</span>
+              <?php endif; ?>
             </div>
           </td>
           <td class="px-4 py-3">
@@ -703,20 +697,26 @@ select.input{appearance:auto;}
             <?php if ($p['badge']): ?>
             <span class="inline-block mt-1 bg-brand/10 text-brand font-jakarta text-[10px] tracking-[0.5px] uppercase px-1.5 py-0.5 rounded-[2px]"><?= htmlspecialchars($p['badge']) ?></span>
             <?php endif; ?>
-            <p class="font-jakarta text-muted text-[11px] mt-0.5">REF: <?= htmlspecialchars($p['ref_code']) ?> · slug: <?= htmlspecialchars($p['slug']) ?></p>
+            <p class="font-jakarta text-muted text-[11px] mt-0.5">REF: <?= htmlspecialchars($p['ref_code']) ?></p>
+            <?php if (!$p['cover_image']): ?>
+            <p class="font-jakarta text-amber-700 text-[11px] mt-0.5">⚠ Belum ada foto — klik Edit untuk menambahkan</p>
+            <?php endif; ?>
           </td>
           <td class="px-4 py-3 hidden lg:table-cell">
             <span class="font-jakarta text-muted text-[12px]"><?= htmlspecialchars($p['category']) ?></span>
           </td>
           <td class="px-4 py-3 text-center">
-            <form method="POST" class="inline">
+            <form method="POST" class="inline-flex">
               <input type="hidden" name="_action" value="toggle_active"/>
               <input type="hidden" name="product_id" value="<?= $p['id'] ?>"/>
               <?= csrf_field() ?>
-              <button type="submit" title="<?= $p['is_active'] ? 'Klik untuk nonaktifkan' : 'Klik untuk aktifkan' ?>"
-                      class="font-jakarta text-[10px] tracking-[0.5px] uppercase px-2 py-1 rounded-full border transition-colors
-                             <?= $p['is_active'] ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' ?>">
-                <?= $p['is_active'] ? '● Aktif' : '○ Nonaktif' ?>
+              <button type="submit" role="switch" aria-checked="<?= $p['is_active'] ? 'true' : 'false' ?>"
+                      title="<?= $p['is_active'] ? 'Aktif — klik untuk menyembunyikan dari katalog' : 'Nonaktif — klik untuk menampilkan di katalog' ?>"
+                      class="group inline-flex items-center gap-2.5 whitespace-nowrap rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-cream-dark">
+                <span class="relative inline-block h-[22px] w-[40px] shrink-0 rounded-full transition-colors duration-200 <?= $p['is_active'] ? 'bg-emerald-500' : 'bg-[#cfcac2]' ?>">
+                  <span class="absolute top-[3px] left-[3px] size-4 rounded-full bg-white shadow transition-transform duration-200 <?= $p['is_active'] ? 'translate-x-[18px]' : '' ?>"></span>
+                </span>
+                <span class="font-jakarta font-semibold text-[12px] <?= $p['is_active'] ? 'text-emerald-700' : 'text-muted' ?>"><?= $p['is_active'] ? 'Aktif' : 'Nonaktif' ?></span>
               </button>
             </form>
           </td>
@@ -733,30 +733,20 @@ select.input{appearance:auto;}
             <p class="font-jakarta text-[10px] <?= $pp['custom'] ? 'text-brand' : 'text-muted' ?>"><?= $pp['custom'] ? 'harga custom' : 'dari kategori' ?></p>
           </td>
           <td class="px-4 py-3">
-            <div class="flex items-center justify-center gap-2">
-              <a href="products.php?edit=<?= $p['id'] ?>"
-                 class="font-jakarta text-[11px] tracking-[0.5px] uppercase text-brand border border-brand/30 px-3 py-1.5 rounded-[3px] hover:bg-brand/5 transition-colors">
-                Edit
-              </a>
-              <a href="<?= BASE_URL ?>/product-detail.php?slug=<?= htmlspecialchars($p['slug']) ?>" target="_blank"
-                 class="font-jakarta text-[11px] text-muted border border-border px-3 py-1.5 rounded-[3px] hover:border-dark/30 transition-colors">
-                View
-              </a>
-              <form method="POST" onsubmit="return confirm('Hapus produk ini? Semua foto akan ikut terhapus.')">
-                <input type="hidden" name="_action" value="delete"/>
-                <input type="hidden" name="product_id" value="<?= $p['id'] ?>"/>
-                <?= csrf_field() ?>
-                <button type="submit" class="font-jakarta text-[11px] text-red-500 border border-red-200 px-3 py-1.5 rounded-[3px] hover:bg-red-50 transition-colors">Del</button>
-              </form>
+            <div class="flex items-center justify-center gap-1.5">
+              <?php admin_btn_edit(['href' => 'products.php?edit=' . (int)$p['id']]); ?>
+              <?php admin_btn_view(BASE_URL . '/product-detail.php?slug=' . $p['slug'], $p['is_active'] ? 'Lihat di situs' : 'Pratinjau (produk nonaktif)'); ?>
+              <?php admin_btn_delete('Hapus "' . $p['name'] . '"?', 'Produk beserta semua fotonya akan dihapus permanen dan tidak bisa dikembalikan.', ['_action' => 'delete', 'product_id' => $p['id']]); ?>
             </div>
           </td>
         </tr>
         <?php endforeach; ?>
         <?php if (empty($products)): ?>
-        <tr><td colspan="7" class="px-4 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada produk. <a href="products.php?add=1" class="text-brand hover:underline">Tambah sekarang →</a></td></tr>
+        <?php admin_empty_row(7, 'Belum ada produk', 'Tambahkan satu per satu, atau impor banyak sekaligus lewat CSV.', 'products.php?add=1', 'Tambah produk'); ?>
         <?php endif; ?>
       </tbody>
     </table>
+    <?php admin_pagination($pg); ?>
   </div>
   <?php endif; ?>
 </main>
@@ -962,5 +952,6 @@ function showCategoryPrice() {
 showCategoryPrice();
 </script>
 <?php image_upload_script(); ?>
+<?php admin_actions_assets(); ?>
 </body>
 </html>

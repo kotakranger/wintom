@@ -2,7 +2,10 @@
 // admin/categories.php — Manajemen Kategori Produk
 // Kategori = master data untuk produk & portofolio: harga per meter (kalkulator), foto & tagline (kartu di landing page).
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/admin-actions.php';
+require_once __DIR__ . '/../includes/admin-table.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/admin-sidebar.php';
 require_once __DIR__ . '/../includes/admin-modal.php';
 require_once __DIR__ . '/../includes/image-upload.php';
 require_login();
@@ -130,6 +133,7 @@ if ($action === 'delete') {
 /* ============================================================
    LOAD CATEGORIES + PRODUCT COUNT
    ============================================================ */
+$pg = admin_paginate((int)$db->query('SELECT COUNT(*) FROM categories')->fetchColumn());
 $categories = $db->query('
     SELECT c.*, COALESCE(p_cnt.cnt, 0) AS product_count,
            (SELECT COUNT(*) FROM galleries g WHERE g.category_id = c.id) AS gallery_count
@@ -137,7 +141,7 @@ $categories = $db->query('
     LEFT JOIN (SELECT category_id, COUNT(*) AS cnt FROM products GROUP BY category_id) p_cnt
       ON p_cnt.category_id = c.id
     ORDER BY c.sort_order ASC, c.name ASC
-')->fetchAll();
+    LIMIT ' . (int)$pg['per'] . ' OFFSET ' . (int)$pg['offset'])->fetchAll();
 
 $field = 'w-full border border-border rounded-[4px] px-3 py-2.5 font-jakarta text-[13px] text-dark focus:border-brand transition-colors';
 $label = 'block font-jakarta font-medium text-[12px] tracking-[0.6px] uppercase text-muted mb-1.5';
@@ -201,28 +205,7 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
 <body class="font-jakarta bg-[#f5f3f0] text-dark antialiased flex min-h-screen">
 
 <!-- SIDEBAR -->
-<aside class="w-[220px] shrink-0 bg-white border-r border-border flex flex-col min-h-screen fixed top-0 left-0 h-full z-20">
-  <div class="p-6 border-b border-border">
-    <a href="../" target="_blank" class="flex flex-col group">
-      <span class="font-playfair font-bold text-brand text-[22px] leading-[28px]">wintom</span>
-      <span class="font-jakarta font-semibold text-muted text-[8px] tracking-[2.5px] uppercase group-hover:text-brand transition-colors">CURTAIN ADMIN</span>
-    </a>
-  </div>
-  <nav class="flex flex-col p-4 gap-1 flex-1">
-    <a href="index.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Dashboard</a>
-    <a href="inquiries.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Inquiry</a>
-    <a href="products.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Produk</a>
-    <a href="categories.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium bg-brand/10 text-brand">Kategori</a>
-    <a href="gallery.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Galeri Portofolio</a>
-    <a href="videos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Konten Video</a>
-  </nav>
-  <div class="p-4 border-t border-border">
-    <form method="POST" action="logout.php" class="inline">
-      <?= csrf_field() ?>
-      <button type="submit" class="block px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors bg-none border-none cursor-pointer">Logout</button>
-    </form>
-  </div>
-</aside>
+<?php admin_sidebar('categories'); ?>
 
 <!-- MAIN -->
 <main class="ml-[220px] flex-1 p-8 min-h-screen min-w-0">
@@ -233,7 +216,7 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
   <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
     <div>
       <h1 class="font-playfair font-semibold text-dark text-[26px]">Manajemen Kategori</h1>
-      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= count($categories) ?> kategori · <?= LANDING_CATEGORY_SLOTS ?> urutan teratas tampil sebagai kartu di landing page</p>
+      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= LANDING_CATEGORY_SLOTS ?> urutan teratas tampil sebagai kartu di landing page.</p>
     </div>
     <button type="button" data-modal-open="add-category"
             class="bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-2.5 rounded-[4px] hover:bg-[#6a041c] transition-colors shadow-sm">
@@ -259,8 +242,8 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
         <?php foreach ($categories as $i => $cat): ?>
         <tr class="border-t border-border hover:bg-cream/50 transition-colors">
           <td class="px-4 py-3 font-jakarta text-muted text-[12px]">
-            <?= $i + 1 ?>
-            <?php if ($i < LANDING_CATEGORY_SLOTS): ?><span class="block text-[9px] uppercase tracking-[0.5px] text-brand" title="Tampil di landing page">Landing</span><?php endif; ?>
+            <?= $pg['offset'] + $i + 1 ?>
+            <?php if ($pg['offset'] + $i < LANDING_CATEGORY_SLOTS): ?><span class="block text-[9px] uppercase tracking-[0.5px] text-brand" title="Tampil di landing page">Landing</span><?php endif; ?>
           </td>
           <td class="px-4 py-3">
             <?php if ($cat['image_url']): ?>
@@ -285,27 +268,26 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
           <td class="px-4 py-3 text-center font-jakarta text-dark text-[13px]"><?= (int)$cat['gallery_count'] ?></td>
           <td class="px-4 py-3">
             <div class="flex items-center justify-end gap-2">
-              <button type="button" data-modal-open="edit-cat-<?= (int)$cat['id'] ?>"
-                      class="font-jakarta text-[11px] tracking-[0.5px] uppercase text-brand border border-brand/30 px-3 py-1.5 rounded-[3px] hover:bg-brand/5 transition-colors">Edit</button>
+              <?php admin_btn_edit(['modal' => 'edit-cat-' . (int)$cat['id']]); ?>
               <?php if ((int) $cat['product_count'] === 0): ?>
-              <form method="POST" onsubmit="return confirm(<?= htmlspecialchars(json_encode('Hapus kategori "' . $cat['name'] . '"?' . ((int)$cat['gallery_count'] > 0 ? "\n" . $cat['gallery_count'] . ' proyek portofolio akan menjadi "tanpa kategori".' : '')), ENT_QUOTES) ?>)">
-                <?= csrf_field() ?>
-                <input type="hidden" name="_action" value="delete"/>
-                <input type="hidden" name="cat_id" value="<?= (int)$cat['id'] ?>"/>
-                <button type="submit" class="font-jakarta text-[11px] text-red-500 border border-red-200 px-3 py-1.5 rounded-[3px] hover:bg-red-50 transition-colors">Hapus</button>
-              </form>
+              <?php admin_btn_delete('Hapus kategori "' . $cat['name'] . '"?',
+                  (int)$cat['gallery_count'] > 0 ? $cat['gallery_count'] . ' proyek portofolio akan menjadi "tanpa kategori".' : 'Kategori ini akan dihapus permanen.',
+                  ['_action' => 'delete', 'cat_id' => (int)$cat['id']]); ?>
               <?php else: ?>
-              <span class="font-jakarta text-[10px] text-muted/60 italic px-2" title="Tidak bisa dihapus — masih ada produk">Terkunci</span>
+              <span class="adm-act adm-act-icon !cursor-not-allowed !text-muted/50 hover:!bg-white hover:!border-border" data-tip="Tidak bisa dihapus — masih ada <?= (int)$cat['product_count'] ?> produk" aria-label="Tidak bisa dihapus">
+                <svg class="size-[17px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 118 0v3"/></svg>
+              </span>
               <?php endif; ?>
             </div>
           </td>
         </tr>
         <?php endforeach; ?>
         <?php if (empty($categories)): ?>
-        <tr><td colspan="8" class="px-5 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada kategori.</td></tr>
+        <?php admin_empty_row(8, 'Belum ada kategori', 'Tambahkan kategori pertama lewat tombol di kanan atas.'); ?>
         <?php endif; ?>
       </tbody>
     </table>
+    <?php admin_pagination($pg); ?>
   </div>
 
   <p class="mt-3 font-jakarta text-muted text-[11px]">Kategori yang masih dipakai produk tidak bisa dihapus. Nama, harga, foto & tagline langsung berlaku untuk semua produk, portofolio, dan landing page.</p>
@@ -342,5 +324,6 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
 
 <?php image_upload_script(); ?>
 <?php admin_modal_script($reopen); ?>
+<?php admin_actions_assets(); ?>
 </body>
 </html>

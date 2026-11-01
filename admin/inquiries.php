@@ -2,6 +2,9 @@
 // admin/inquiries.php — Inquiry masuk dari form "Kontak Kami"
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/admin-sidebar.php';
+require_once __DIR__ . '/../includes/admin-actions.php';
+require_once __DIR__ . '/../includes/admin-table.php';
 require_login();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -12,19 +15,13 @@ $db  = get_db();
 $msg = '';
 $err = '';
 
-$statuses = [
-    'new'       => ['Baru',        'bg-amber-50 text-amber-800 border-amber-200'],
-    'contacted' => ['Dihubungi',   'bg-blue-50 text-blue-800 border-blue-200'],
-    'closed'    => ['Selesai',     'bg-green-50 text-green-800 border-green-200'],
-];
-
 /* ACTION: UPDATE STATUS */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'status') {
     $id     = (int)($_POST['id'] ?? 0);
     $status = (string)($_POST['status'] ?? '');
-    if ($id > 0 && isset($statuses[$status])) {
+    if ($id > 0 && isset(INQUIRY_STATUSES[$status])) {
         $db->prepare('UPDATE inquiries SET status = ? WHERE id = ?')->execute([$status, $id]);
-        $msg = 'Status inquiry #' . $id . ' diperbarui.';
+        $msg = 'Status inquiry #' . $id . ' diubah menjadi "' . INQUIRY_STATUSES[$status][0] . '".';
     } else {
         $err = 'Status tidak valid.';
     }
@@ -40,79 +37,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'dele
 }
 
 $filter = (string)($_GET['status'] ?? '');
-if ($filter !== '' && !isset($statuses[$filter])) {
+if ($filter !== '' && !isset(INQUIRY_STATUSES[$filter])) {
     $filter = '';
 }
 
-$counts = array_fill_keys(array_keys($statuses), 0);
+$counts = array_fill_keys(array_keys(INQUIRY_STATUSES), 0);
 foreach ($db->query('SELECT status, COUNT(*) c FROM inquiries GROUP BY status')->fetchAll() as $row) {
     $counts[$row['status']] = (int)$row['c'];
 }
 $total = array_sum($counts);
 
-$sql    = 'SELECT * FROM inquiries';
-$params = [];
-if ($filter !== '') {
-    $sql .= ' WHERE status = ?';
-    $params[] = $filter;
-}
-$sql .= ' ORDER BY created_at DESC, id DESC LIMIT 200';
-$stmt = $db->prepare($sql);
-$stmt->execute($params);
+$pg     = admin_paginate($filter !== '' ? $counts[$filter] : $total);
+$sql    = 'SELECT * FROM inquiries' . ($filter !== '' ? ' WHERE status = ?' : '')
+        . ' ORDER BY created_at DESC, id DESC LIMIT ' . (int)$pg['per'] . ' OFFSET ' . (int)$pg['offset'];
+$stmt   = $db->prepare($sql);
+$stmt->execute($filter !== '' ? [$filter] : []);
 $inquiries = $stmt->fetchAll();
+
+admin_page_start('Inquiry', 'inquiries', '');
 ?>
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Inquiry — Wintom Admin</title>
-<link rel="icon" type="image/png" href="../assets/images/favicon.png"/>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={theme:{extend:{fontFamily:{playfair:['Georgia','"Times New Roman"','serif'],jakarta:['Arial','Helvetica','sans-serif']},colors:{brand:{DEFAULT:'#860524',dark:'#6a041c'},dark:'#242424',muted:'#686561',cream:'#faf8f5','cream-dark':'#f4f1ea',border:'#ece8e1'}}}};</script>
-<style>*{box-sizing:border-box;}</style>
-</head>
-<body class="font-jakarta bg-[#f5f3f0] text-dark antialiased flex min-h-screen">
-
-<!-- SIDEBAR -->
-<aside class="w-[220px] shrink-0 bg-white border-r border-border flex flex-col min-h-screen fixed top-0 left-0 h-full z-20">
-  <div class="p-6 border-b border-border">
-    <a href="../" target="_blank" class="flex flex-col group">
-      <span class="font-playfair font-bold text-brand text-[22px] leading-[28px]">wintom</span>
-      <span class="font-jakarta font-semibold text-muted text-[8px] tracking-[2.5px] uppercase group-hover:text-brand transition-colors">CURTAIN ADMIN</span>
-    </a>
-  </div>
-  <nav class="flex flex-col p-4 gap-1 flex-1">
-    <a href="index.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Dashboard</a>
-    <a href="inquiries.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium bg-brand/10 text-brand">Inquiry</a>
-    <a href="products.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Produk</a>
-    <a href="categories.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Kategori</a>
-    <a href="gallery.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Galeri Portofolio</a>
-    <a href="videos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Konten Video</a>
-  </nav>
-  <div class="p-4 border-t border-border">
-    <form method="POST" action="logout.php" class="inline">
-      <?= csrf_field() ?>
-      <button type="submit" class="block px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors bg-none border-none cursor-pointer">Logout</button>
-    </form>
-  </div>
-</aside>
-
-<!-- MAIN -->
-<main class="ml-[220px] flex-1 p-8 min-h-screen min-w-0">
-
-  <?php if ($msg): ?><div class="mb-5 bg-green-50 border border-green-200 text-green-800 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
-  <?php if ($err): ?><div class="mb-5 bg-red-50 border border-red-200 text-red-700 font-jakarta text-[13px] px-4 py-3 rounded-[4px]"><?= htmlspecialchars($err) ?></div><?php endif; ?>
+<style>
+  .st-select { appearance: none; -webkit-appearance: none; cursor: pointer; border-width: 1px; border-radius: 9999px; height: 32px; padding: 0 28px 0 26px;
+    font: 600 12px/1 Arial, Helvetica, sans-serif; background: no-repeat right 10px center / 10px 6px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23686561' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E"); transition: box-shadow .15s; }
+  .st-select:hover { box-shadow: 0 0 0 3px rgba(134,5,36,.08); }
+  .st-select:focus-visible { outline: 2px solid #860524; outline-offset: 2px; }
+  .st-select:disabled { opacity: .6; cursor: progress; }
+</style>
 
   <div class="mb-6">
-    <h1 class="font-playfair font-semibold text-dark text-[26px]">Inquiry Masuk</h1>
-    <p class="font-jakarta text-muted text-[13px] mt-0.5">Dari form “Kontak Kami” — <?= $total ?> total, <?= $counts['new'] ?> belum dihubungi</p>
+    <h1 class="font-playfair font-semibold text-dark text-[26px]">Inquiry</h1>
+    <p class="font-jakarta text-muted text-[13px] mt-0.5">Permintaan penawaran yang masuk dari form di website.</p>
   </div>
+  <?php admin_flash($msg, $err); ?>
 
   <!-- Filter tabs -->
   <div class="flex flex-wrap gap-2 mb-5">
     <?php
     $tabs = ['' => ['Semua', $total]];
-    foreach ($statuses as $k => $v) { $tabs[$k] = [$v[0], $counts[$k]]; }
+    foreach (INQUIRY_STATUSES as $k => $v) { $tabs[$k] = [$v[0], $counts[$k]]; }
     foreach ($tabs as $k => [$label, $n]):
         $active = ($filter === (string)$k);
     ?>
@@ -123,69 +85,72 @@ $inquiries = $stmt->fetchAll();
     <?php endforeach; ?>
   </div>
 
-  <div class="bg-white border border-border rounded-[6px] overflow-x-auto">
-    <table class="w-full min-w-[900px]">
+  <div class="bg-white border border-border rounded-[6px] overflow-hidden">
+   <div class="overflow-x-auto">
+    <table class="w-full min-w-[980px]">
       <thead class="bg-cream-dark">
         <tr>
-          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Waktu</th>
-          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Pelanggan</th>
-          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Jenis &amp; Ukuran</th>
-          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Kebutuhan</th>
+          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-36">Waktu</th>
+          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-56">Pelanggan</th>
+          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-60">Jenis &amp; Ukuran</th>
+          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase min-w-[240px]">Kebutuhan</th>
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-44">Status</th>
+          <th class="px-4 py-3 text-right font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-36">Aksi</th>
         </tr>
       </thead>
       <tbody>
         <?php foreach ($inquiries as $q):
-            [$st_label, $st_class] = $statuses[$q['status']] ?? [$q['status'], 'bg-gray-50 text-gray-700 border-gray-200'];
+            $is_new = $q['status'] === 'new';
             $reply = 'https://wa.me/' . $q['whatsapp'] . '?text=' . rawurlencode('Halo ' . $q['full_name'] . ', terima kasih sudah menghubungi Wintom Curtain. ');
+            [, $st_class, $st_dot] = INQUIRY_STATUSES[$q['status']] ?? ['', 'bg-gray-50 text-gray-700 border-gray-200', '#9ca3af'];
+            $notes = trim((string)$q['notes']);
         ?>
         <tr class="border-t border-border align-top hover:bg-cream/50 transition-colors">
-          <td class="px-4 py-3.5 font-jakarta text-muted text-[12px] whitespace-nowrap">
-            #<?= (int)$q['id'] ?><br><?= htmlspecialchars(date('d M Y', strtotime($q['created_at']))) ?><br><?= htmlspecialchars(date('H:i', strtotime($q['created_at']))) ?>
+          <td class="px-4 py-4 whitespace-nowrap <?= $is_new ? 'shadow-[inset_3px_0_0_#f59e0b]' : '' ?>">
+            <p class="font-jakarta font-semibold text-dark text-[13px]"><?= htmlspecialchars(admin_date($q['created_at'])) ?></p>
+            <p class="font-jakarta text-muted text-[12px] mt-0.5"><?= htmlspecialchars(date('H:i', strtotime($q['created_at']))) ?></p>
           </td>
-          <td class="px-4 py-3.5">
-            <p class="font-jakarta font-semibold text-dark text-[13px]"><?= htmlspecialchars($q['full_name']) ?></p>
-            <a href="<?= htmlspecialchars($reply) ?>" target="_blank" rel="noopener"
-               class="font-jakarta text-[12px] text-[#128c4a] hover:underline">+<?= htmlspecialchars($q['whatsapp']) ?> ↗</a>
+          <td class="px-4 py-4">
+            <p class="font-jakarta font-semibold text-dark text-[14px] leading-[18px]"><?= htmlspecialchars($q['full_name']) ?></p>
+            <div class="mt-1"><?php admin_phone_copy((string)$q['whatsapp']); ?></div>
           </td>
-          <td class="px-4 py-3.5 font-jakarta text-[12px]">
-            <p class="font-medium text-dark"><?= htmlspecialchars($q['curtain_type']) ?></p>
+          <td class="px-4 py-4 font-jakarta text-[12px]">
+            <p class="font-medium text-dark text-[13px]"><?= htmlspecialchars($q['curtain_type']) ?></p>
             <p class="text-muted mt-0.5"><?= $q['estimated_size'] ? htmlspecialchars($q['estimated_size']) : '—' ?></p>
             <?php if (!empty($q['routed_whatsapp'])): ?>
             <p class="text-muted mt-1 text-[11px]">Dikirim ke <span class="text-dark">+<?= htmlspecialchars($q['routed_whatsapp']) ?></span><?= $q['routed_whatsapp'] === WA_NUMBER ? ' (nomor utama)' : '' ?></p>
             <?php endif; ?>
           </td>
-          <td class="px-4 py-3.5 font-jakarta text-muted text-[12px] max-w-[280px] whitespace-pre-line break-words"><?= $q['notes'] ? htmlspecialchars($q['notes']) : '—' ?></td>
-          <td class="px-4 py-3.5">
-            <form method="POST" class="flex items-center gap-2">
+          <td class="px-4 py-4 font-jakarta text-[13px] leading-[19px] text-dark whitespace-pre-line break-words max-w-[360px]"><?= $notes !== '' ? htmlspecialchars($notes) : '<span class="text-muted">—</span>' ?></td>
+          <td class="px-4 py-4">
+            <form method="POST" class="relative inline-block">
               <?= csrf_field() ?>
               <input type="hidden" name="_action" value="status">
               <input type="hidden" name="id" value="<?= (int)$q['id'] ?>">
-              <select name="status" onchange="this.form.submit()"
-                      class="border rounded-[3px] px-2 py-1.5 font-jakarta text-[12px] font-medium <?= $st_class ?>">
-                <?php foreach ($statuses as $k => [$lbl]): ?>
+              <span class="pointer-events-none absolute left-2.5 top-1/2 size-2 -translate-y-1/2 rounded-full" style="background:<?= $st_dot ?>"></span>
+              <select name="status" aria-label="Status inquiry #<?= (int)$q['id'] ?>" onchange="this.form.submit();this.disabled=true" class="st-select <?= $st_class ?>">
+                <?php foreach (INQUIRY_STATUSES as $k => [$lbl]): ?>
                 <option value="<?= $k ?>" <?= $q['status'] === $k ? 'selected' : '' ?>><?= $lbl ?></option>
                 <?php endforeach; ?>
               </select>
             </form>
-            <form method="POST" class="mt-2" onsubmit="return confirm('Hapus inquiry ini?')">
-              <?= csrf_field() ?>
-              <input type="hidden" name="_action" value="delete">
-              <input type="hidden" name="id" value="<?= (int)$q['id'] ?>">
-              <button type="submit" class="font-jakarta text-[11px] text-red-500 hover:underline">Hapus</button>
-            </form>
+          </td>
+          <td class="px-4 py-4">
+            <div class="flex items-center justify-end gap-1.5">
+              <?php admin_btn_whatsapp($reply); ?>
+              <?php admin_btn_delete('Hapus inquiry dari "' . $q['full_name'] . '"?', 'Data inquiry #' . (int)$q['id'] . ' akan dihapus permanen dan tidak bisa dikembalikan.', ['_action' => 'delete', 'id' => (int)$q['id']], 'Hapus inquiry'); ?>
+            </div>
           </td>
         </tr>
         <?php endforeach; ?>
         <?php if (!$inquiries): ?>
-        <tr><td colspan="5" class="px-5 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada inquiry<?= $filter !== '' ? ' dengan status ini' : '' ?>.</td></tr>
+          <?php admin_empty_row(6, 'Belum ada inquiry' . ($filter !== '' ? ' dengan status ini' : ''), $filter !== '' ? 'Coba pilih filter status lain.' : 'Inquiry dari form “Minta Penawaran” akan muncul di sini.'); ?>
         <?php endif; ?>
       </tbody>
     </table>
+   </div>
+   <?php admin_pagination($pg); ?>
   </div>
-  <?php if (count($inquiries) === 200): ?>
-  <p class="mt-3 font-jakarta text-muted text-[12px]">Menampilkan 200 inquiry terbaru.</p>
-  <?php endif; ?>
-</main>
-</body>
-</html>
+
+<?php admin_actions_assets(); ?>
+<?php admin_page_end(); ?>

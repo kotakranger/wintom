@@ -3,7 +3,10 @@
 // Kategori proyek = kategori produk (tabel categories), agar portofolio menunjukkan hasil nyata produk yang dijual.
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/admin-sidebar.php';
 require_once __DIR__ . '/../includes/admin-modal.php';
+require_once __DIR__ . '/../includes/admin-actions.php';
+require_once __DIR__ . '/../includes/admin-table.php';
 require_once __DIR__ . '/../includes/image-upload.php';
 require_login();
 
@@ -158,7 +161,10 @@ if ($filter === 'none') {
     $sql .= " WHERE g.category_id = ?";
     $params[] = (int)$filter;
 }
-$sql .= " ORDER BY g.created_at DESC, g.id DESC";
+$cnt = $db->prepare("SELECT COUNT(*) FROM (" . $sql . ") t");
+$cnt->execute($params);
+$pg = admin_paginate((int)$cnt->fetchColumn());
+$sql .= " ORDER BY g.created_at DESC, g.id DESC LIMIT " . (int)$pg['per'] . " OFFSET " . (int)$pg['offset'];
 $st = $db->prepare($sql);
 $st->execute($params);
 $items = $st->fetchAll();
@@ -199,29 +205,7 @@ function category_select(array $cats, ?int $selected, string $id): string {
 </head>
 <body class="font-jakarta bg-[#f5f3f0] text-dark antialiased flex min-h-screen">
 
-<!-- ===== SIDEBAR ===== -->
-<aside class="w-[220px] shrink-0 bg-white border-r border-border flex flex-col min-h-screen fixed top-0 left-0 h-full z-20">
-  <div class="p-6 border-b border-border">
-    <a href="../" target="_blank" class="flex flex-col group">
-      <span class="font-playfair font-bold text-brand text-[22px] leading-[28px]">wintom</span>
-      <span class="font-jakarta font-semibold text-muted text-[8px] tracking-[2.5px] uppercase group-hover:text-brand transition-colors">CURTAIN ADMIN</span>
-    </a>
-  </div>
-  <nav class="flex flex-col p-4 gap-1 flex-1">
-    <a href="index.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Dashboard</a>
-    <a href="inquiries.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Inquiry</a>
-    <a href="products.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Produk</a>
-    <a href="categories.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Kategori</a>
-    <a href="gallery.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium bg-brand/10 text-brand">Galeri Portofolio</a>
-    <a href="videos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Konten Video</a>
-  </nav>
-  <div class="p-4 border-t border-border">
-    <form method="POST" action="logout.php" class="inline">
-      <?= csrf_field() ?>
-      <button type="submit" class="block px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors bg-none border-none cursor-pointer">Logout</button>
-    </form>
-  </div>
-</aside>
+<?php admin_sidebar('gallery'); ?>
 
 <!-- ===== MAIN ===== -->
 <main class="ml-[220px] flex-1 p-8 min-h-screen min-w-0">
@@ -232,7 +216,7 @@ function category_select(array $cats, ?int $selected, string $id): string {
   <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
     <div>
       <h1 class="font-playfair font-semibold text-dark text-[26px]">Galeri Portofolio</h1>
-      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= $total_all ?> proyek · dikelompokkan per kategori produk</p>
+      <p class="font-jakarta text-muted text-[13px] mt-0.5">Proyek pemasangan, dikelompokkan per kategori produk.</p>
     </div>
     <div class="flex items-center gap-2">
       <a href="../gallery.php" target="_blank" class="font-jakarta text-[12px] text-brand tracking-[1px] uppercase border border-brand/30 px-4 py-2.5 rounded-[4px] hover:bg-brand/5 transition-colors">
@@ -299,26 +283,21 @@ function category_select(array $cats, ?int $selected, string $id): string {
             <?php endif; ?>
           </td>
           <td class="px-4 py-3 font-jakarta text-dark text-[13px] text-center"><?= $n_photos ?></td>
-          <td class="px-4 py-3 font-jakarta text-muted text-[12px] whitespace-nowrap"><?= htmlspecialchars(date('d M Y', strtotime($item['created_at']))) ?></td>
+          <td class="px-4 py-3 font-jakarta text-muted text-[12px] whitespace-nowrap"><?= htmlspecialchars(admin_date($item['created_at'])) ?></td>
           <td class="px-4 py-3">
             <div class="flex items-center justify-end gap-2">
-              <button type="button" data-modal-open="edit-<?= (int)$item['id'] ?>"
-                      class="font-jakarta text-[11px] tracking-[0.5px] uppercase text-brand border border-brand/30 px-3 py-1.5 rounded-[3px] hover:bg-brand/5 transition-colors">Edit</button>
-              <form method="POST" onsubmit="return confirm('Hapus proyek ini beserta semua fotonya?')">
-                <?= csrf_field() ?>
-                <input type="hidden" name="_action" value="delete"/>
-                <input type="hidden" name="gallery_id" value="<?= (int)$item['id'] ?>"/>
-                <button type="submit" class="font-jakarta text-[11px] text-red-500 border border-red-200 px-3 py-1.5 rounded-[3px] hover:bg-red-50 transition-colors">Hapus</button>
-              </form>
+              <?php admin_btn_edit(['modal' => 'edit-' . (int)$item['id']]); ?>
+              <?php admin_btn_delete('Hapus proyek "' . $item['title'] . '"?', 'Proyek beserta semua fotonya akan dihapus permanen dan tidak bisa dikembalikan.', ['_action' => 'delete', 'gallery_id' => (int)$item['id']]); ?>
             </div>
           </td>
         </tr>
         <?php endforeach; ?>
         <?php if (!$items): ?>
-        <tr><td colspan="6" class="px-5 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada proyek<?= $filter !== '' ? ' di kategori ini' : '' ?>.</td></tr>
+        <?php admin_empty_row(6, 'Belum ada proyek' . ($filter !== '' ? ' di kategori ini' : ''), $filter !== '' ? 'Coba pilih kategori lain.' : 'Tambahkan proyek portofolio pertama lewat tombol di kanan atas.'); ?>
         <?php endif; ?>
       </tbody>
     </table>
+    <?php admin_pagination($pg); ?>
   </div>
 
   <!-- ===== MODAL: TAMBAH PROYEK ===== -->
@@ -421,5 +400,6 @@ function category_select(array $cats, ?int $selected, string $id): string {
 
 <?php image_upload_script(); ?>
 <?php admin_modal_script($reopen); ?>
+<?php admin_actions_assets(); ?>
 </body>
 </html>

@@ -49,7 +49,8 @@ function store_uploaded_image(array $file, string $subdir, ?string &$error = nul
     $name = uniqid($prefix, true) . '.' . $ext;
     $dest = $dir . '/' . $name;
 
-    if (!compress_image($file['tmp_name'], $dest, $mime) && !move_uploaded_file($file['tmp_name'], $dest)) {
+    if (!compress_image($file['tmp_name'], $dest, $mime)
+        && !(is_uploaded_file($file['tmp_name']) ? move_uploaded_file($file['tmp_name'], $dest) : copy($file['tmp_name'], $dest))) {
         $error = 'Gagal menyimpan foto.';
         return false;
     }

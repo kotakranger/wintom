@@ -16,6 +16,9 @@ CREATE TABLE `admins` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(100) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
+  `role` varchar(20) NOT NULL DEFAULT 'admin',
+  `session_version` int(10) unsigned NOT NULL DEFAULT 1,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -23,7 +26,7 @@ CREATE TABLE `admins` (
 
 LOCK TABLES `admins` WRITE;
 /*!40000 ALTER TABLE `admins` DISABLE KEYS */;
-INSERT INTO `admins` VALUES (1,'admin','$2y$10$vHL.1Ox5rRlW5RMmB.OMROObHF9iMPgjKbOBJ6nd0uCC8dIE2zEYi');
+INSERT INTO `admins` (`id`,`username`,`password_hash`,`role`) VALUES (1,'admin','$2y$10$vHL.1Ox5rRlW5RMmB.OMROObHF9iMPgjKbOBJ6nd0uCC8dIE2zEYi','superadmin');
 /*!40000 ALTER TABLE `admins` ENABLE KEYS */;
 UNLOCK TABLES;
 DROP TABLE IF EXISTS `categories`;
