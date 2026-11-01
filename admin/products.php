@@ -243,8 +243,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'save
             sync_cover($db, $pid);
             $has_img = $db->prepare("SELECT COUNT(*) FROM product_images WHERE product_id = ?");
             $has_img->execute([$pid]);
-            if (!$has_img->fetchColumn()) {
-                $err = 'Gagal upload foto produk. ' . implode('; ', $upload_errors);
+            if (!$has_img->fetchColumn() && $is_active) {
+                // Produk tanpa foto boleh disimpan selama Nonaktif (mis. hasil impor CSV); aktif butuh minimal 1 foto
+                $err = 'Produk aktif butuh minimal satu foto. Tambahkan foto, atau ubah status menjadi Nonaktif.'
+                     . ($upload_errors ? ' (' . implode('; ', $upload_errors) . ')' : '');
             }
         }
 
@@ -588,8 +590,8 @@ select.input{appearance:auto;}
             <span class="sw-track relative inline-block h-[24px] w-[44px] shrink-0 rounded-full bg-[#cfcac2] transition-colors duration-200 peer-focus-visible:ring-2 peer-focus-visible:ring-brand/40">
               <span class="sw-knob absolute top-[3px] left-[3px] size-[18px] rounded-full bg-white shadow transition-transform duration-200"></span>
             </span>
-            <span class="font-jakarta font-semibold text-[13px] text-muted peer-checked:hidden">Nonaktif <span class="font-normal text-[11px]">· disembunyikan dari katalog</span></span>
-            <span class="hidden font-jakarta font-semibold text-[13px] text-emerald-700 peer-checked:inline">Aktif <span class="font-normal text-[11px] text-muted">· tampil di katalog</span></span>
+            <span class="font-jakarta font-semibold text-[13px] text-muted leading-tight peer-checked:hidden">Nonaktif <span class="block font-normal text-[11px] text-muted">Disembunyikan dari katalog</span></span>
+            <span class="hidden font-jakarta font-semibold text-[13px] text-emerald-700 leading-tight peer-checked:inline">Aktif <span class="block font-normal text-[11px] text-muted">Tampil di katalog</span></span>
           </label>
           <p class="font-jakarta text-muted text-[10px] mt-1.5">Nonaktif = tersembunyi dari katalog publik</p>
         </div>
@@ -700,8 +702,12 @@ select.input{appearance:auto;}
         <?php foreach($products as $p): ?>
         <tr class="border-t border-border hover:bg-cream/50 transition-colors <?= !$p['is_active'] ? 'opacity-60' : '' ?>">
           <td class="px-4 py-3">
-            <div class="size-12 rounded-[3px] overflow-hidden border border-border bg-cream-dark shrink-0">
+            <div class="size-12 rounded-[3px] overflow-hidden border border-border bg-cream-dark shrink-0 flex items-center justify-center">
+              <?php if ($p['cover_image']): ?>
               <img src="<?= htmlspecialchars(img_src((string)$p['cover_image'], 480)) ?>" alt="" class="w-full h-full object-cover"/>
+              <?php else: ?>
+              <span class="font-jakarta text-[9px] leading-[11px] text-center text-muted px-1">Tanpa foto</span>
+              <?php endif; ?>
             </div>
           </td>
           <td class="px-4 py-3">
@@ -710,6 +716,9 @@ select.input{appearance:auto;}
             <span class="inline-block mt-1 bg-brand/10 text-brand font-jakarta text-[10px] tracking-[0.5px] uppercase px-1.5 py-0.5 rounded-[2px]"><?= htmlspecialchars($p['badge']) ?></span>
             <?php endif; ?>
             <p class="font-jakarta text-muted text-[11px] mt-0.5">REF: <?= htmlspecialchars($p['ref_code']) ?></p>
+            <?php if (!$p['cover_image']): ?>
+            <p class="font-jakarta text-amber-700 text-[11px] mt-0.5">⚠ Belum ada foto — klik Edit untuk menambahkan</p>
+            <?php endif; ?>
           </td>
           <td class="px-4 py-3 hidden lg:table-cell">
             <span class="font-jakarta text-muted text-[12px]"><?= htmlspecialchars($p['category']) ?></span>

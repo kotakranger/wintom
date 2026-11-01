@@ -211,6 +211,8 @@ function pimport_validate_row(array $r, array $cats, array $cat_names, array &$t
     foreach (preg_split('/[|\s]+/', $r['foto'], -1, PREG_SPLIT_NO_EMPTY) as $u) {
         $ok = filter_var($u, FILTER_VALIDATE_URL) && preg_match('#^https?://#i', $u) && strlen($u) <= 500;
         if (!$ok) { $err[] = 'Alamat foto tidak valid: ' . mb_strimwidth($u, 0, 60, '…'); continue; }
+        [, $problem] = pimport_normalize_photo_url($u);
+        if ($problem) { $warn[] = 'Foto dilewati: ' . $problem . '.'; continue; }
         $photos[] = $u;
     }
     if (count($photos) > PIMPORT_MAX_PHOTOS) {
@@ -261,11 +263,35 @@ function pimport_public_ip(string $ip): bool {
 }
 
 /**
+ * Ubah link "bagikan" Google Drive / Dropbox menjadi link unduh langsung.
+ * @return array{0:string,1:?string} [url, pesan masalah bila link tidak bisa dipakai]
+ */
+function pimport_normalize_photo_url(string $url): array {
+    $p = parse_url($url);
+    $host = strtolower($p['host'] ?? '');
+    parse_str($p['query'] ?? '', $q);
+    if ($host === 'drive.google.com' || $host === 'docs.google.com') {
+        if (str_contains($p['path'] ?? '', '/folders/')) return [$url, 'link folder Google Drive tidak bisa dipakai — gunakan link satu file gambar'];
+        $id = '';
+        if (preg_match('#/file/d/([A-Za-z0-9_-]+)#', $p['path'] ?? '', $m)) $id = $m[1];
+        elseif (!empty($q['id'])) $id = (string)$q['id'];
+        if ($id !== '' && preg_match('/^[A-Za-z0-9_-]+$/', $id)) return ['https://drive.google.com/uc?export=download&id=' . $id, null];
+    }
+    if (in_array($host, ['www.dropbox.com', 'dropbox.com'], true)) {
+        $q['dl'] = '1'; unset($q['raw']);
+        return ['https://' . $host . ($p['path'] ?? '') . '?' . http_build_query($q), null];
+    }
+    return [$url, null];
+}
+
+/**
  * Unduh satu foto dari URL, kompres, simpan ke /uploads/products. Unsplash dipakai langsung (tanpa unduh).
  * @return string|null URL relatif atau URL Unsplash; $error terisi bila gagal
  */
 function pimport_fetch_photo(string $url, ?string &$error = null): ?string {
     $error = null;
+    [$url, $problem] = pimport_normalize_photo_url($url);
+    if ($problem) { $error = $problem; return null; }
     $host = strtolower((string)parse_url($url, PHP_URL_HOST));
     if ($host === 'images.unsplash.com') return $url;
 
@@ -298,6 +324,7 @@ function pimport_fetch_photo(string $url, ?string &$error = null): ?string {
             $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
             $loc  = (string)curl_getinfo($ch, CURLINFO_REDIRECT_URL);
             $cerr = curl_error($ch);
+            $ctype = strtolower((string)curl_getinfo($ch, CURLINFO_CONTENT_TYPE));
             curl_close($ch); fclose($fh);
 
             if ($over) { $error = 'lebih dari 5 MB'; return null; }
@@ -306,6 +333,12 @@ function pimport_fetch_photo(string $url, ?string &$error = null): ?string {
             break;
         }
         if ($code !== 200) { $error = 'terlalu banyak pengalihan'; return null; }
+        if (str_contains($ctype, 'text/html')) {
+            $error = preg_match('/(^|\.)(drive|docs)\.google\.com$|usercontent\.google\.com$/', $host)
+                ? 'Google Drive meminta login — ubah akses file menjadi "Siapa saja yang memiliki link"'
+                : 'alamat ini halaman web, bukan file gambar langsung';
+            return null;
+        }
 
         $stored = store_uploaded_image(['name' => basename($p['path'] ?? 'foto'), 'tmp_name' => $tmp, 'error' => UPLOAD_ERR_OK, 'size' => filesize($tmp)], 'products', $e);
         if (!$stored) { $error = $e ?: 'bukan gambar yang valid'; return null; }
@@ -327,10 +360,13 @@ function pimport_save(PDO $db, array $d): array {
     foreach ($d['photos'] as $i => $u) {
         $url = pimport_fetch_photo($u, $e);
         if ($url) { $saved[] = $url; if (str_starts_with($url, '/uploads/')) $local[] = $url; }
-        else $warnings[] = 'Foto #' . ($i + 1) . ' gagal (' . $e . ').';
+        else $warnings[] = 'Foto #' . ($i + 1) . ' gagal diunduh: ' . $e . '.';
     }
     $active = $d['is_active'];
-    if (!$saved && $d['photos']) { $active = 0; $warnings[] = 'Semua foto gagal diunduh: produk dibuat Nonaktif.'; }
+    if (!$saved && $d['photos']) {
+        $active = 0;
+        $warnings[] = 'Foto dikosongkan dan produk dibuat Nonaktif. Buka Edit, tambahkan foto, lalu aktifkan.';
+    }
 
     $db->beginTransaction();
     try {
