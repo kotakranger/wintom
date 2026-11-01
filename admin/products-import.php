@@ -262,7 +262,7 @@ select.input{appearance:auto;}
         <tbody class="divide-y divide-border text-dark">
           <tr><td class="px-3 py-2 font-semibold">nama_produk</td><td class="px-3 py-2">Ya</td><td class="px-3 py-2">Nama produk. Produk dengan nama yang sudah ada akan dilewati.</td></tr>
           <tr><td class="px-3 py-2 font-semibold">kategori</td><td class="px-3 py-2">Ya</td><td class="px-3 py-2">Nama kategori, persis seperti di daftar kategori.</td></tr>
-          <tr><td class="px-3 py-2 font-semibold">badge, kode_ref</td><td class="px-3 py-2">Tidak</td><td class="px-3 py-2">Label kecil (mis. Terlaris) dan kode produk.</td></tr>
+          <tr><td class="px-3 py-2 font-semibold">badge, kode_ref</td><td class="px-3 py-2">Tidak</td><td class="px-3 py-2">Label kecil (mis. Terlaris) dan kode produk. Kode ref yang sudah dipakai produk lain tetap diimpor, tapi diberi peringatan.</td></tr>
           <tr><td class="px-3 py-2 font-semibold">deskripsi</td><td class="px-3 py-2">Tidak</td><td class="px-3 py-2">Teks deskripsi produk.</td></tr>
           <tr><td class="px-3 py-2 font-semibold">fitur</td><td class="px-3 py-2">Tidak</td><td class="px-3 py-2">Spesifikasi, dipisah garis tegak: <code>Bahan linen|Tidak luntur</code></td></tr>
           <tr><td class="px-3 py-2 font-semibold">status</td><td class="px-3 py-2">Tidak</td><td class="px-3 py-2"><code>aktif</code> (default) atau <code>nonaktif</code>.</td></tr>

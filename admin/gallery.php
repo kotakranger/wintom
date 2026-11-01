@@ -4,6 +4,7 @@
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/admin-modal.php';
+require_once __DIR__ . '/../includes/admin-actions.php';
 require_once __DIR__ . '/../includes/image-upload.php';
 require_login();
 
@@ -302,14 +303,8 @@ function category_select(array $cats, ?int $selected, string $id): string {
           <td class="px-4 py-3 font-jakarta text-muted text-[12px] whitespace-nowrap"><?= htmlspecialchars(date('d M Y', strtotime($item['created_at']))) ?></td>
           <td class="px-4 py-3">
             <div class="flex items-center justify-end gap-2">
-              <button type="button" data-modal-open="edit-<?= (int)$item['id'] ?>"
-                      class="font-jakarta text-[11px] tracking-[0.5px] uppercase text-brand border border-brand/30 px-3 py-1.5 rounded-[3px] hover:bg-brand/5 transition-colors">Edit</button>
-              <form method="POST" onsubmit="return confirm('Hapus proyek ini beserta semua fotonya?')">
-                <?= csrf_field() ?>
-                <input type="hidden" name="_action" value="delete"/>
-                <input type="hidden" name="gallery_id" value="<?= (int)$item['id'] ?>"/>
-                <button type="submit" class="font-jakarta text-[11px] text-red-500 border border-red-200 px-3 py-1.5 rounded-[3px] hover:bg-red-50 transition-colors">Hapus</button>
-              </form>
+              <?php admin_btn_edit(['modal' => 'edit-' . (int)$item['id']]); ?>
+              <?php admin_btn_delete('Hapus proyek "' . $item['title'] . '"?', 'Proyek beserta semua fotonya akan dihapus permanen dan tidak bisa dikembalikan.', ['_action' => 'delete', 'gallery_id' => (int)$item['id']]); ?>
             </div>
           </td>
         </tr>
@@ -421,5 +416,6 @@ function category_select(array $cats, ?int $selected, string $id): string {
 
 <?php image_upload_script(); ?>
 <?php admin_modal_script($reopen); ?>
+<?php admin_actions_assets(); ?>
 </body>
 </html>

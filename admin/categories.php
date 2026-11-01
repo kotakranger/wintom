@@ -2,6 +2,7 @@
 // admin/categories.php — Manajemen Kategori Produk
 // Kategori = master data untuk produk & portofolio: harga per meter (kalkulator), foto & tagline (kartu di landing page).
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/admin-actions.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/admin-modal.php';
 require_once __DIR__ . '/../includes/image-upload.php';
@@ -285,17 +286,15 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
           <td class="px-4 py-3 text-center font-jakarta text-dark text-[13px]"><?= (int)$cat['gallery_count'] ?></td>
           <td class="px-4 py-3">
             <div class="flex items-center justify-end gap-2">
-              <button type="button" data-modal-open="edit-cat-<?= (int)$cat['id'] ?>"
-                      class="font-jakarta text-[11px] tracking-[0.5px] uppercase text-brand border border-brand/30 px-3 py-1.5 rounded-[3px] hover:bg-brand/5 transition-colors">Edit</button>
+              <?php admin_btn_edit(['modal' => 'edit-cat-' . (int)$cat['id']]); ?>
               <?php if ((int) $cat['product_count'] === 0): ?>
-              <form method="POST" onsubmit="return confirm(<?= htmlspecialchars(json_encode('Hapus kategori "' . $cat['name'] . '"?' . ((int)$cat['gallery_count'] > 0 ? "\n" . $cat['gallery_count'] . ' proyek portofolio akan menjadi "tanpa kategori".' : '')), ENT_QUOTES) ?>)">
-                <?= csrf_field() ?>
-                <input type="hidden" name="_action" value="delete"/>
-                <input type="hidden" name="cat_id" value="<?= (int)$cat['id'] ?>"/>
-                <button type="submit" class="font-jakarta text-[11px] text-red-500 border border-red-200 px-3 py-1.5 rounded-[3px] hover:bg-red-50 transition-colors">Hapus</button>
-              </form>
+              <?php admin_btn_delete('Hapus kategori "' . $cat['name'] . '"?',
+                  (int)$cat['gallery_count'] > 0 ? $cat['gallery_count'] . ' proyek portofolio akan menjadi "tanpa kategori".' : 'Kategori ini akan dihapus permanen.',
+                  ['_action' => 'delete', 'cat_id' => (int)$cat['id']]); ?>
               <?php else: ?>
-              <span class="font-jakarta text-[10px] text-muted/60 italic px-2" title="Tidak bisa dihapus — masih ada produk">Terkunci</span>
+              <span class="adm-act adm-act-icon !cursor-not-allowed !text-muted/50 hover:!bg-white hover:!border-border" data-tip="Tidak bisa dihapus — masih ada <?= (int)$cat['product_count'] ?> produk" aria-label="Tidak bisa dihapus">
+                <svg class="size-[17px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 118 0v3"/></svg>
+              </span>
               <?php endif; ?>
             </div>
           </td>
@@ -342,5 +341,6 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
 
 <?php image_upload_script(); ?>
 <?php admin_modal_script($reopen); ?>
+<?php admin_actions_assets(); ?>
 </body>
 </html>

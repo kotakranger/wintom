@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/image-upload.php';
+require_once __DIR__ . '/../includes/admin-actions.php';
 require_login();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') csrf_check();
 
@@ -62,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'dele
         $cover = $db->prepare("SELECT cover_image FROM products WHERE id = ?");
         $cover->execute([$id]);
         $row = $cover->fetch();
-        if ($row) delete_file($row['cover_image']);
+        if ($row && $row['cover_image']) delete_file($row['cover_image']);   // produk hasil impor bisa belum punya foto
         $db->prepare("DELETE FROM products WHERE id = ?")->execute([$id]);
         $msg = 'Produk berhasil dihapus.';
     }
@@ -695,12 +696,12 @@ select.input{appearance:auto;}
           <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-36">Status</th>
           <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-20 hidden lg:table-cell">Stok</th>
           <th class="px-4 py-3 text-right font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Harga</th>
-          <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-44">Aksi</th>
+          <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-48">Aksi</th>
         </tr>
       </thead>
       <tbody>
         <?php foreach($products as $p): ?>
-        <tr class="border-t border-border hover:bg-cream/50 transition-colors <?= !$p['is_active'] ? 'opacity-60' : '' ?>">
+        <tr class="border-t border-border hover:bg-cream/50 transition-colors <?= !$p['is_active'] ? '[&>td:not(:last-child)]:opacity-60' : '' ?>">
           <td class="px-4 py-3">
             <div class="size-12 rounded-[3px] overflow-hidden border border-border bg-cream-dark shrink-0 flex items-center justify-center">
               <?php if ($p['cover_image']): ?>
@@ -751,21 +752,10 @@ select.input{appearance:auto;}
             <p class="font-jakarta text-[10px] <?= $pp['custom'] ? 'text-brand' : 'text-muted' ?>"><?= $pp['custom'] ? 'harga custom' : 'dari kategori' ?></p>
           </td>
           <td class="px-4 py-3">
-            <div class="flex items-center justify-center gap-2">
-              <a href="products.php?edit=<?= $p['id'] ?>"
-                 class="font-jakarta text-[11px] tracking-[0.5px] uppercase text-brand border border-brand/30 px-3 py-1.5 rounded-[3px] hover:bg-brand/5 transition-colors">
-                Edit
-              </a>
-              <a href="<?= BASE_URL ?>/product-detail.php?slug=<?= htmlspecialchars($p['slug']) ?>" target="_blank"
-                 class="font-jakarta text-[11px] text-muted border border-border px-3 py-1.5 rounded-[3px] hover:border-dark/30 transition-colors">
-                View
-              </a>
-              <form method="POST" onsubmit="return confirm('Hapus produk ini? Semua foto akan ikut terhapus.')">
-                <input type="hidden" name="_action" value="delete"/>
-                <input type="hidden" name="product_id" value="<?= $p['id'] ?>"/>
-                <?= csrf_field() ?>
-                <button type="submit" class="font-jakarta text-[11px] text-red-500 border border-red-200 px-3 py-1.5 rounded-[3px] hover:bg-red-50 transition-colors">Del</button>
-              </form>
+            <div class="flex items-center justify-center gap-1.5">
+              <?php admin_btn_edit(['href' => 'products.php?edit=' . (int)$p['id']]); ?>
+              <?php admin_btn_view(BASE_URL . '/product-detail.php?slug=' . $p['slug'], $p['is_active'] ? 'Lihat di situs' : 'Pratinjau (produk nonaktif)'); ?>
+              <?php admin_btn_delete('Hapus "' . $p['name'] . '"?', 'Produk beserta semua fotonya akan dihapus permanen dan tidak bisa dikembalikan.', ['_action' => 'delete', 'product_id' => $p['id']]); ?>
             </div>
           </td>
         </tr>
@@ -980,5 +970,6 @@ function showCategoryPrice() {
 showCategoryPrice();
 </script>
 <?php image_upload_script(); ?>
+<?php admin_actions_assets(); ?>
 </body>
 </html>

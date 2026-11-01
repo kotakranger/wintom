@@ -139,7 +139,15 @@ function pimport_validate_row(array $r, array $cats, array $cat_names, array &$t
 
     $cat_id = $cats[mb_strtolower($r['kategori'])] ?? 0;
     if ($r['kategori'] === '') $err[] = 'Kategori kosong.';
-    elseif (!$cat_id) $err[] = 'Kategori "' . $r['kategori'] . '" tidak ada. Pilihan: ' . implode(', ', $cat_names) . '.';
+    elseif (!$cat_id) {
+        $best = null; $best_pct = 0.0;
+        foreach ($cat_names as $cn) {
+            similar_text(mb_strtolower($r['kategori']), mb_strtolower($cn), $pct);
+            if ($pct > $best_pct) { $best_pct = $pct; $best = $cn; }
+        }
+        $err[] = 'Kategori "' . $r['kategori'] . '" tidak ada' . ($best !== null && $best_pct >= 55 ? ' — maksud Anda "' . $best . '"?' : '.')
+               . ' Pilihan: ' . implode(', ', $cat_names) . '. (Kategori baru dibuat dulu di menu Kategori.)';
+    }
 
     $slug = product_slug($name);
     $nkey = 'n:' . mb_strtolower($name);
@@ -153,6 +161,10 @@ function pimport_validate_row(array $r, array $cats, array $cat_names, array &$t
 
     if (mb_strlen($r['badge']) > 100) $err[] = 'Badge maksimal 100 karakter.';
     if (mb_strlen($r['kode_ref']) > 50) $err[] = 'Kode ref maksimal 50 karakter.';
+    $rkey = $r['kode_ref'] !== '' ? 'r:' . mb_strtolower($r['kode_ref']) : null;
+    if ($rkey && isset($taken[$rkey])) {
+        $warn[] = 'Kode ref "' . $r['kode_ref'] . '" sudah dipakai ' . ($taken[$rkey] === 'db' ? 'produk yang sudah ada' : 'baris lain di file ini') . ' — tetap diimpor, periksa kembali.';
+    }
 
     // Status
     $st = mb_strtolower($r['status']);
@@ -227,6 +239,7 @@ function pimport_validate_row(array $r, array $cats, array $cat_names, array &$t
     if ($err) { $out['status'] = 'error'; $out['messages'] = $err; return $out; }
 
     $taken[$slug] = $taken[$nkey] = 'file';
+    if ($rkey && !isset($taken[$rkey])) $taken[$rkey] = 'file';
     $out['status']   = $warn ? 'warn' : 'ok';
     $out['messages'] = $warn;
     $out['data'] = [
@@ -246,8 +259,9 @@ function pimport_validate(PDO $db, array $rows): array {
         $names[] = $c['name'];
     }
     $taken = [];
-    foreach ($db->query('SELECT slug, name FROM products')->fetchAll() as $p) {
+    foreach ($db->query('SELECT slug, name, ref_code FROM products')->fetchAll() as $p) {
         $taken[$p['slug']] = 'db';
+        if (trim((string)$p['ref_code']) !== '') $taken['r:' . mb_strtolower(trim($p['ref_code']))] = 'db';
         $taken['n:' . mb_strtolower($p['name'])] = 'db';
     }
     $out = [];
