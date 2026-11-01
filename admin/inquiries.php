@@ -54,13 +54,6 @@ $stmt   = $db->prepare($sql);
 $stmt->execute($filter !== '' ? [$filter] : []);
 $inquiries = $stmt->fetchAll();
 
-/** "120 × 160 cm" dari kolom terstruktur; cadangan: teks lama estimated_size. */
-function inquiry_size_text(array $q): string {
-    $n = fn($v) => rtrim(rtrim(number_format((float)$v, 1, ',', ''), '0'), ',');
-    if (!empty($q['width_cm']) && !empty($q['height_cm'])) return $n($q['width_cm']) . ' × ' . $n($q['height_cm']) . ' cm';
-    return (string)($q['estimated_size'] ?? '');
-}
-
 admin_page_start('Inquiry', 'inquiries', '');
 ?>
 <style>
@@ -100,7 +93,7 @@ admin_page_start('Inquiry', 'inquiries', '');
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-36">Waktu</th>
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-56">Pelanggan</th>
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-60">Jenis &amp; Ukuran</th>
-          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Kebutuhan</th>
+          <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase min-w-[240px]">Kebutuhan</th>
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-44">Status</th>
           <th class="px-4 py-3 text-right font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-36">Aksi</th>
         </tr>
@@ -108,42 +101,27 @@ admin_page_start('Inquiry', 'inquiries', '');
       <tbody>
         <?php foreach ($inquiries as $q):
             $is_new = $q['status'] === 'new';
-            [$t1, $t2] = admin_time_lines($q['created_at']);
             $reply = 'https://wa.me/' . $q['whatsapp'] . '?text=' . rawurlencode('Halo ' . $q['full_name'] . ', terima kasih sudah menghubungi Wintom Curtain. ');
             [, $st_class, $st_dot] = INQUIRY_STATUSES[$q['status']] ?? ['', 'bg-gray-50 text-gray-700 border-gray-200', '#9ca3af'];
-            $size  = inquiry_size_text($q);
             $notes = trim((string)$q['notes']);
         ?>
         <tr class="border-t border-border align-top hover:bg-cream/50 transition-colors">
-          <td class="px-4 py-4 whitespace-nowrap <?= $is_new ? 'shadow-[inset_3px_0_0_#f59e0b]' : '' ?>" title="<?= htmlspecialchars(date('d/m/Y H:i', strtotime($q['created_at']))) ?>">
-            <p class="font-jakarta font-semibold text-dark text-[13px]"><?= htmlspecialchars($t1) ?></p>
-            <p class="font-jakarta text-muted text-[12px] mt-0.5"><?= htmlspecialchars($t2) ?></p>
-            <p class="font-jakarta text-muted/70 text-[11px] mt-1">#<?= (int)$q['id'] ?></p>
+          <td class="px-4 py-4 whitespace-nowrap <?= $is_new ? 'shadow-[inset_3px_0_0_#f59e0b]' : '' ?>">
+            <p class="font-jakarta font-semibold text-dark text-[13px]"><?= htmlspecialchars(admin_date($q['created_at'])) ?></p>
+            <p class="font-jakarta text-muted text-[12px] mt-0.5"><?= htmlspecialchars(date('H:i', strtotime($q['created_at']))) ?></p>
           </td>
           <td class="px-4 py-4">
             <p class="font-jakarta font-semibold text-dark text-[14px] leading-[18px]"><?= htmlspecialchars($q['full_name']) ?></p>
             <div class="mt-1"><?php admin_phone_copy((string)$q['whatsapp']); ?></div>
           </td>
-          <td class="px-4 py-4">
-            <span class="inline-block rounded-[4px] border border-border bg-cream-dark px-2 py-0.5 font-jakarta font-semibold text-[12px] text-dark"><?= htmlspecialchars($q['curtain_type']) ?></span>
-            <p class="mt-1.5 flex items-center gap-1.5 font-jakarta text-[12px] text-dark">
-              <svg class="size-[14px] shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21l-4-4zM7 13l2 2M10 10l2 2M13 7l2 2"/></svg>
-              <span><?= $size !== '' ? htmlspecialchars($size) : '<span class="text-muted">Ukuran belum diisi</span>' ?><?php if ((int)($q['quantity'] ?? 0) > 0 && $size !== ''): ?> <span class="text-muted">· <?= (int)$q['quantity'] ?> set</span><?php endif; ?></span>
-            </p>
+          <td class="px-4 py-4 font-jakarta text-[12px]">
+            <p class="font-medium text-dark text-[13px]"><?= htmlspecialchars($q['curtain_type']) ?></p>
+            <p class="text-muted mt-0.5"><?= $q['estimated_size'] ? htmlspecialchars($q['estimated_size']) : '—' ?></p>
             <?php if (!empty($q['routed_whatsapp'])): ?>
-            <p class="mt-1.5 font-jakarta text-[11px] text-muted" title="Pesan diarahkan ke nomor ini">
-              Dikirim ke <?= $q['routed_whatsapp'] === WA_NUMBER ? 'nomor utama' : htmlspecialchars(admin_phone($q['routed_whatsapp'])) ?>
-            </p>
+            <p class="text-muted mt-1 text-[11px]">Dikirim ke <span class="text-dark">+<?= htmlspecialchars($q['routed_whatsapp']) ?></span><?= $q['routed_whatsapp'] === WA_NUMBER ? ' (nomor utama)' : '' ?></p>
             <?php endif; ?>
           </td>
-          <td class="px-4 py-4 font-jakarta text-[13px] leading-[19px] text-dark">
-            <?php if ($notes !== ''): ?>
-            <div data-clamp class="line-clamp-3 whitespace-pre-line break-words max-w-[340px]"><?= htmlspecialchars($notes) ?></div>
-            <?php if (mb_strlen($notes) > 130 || substr_count($notes, "\n") > 2): ?>
-            <button type="button" data-clamp-toggle class="mt-1 font-jakarta text-[12px] font-semibold text-brand hover:underline">Selengkapnya</button>
-            <?php endif; ?>
-            <?php else: ?><span class="text-muted">Tidak ada catatan</span><?php endif; ?>
-          </td>
+          <td class="px-4 py-4 font-jakarta text-[13px] leading-[19px] text-dark whitespace-pre-line break-words max-w-[360px]"><?= $notes !== '' ? htmlspecialchars($notes) : '<span class="text-muted">—</span>' ?></td>
           <td class="px-4 py-4">
             <form method="POST" class="relative inline-block">
               <?= csrf_field() ?>
@@ -175,12 +153,4 @@ admin_page_start('Inquiry', 'inquiries', '');
   </div>
 
 <?php admin_actions_assets(); ?>
-<script>
-  // "Selengkapnya" untuk catatan panjang
-  document.addEventListener('click', function (e) {
-    var b = e.target.closest('[data-clamp-toggle]'); if (!b) return;
-    var box = b.previousElementSibling, open = box.classList.toggle('line-clamp-3');
-    b.textContent = open ? 'Selengkapnya' : 'Lebih sedikit';
-  });
-</script>
 <?php admin_page_end(); ?>

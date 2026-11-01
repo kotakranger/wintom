@@ -32,13 +32,9 @@ function admin_ago(string $ts): string {
     return '';
 }
 
-/** Dua baris untuk kolom Waktu: ["Hari ini" | "Kemarin" | "31 Okt 2026", "21:45 · 3 jam lalu"]. */
+/** Dua baris untuk kolom Waktu: ["31 Okt 2026", "21:45"]. */
 function admin_time_lines(string $ts): array {
-    $t = strtotime($ts);
-    $day = date('Y-m-d', $t);
-    $line1 = $day === date('Y-m-d') ? 'Hari ini' : ($day === date('Y-m-d', strtotime('-1 day')) ? 'Kemarin' : admin_date($ts, true));
-    $ago = admin_ago($ts);
-    return [$line1, date('H:i', $t) . ($ago !== '' && time() - $t < 86400 * 7 ? ' · ' . $ago : '')];
+    return [admin_date($ts), date('H:i', strtotime($ts))];
 }
 
 /* ------------------------------------------------------------------ TELEPON */
