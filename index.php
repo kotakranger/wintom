@@ -27,7 +27,9 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
 
   <!-- Gambar hero = elemen terbesar (LCP): responsif & diprioritaskan. Video (4,9 MB) dimuat saat pengunjung
        mulai berinteraksi, lalu muncul halus di atas gambar ini, jadi skor PageSpeed tidak terganggu. -->
-  <img <?= img_attrs('https://images.unsplash.com/photo-1558618666-fcd25c85cd64', '100vw', [640, 960, 1280, 1920]) ?>
+  <img src="<?= BASE_URL ?>/assets/images/hero/hero-1280.webp"
+       srcset="<?= BASE_URL ?>/assets/images/hero/hero-640.webp 640w, <?= BASE_URL ?>/assets/images/hero/hero-960.webp 960w, <?= BASE_URL ?>/assets/images/hero/hero-1280.webp 1280w, <?= BASE_URL ?>/assets/images/hero/hero-1920.webp 1920w"
+       sizes="100vw" width="1920" height="1080"
        alt="" fetchpriority="high" decoding="async" class="wt-zoom absolute inset-0 w-full h-full object-cover" />
   <video id="hero-video" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000"
          muted loop playsinline preload="none" aria-hidden="true" data-src="<?= BASE_URL ?>/assets/video/hero.mp4"></video>
