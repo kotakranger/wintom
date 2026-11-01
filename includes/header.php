@@ -36,6 +36,8 @@ $quote_categories = $quote_categories
     @font-face { font-family: 'Libre Caslon Text'; font-style: normal; font-weight: 400; font-display: swap; src: url(<?= BASE_URL ?>/assets/fonts/libre-caslon-text-400.woff2) format('woff2'); }
     @font-face { font-family: 'Libre Caslon Text'; font-style: normal; font-weight: 700; font-display: swap; src: url(<?= BASE_URL ?>/assets/fonts/libre-caslon-text-700.woff2) format('woff2'); }
     * { box-sizing: border-box; }
+    /* Atribut hidden harus selalu menang atas class display Tailwind (flex/grid) — di <head> agar tidak ada kilatan sebelum CSS lain dimuat */
+    [hidden] { display: none !important; }
     :root { --wt-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23860524' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E"); }
     /* Semua dropdown: panah chevron seragam & seimbang (sama dengan pemilih bahasa) */
     select:not(.goog-te-combo):not([multiple]) {
