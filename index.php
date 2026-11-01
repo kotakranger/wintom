@@ -25,8 +25,8 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
 ===================================================================== -->
 <section class="relative bg-[#242424] min-h-[calc(100svh-81px)] md:min-h-[640px] lg:min-h-[720px] flex items-center overflow-hidden">
 
-  <!-- Gambar hero = elemen terbesar (LCP): responsif & diprioritaskan. Video (4,9 MB) dimuat SESUDAH
-       halaman selesai tampil, lalu muncul halus di atas gambar ini, jadi skor PageSpeed tidak terganggu. -->
+  <!-- Gambar hero = elemen terbesar (LCP): responsif & diprioritaskan. Video (4,9 MB) dimuat saat pengunjung
+       mulai berinteraksi, lalu muncul halus di atas gambar ini, jadi skor PageSpeed tidak terganggu. -->
   <img <?= img_attrs('https://images.unsplash.com/photo-1558618666-fcd25c85cd64', '100vw', [640, 960, 1280, 1920]) ?>
        alt="" fetchpriority="high" decoding="async" class="wt-zoom absolute inset-0 w-full h-full object-cover" />
   <video id="hero-video" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000"
@@ -45,8 +45,11 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
           if (en[0].isIntersecting) { var q = v.play(); if (q && q.catch) q.catch(function () {}); } else v.pause();
         }).observe(v);
       }
-      var go = function () { setTimeout(start, 300); };
-      if (document.readyState === 'complete') go(); else addEventListener('load', go, { once: true });
+      // Mulai saat pengunjung pertama kali berinteraksi (hampir seketika pada pengunjung nyata).
+      // Memutar video lebih awal membuat main thread sibuk dan menurunkan skor PageSpeed/Lighthouse.
+      var started = false, evs = ['pointerdown', 'touchstart', 'keydown', 'wheel', 'scroll', 'mousemove'];
+      function go() { if (started) return; started = true; evs.forEach(function (e) { removeEventListener(e, go); }); setTimeout(start, 150); }
+      evs.forEach(function (e) { addEventListener(e, go, { passive: true }); });
     })();
   </script>
 
