@@ -36,6 +36,13 @@ function admin_btn_view(string $url, string $tip = 'Lihat di situs'): void {
        . admin_icon('view') . '</a>';
 }
 
+/** Balas via WhatsApp (tab baru): ikon + teks, hijau. */
+function admin_btn_whatsapp(string $url, string $label = 'Balas', string $tip = 'Balas lewat WhatsApp'): void {
+    echo '<a href="' . htmlspecialchars($url) . '" target="_blank" rel="noopener" class="adm-act adm-act-wa" data-tip="' . htmlspecialchars($tip) . '" aria-label="' . htmlspecialchars($tip) . '">'
+       . '<svg class="size-[16px]" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 1.667A8.333 8.333 0 0 0 2.92 13.742L1.667 18.333l4.725-1.237A8.333 8.333 0 1 0 10 1.667Zm4.2 11.4c-.18.5-1.04.96-1.43 1-.37.04-.83.06-1.34-.08a11.5 11.5 0 0 1-1.21-.45c-2.13-.92-3.52-3.07-3.63-3.21-.1-.14-.87-1.16-.87-2.2 0-1.05.55-1.56.74-1.78.2-.21.43-.27.57-.27h.4c.13 0 .3-.05.47.36.18.43.6 1.48.65 1.58.05.11.09.23.02.37-.07.14-.1.23-.21.35-.1.13-.22.28-.31.38-.1.1-.21.22-.09.43.12.21.53.88 1.14 1.42.78.7 1.45.91 1.66 1.02.21.1.33.09.45-.05.13-.15.53-.62.67-.83.14-.21.28-.17.47-.1.2.07 1.23.58 1.44.69.21.1.35.16.4.24.05.1.05.52-.13 1.02Z"/></svg>'
+       . '<span>' . htmlspecialchars($label) . '</span></a>';
+}
+
 /** Hapus: form POST + dialog konfirmasi. $hidden = field tersembunyi (mis. _action, product_id). */
 function admin_btn_delete(string $title, string $text, array $hidden, string $tip = 'Hapus'): void {
     echo '<form method="POST" class="m-0 inline-flex" data-confirm-title="' . htmlspecialchars($title) . '" data-confirm-text="' . htmlspecialchars($text) . '">';
@@ -60,11 +67,18 @@ function admin_actions_assets(): void {
   .adm-act:focus-visible { outline: 2px solid #860524; outline-offset: 2px; }
   .adm-act:active { transform: translateY(1px); }
   /* Tooltip singkat saat hover/fokus */
-  .adm-act[data-tip]::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translate(-50%, 3px);
+  .adm-act[data-tip]::after, .adm-copy[data-tip]::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translate(-50%, 3px);
     background: #242424; color: #fff; font: 500 11px/1 Arial, Helvetica, sans-serif; padding: 6px 8px; border-radius: 4px; white-space: nowrap;
     opacity: 0; pointer-events: none; transition: opacity .12s, transform .12s; z-index: 30; }
-  .adm-act[data-tip]:hover::after, .adm-act[data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); transition-delay: .25s; }
-  @media (hover: none) { .adm-act[data-tip]::after { display: none; } }
+  .adm-act[data-tip]:hover::after, .adm-act[data-tip]:focus-visible::after, .adm-copy[data-tip]:hover::after, .adm-copy[data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); transition-delay: .25s; }
+  @media (hover: none) { .adm-act[data-tip]::after, .adm-copy[data-tip]::after { display: none; } }
+  .adm-act-wa { padding: 0 12px; color: #128c4a; border-color: #bfe5cd; }
+  .adm-act-wa:hover { background: #128c4a; color: #fff; border-color: #128c4a; }
+  .adm-copy { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px;
+    border: 0; background: transparent; color: #9a958d; cursor: pointer; transition: background-color .15s, color .15s; }
+  .adm-copy:hover { background: #f4f1ea; color: #242424; }
+  .adm-copy.is-done { color: #16a34a; background: #ecfdf3; }
+  .adm-copy:focus-visible { outline: 2px solid #860524; outline-offset: 1px; }
   #adm-confirm [data-confirm-panel] { animation: adm-pop .18s cubic-bezier(.2,.7,.2,1) both; }
   @keyframes adm-pop { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
 </style>
@@ -103,6 +117,15 @@ function admin_actions_assets(): void {
     }
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && pending) close(); });
+
+  // Tombol salin (data-copy): salin ke clipboard lalu beri umpan balik singkat
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-copy]'); if (!b) return;
+    var text = b.dataset.copy, orig = b.dataset.tip;
+    function done() { b.classList.add('is-done'); b.dataset.tip = 'Tersalin!'; setTimeout(function () { b.classList.remove('is-done'); b.dataset.tip = orig; }, 1600); }
+    function legacy() { var t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (_) {} t.remove(); if (ok) done(); }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, legacy); else legacy();
+  });
 })();
 </script>
     <?php

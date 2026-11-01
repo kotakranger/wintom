@@ -23,6 +23,7 @@ function connect_db(): PDO {
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES   => false,
+        PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '+07:00'",   // waktu inquiry/produk selalu WIB, apa pun zona waktu server
     ];
     $dsn = fn(bool $withDb) => 'mysql:host=' . DB_HOST . ';port=' . DB_PORT
          . ($withDb ? ';dbname=' . DB_NAME : '') . ';charset=utf8mb4';

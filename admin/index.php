@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/admin-sidebar.php';
+require_once __DIR__ . '/../includes/admin-table.php';
 require_login();
 
 $db = get_db();
@@ -71,14 +72,21 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
     </div>
     <table class="w-full">
       <tbody>
-        <?php foreach($recent_inquiries as $q): ?>
-        <tr class="border-t border-border first:border-t-0 hover:bg-cream transition-colors">
-          <td class="px-5 py-3.5 font-jakarta text-dark text-[13px]"><?= htmlspecialchars($q['full_name']) ?><span class="block text-muted text-[11px]">+<?= htmlspecialchars($q['whatsapp']) ?></span></td>
-          <td class="px-5 py-3.5 font-jakarta text-muted text-[12px]"><?= htmlspecialchars($q['curtain_type']) ?></td>
-          <td class="px-5 py-3.5 font-jakarta text-muted text-[12px] text-right"><?= $q['status'] === 'new' ? '<span class="text-brand font-semibold">Baru</span> · ' : '' ?><?= htmlspecialchars(date('d M H:i', strtotime($q['created_at']))) ?></td>
+        <?php foreach($recent_inquiries as $q): [$t1, $t2] = admin_time_lines($q['created_at']); ?>
+        <tr class="border-t border-border first:border-t-0 hover:bg-cream transition-colors cursor-pointer" onclick="location.href='inquiries.php'">
+          <td class="px-5 py-3.5 <?= $q['status'] === 'new' ? 'shadow-[inset_3px_0_0_#f59e0b]' : '' ?>">
+            <p class="font-jakarta font-semibold text-dark text-[13px]"><?= htmlspecialchars($q['full_name']) ?></p>
+            <p class="font-jakarta text-muted text-[12px] tabular-nums"><?= htmlspecialchars(admin_phone($q['whatsapp'])) ?></p>
+          </td>
+          <td class="px-5 py-3.5"><span class="inline-block rounded-[4px] border border-border bg-cream-dark px-2 py-0.5 font-jakarta font-semibold text-[12px] text-dark"><?= htmlspecialchars($q['curtain_type']) ?></span></td>
+          <td class="px-5 py-3.5"><?= admin_status_pill($q['status']) ?></td>
+          <td class="px-5 py-3.5 text-right whitespace-nowrap">
+            <p class="font-jakarta font-semibold text-dark text-[12px]"><?= htmlspecialchars($t1) ?></p>
+            <p class="font-jakarta text-muted text-[11px]"><?= htmlspecialchars($t2) ?></p>
+          </td>
         </tr>
         <?php endforeach; ?>
-        <?php if (!$recent_inquiries): ?><tr><td class="px-5 py-8 text-center font-jakarta text-muted text-[13px]">Belum ada inquiry.</td></tr><?php endif; ?>
+        <?php if (!$recent_inquiries): ?><?php admin_empty_row(4, 'Belum ada inquiry', 'Inquiry dari form “Minta Penawaran” akan muncul di sini.'); ?><?php endif; ?>
       </tbody>
     </table>
   </div>
@@ -116,7 +124,7 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
           </td>
         </tr>
         <?php endforeach; ?>
-        <?php if (!$category_rows): ?><tr><td colspan="3" class="px-5 py-8 text-center font-jakarta text-muted text-[13px]">Belum ada kategori.</td></tr><?php endif; ?>
+        <?php if (!$category_rows): ?><?php admin_empty_row(3, 'Belum ada kategori'); ?><?php endif; ?>
       </tbody>
     </table>
   </div>

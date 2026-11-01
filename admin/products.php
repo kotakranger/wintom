@@ -5,6 +5,7 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/admin-sidebar.php';
 require_once __DIR__ . '/../includes/image-upload.php';
 require_once __DIR__ . '/../includes/admin-actions.php';
+require_once __DIR__ . '/../includes/admin-table.php';
 require_login();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') csrf_check();
 
@@ -352,7 +353,8 @@ if (isset($_GET['msg'])) $msg = ['img_deleted' => 'Foto dihapus', 'cover_set' =>
 /* ============================================================
    LOAD PRODUCTS LIST
    ============================================================ */
-$products = $db->query("SELECT p.*, c.name AS category, c.price_per_meter FROM products p JOIN categories c ON c.id = p.category_id ORDER BY p.created_at DESC")->fetchAll();
+$pg = admin_paginate((int)$db->query("SELECT COUNT(*) FROM products")->fetchColumn());
+$products = $db->query("SELECT p.*, c.name AS category, c.price_per_meter FROM products p JOIN categories c ON c.id = p.category_id ORDER BY p.created_at DESC, p.id DESC LIMIT " . (int)$pg['per'] . " OFFSET " . (int)$pg['offset'])->fetchAll();
 
 // Load gallery images and variants for editing product
 $edit_images   = [];
@@ -653,7 +655,7 @@ select.input{appearance:auto;}
   <div class="mb-6 flex items-center justify-between">
     <div>
       <h1 class="font-playfair font-semibold text-dark text-[26px]">Manajemen Produk</h1>
-      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= count($products) ?> produk terdaftar</p>
+      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= $pg['total'] ?> produk terdaftar</p>
     </div>
     <div class="flex items-center gap-3">
       <a href="products-import.php" class="bg-white text-brand border border-brand/40 font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-brand/5 transition-colors">
@@ -740,10 +742,11 @@ select.input{appearance:auto;}
         </tr>
         <?php endforeach; ?>
         <?php if (empty($products)): ?>
-        <tr><td colspan="7" class="px-4 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada produk. <a href="products.php?add=1" class="text-brand hover:underline">Tambah sekarang →</a></td></tr>
+        <?php admin_empty_row(7, 'Belum ada produk', 'Tambahkan satu per satu, atau impor banyak sekaligus lewat CSV.', 'products.php?add=1', 'Tambah produk'); ?>
         <?php endif; ?>
       </tbody>
     </table>
+    <?php admin_pagination($pg); ?>
   </div>
   <?php endif; ?>
 </main>

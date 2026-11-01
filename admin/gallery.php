@@ -6,6 +6,7 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/admin-sidebar.php';
 require_once __DIR__ . '/../includes/admin-modal.php';
 require_once __DIR__ . '/../includes/admin-actions.php';
+require_once __DIR__ . '/../includes/admin-table.php';
 require_once __DIR__ . '/../includes/image-upload.php';
 require_login();
 
@@ -160,7 +161,10 @@ if ($filter === 'none') {
     $sql .= " WHERE g.category_id = ?";
     $params[] = (int)$filter;
 }
-$sql .= " ORDER BY g.created_at DESC, g.id DESC";
+$cnt = $db->prepare("SELECT COUNT(*) FROM (" . $sql . ") t");
+$cnt->execute($params);
+$pg = admin_paginate((int)$cnt->fetchColumn());
+$sql .= " ORDER BY g.created_at DESC, g.id DESC LIMIT " . (int)$pg['per'] . " OFFSET " . (int)$pg['offset'];
 $st = $db->prepare($sql);
 $st->execute($params);
 $items = $st->fetchAll();
@@ -279,7 +283,7 @@ function category_select(array $cats, ?int $selected, string $id): string {
             <?php endif; ?>
           </td>
           <td class="px-4 py-3 font-jakarta text-dark text-[13px] text-center"><?= $n_photos ?></td>
-          <td class="px-4 py-3 font-jakarta text-muted text-[12px] whitespace-nowrap"><?= htmlspecialchars(date('d M Y', strtotime($item['created_at']))) ?></td>
+          <td class="px-4 py-3 font-jakarta text-muted text-[12px] whitespace-nowrap"><?= htmlspecialchars(admin_date($item['created_at'])) ?></td>
           <td class="px-4 py-3">
             <div class="flex items-center justify-end gap-2">
               <?php admin_btn_edit(['modal' => 'edit-' . (int)$item['id']]); ?>
@@ -289,10 +293,11 @@ function category_select(array $cats, ?int $selected, string $id): string {
         </tr>
         <?php endforeach; ?>
         <?php if (!$items): ?>
-        <tr><td colspan="6" class="px-5 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada proyek<?= $filter !== '' ? ' di kategori ini' : '' ?>.</td></tr>
+        <?php admin_empty_row(6, 'Belum ada proyek' . ($filter !== '' ? ' di kategori ini' : ''), $filter !== '' ? 'Coba pilih kategori lain.' : 'Tambahkan proyek portofolio pertama lewat tombol di kanan atas.'); ?>
         <?php endif; ?>
       </tbody>
     </table>
+    <?php admin_pagination($pg); ?>
   </div>
 
   <!-- ===== MODAL: TAMBAH PROYEK ===== -->

@@ -3,6 +3,7 @@
 // Kategori = master data untuk produk & portofolio: harga per meter (kalkulator), foto & tagline (kartu di landing page).
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/admin-actions.php';
+require_once __DIR__ . '/../includes/admin-table.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/admin-sidebar.php';
 require_once __DIR__ . '/../includes/admin-modal.php';
@@ -132,6 +133,7 @@ if ($action === 'delete') {
 /* ============================================================
    LOAD CATEGORIES + PRODUCT COUNT
    ============================================================ */
+$pg = admin_paginate((int)$db->query('SELECT COUNT(*) FROM categories')->fetchColumn());
 $categories = $db->query('
     SELECT c.*, COALESCE(p_cnt.cnt, 0) AS product_count,
            (SELECT COUNT(*) FROM galleries g WHERE g.category_id = c.id) AS gallery_count
@@ -139,7 +141,7 @@ $categories = $db->query('
     LEFT JOIN (SELECT category_id, COUNT(*) AS cnt FROM products GROUP BY category_id) p_cnt
       ON p_cnt.category_id = c.id
     ORDER BY c.sort_order ASC, c.name ASC
-')->fetchAll();
+    LIMIT ' . (int)$pg['per'] . ' OFFSET ' . (int)$pg['offset'])->fetchAll();
 
 $field = 'w-full border border-border rounded-[4px] px-3 py-2.5 font-jakarta text-[13px] text-dark focus:border-brand transition-colors';
 $label = 'block font-jakarta font-medium text-[12px] tracking-[0.6px] uppercase text-muted mb-1.5';
@@ -240,8 +242,8 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
         <?php foreach ($categories as $i => $cat): ?>
         <tr class="border-t border-border hover:bg-cream/50 transition-colors">
           <td class="px-4 py-3 font-jakarta text-muted text-[12px]">
-            <?= $i + 1 ?>
-            <?php if ($i < LANDING_CATEGORY_SLOTS): ?><span class="block text-[9px] uppercase tracking-[0.5px] text-brand" title="Tampil di landing page">Landing</span><?php endif; ?>
+            <?= $pg['offset'] + $i + 1 ?>
+            <?php if ($pg['offset'] + $i < LANDING_CATEGORY_SLOTS): ?><span class="block text-[9px] uppercase tracking-[0.5px] text-brand" title="Tampil di landing page">Landing</span><?php endif; ?>
           </td>
           <td class="px-4 py-3">
             <?php if ($cat['image_url']): ?>
@@ -281,10 +283,11 @@ function category_fields(?array $c, string $field, string $label, bool $repost):
         </tr>
         <?php endforeach; ?>
         <?php if (empty($categories)): ?>
-        <tr><td colspan="8" class="px-5 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada kategori.</td></tr>
+        <?php admin_empty_row(8, 'Belum ada kategori', 'Tambahkan kategori pertama lewat tombol di kanan atas.'); ?>
         <?php endif; ?>
       </tbody>
     </table>
+    <?php admin_pagination($pg); ?>
   </div>
 
   <p class="mt-3 font-jakarta text-muted text-[11px]">Kategori yang masih dipakai produk tidak bisa dihapus. Nama, harga, foto & tagline langsung berlaku untuk semua produk, portofolio, dan landing page.</p>

@@ -2,6 +2,7 @@
 // admin/videos.php — Konten video YouTube untuk homepage
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/admin-table.php';
 require_once __DIR__ . '/../includes/admin-sidebar.php';
 require_once __DIR__ . '/../includes/youtube.php';
 require_login();
@@ -62,7 +63,8 @@ if ($action === 'delete') {
     }
 }
 
-$videos = $db->query('SELECT * FROM content_videos ORDER BY sort_order ASC, id ASC')->fetchAll();
+$pg = admin_paginate((int)$db->query('SELECT COUNT(*) FROM content_videos')->fetchColumn());
+$videos = $db->query('SELECT * FROM content_videos ORDER BY sort_order ASC, id ASC LIMIT ' . (int)$pg['per'] . ' OFFSET ' . (int)$pg['offset'])->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -87,7 +89,7 @@ $videos = $db->query('SELECT * FROM content_videos ORDER BY sort_order ASC, id A
 
   <div class="mb-6">
     <h1 class="font-playfair font-semibold text-dark text-[26px]">Konten Video</h1>
-    <p class="font-jakarta text-muted text-[13px] mt-0.5">Video / Shorts YouTube yang tampil di section “Konten Wintom” pada homepage. <?= count($videos) ?> video terdaftar.</p>
+    <p class="font-jakarta text-muted text-[13px] mt-0.5">Video / Shorts YouTube yang tampil di section “Konten Wintom” pada homepage. <?= $pg['total'] ?> video terdaftar.</p>
   </div>
 
   <div class="grid grid-cols-12 gap-6">
@@ -129,6 +131,7 @@ $videos = $db->query('SELECT * FROM content_videos ORDER BY sort_order ASC, id A
       <?php if (!$videos): ?>
       <div class="bg-white border border-border rounded-[6px] px-5 py-12 text-center font-jakarta text-muted text-[14px]">Belum ada video. Tambahkan link YouTube di panel kanan.</div>
       <?php endif; ?>
+      <?php admin_pagination($pg, false); ?>
     </div>
 
     <!-- ADD -->

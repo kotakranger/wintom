@@ -6,6 +6,7 @@
 if (!defined('APP_DEBUG')) {
     define('APP_DEBUG', false);
 }
+date_default_timezone_set('Asia/Jakarta');   // situs untuk Indonesia: tanggal/jam tampil dalam WIB
 ini_set('display_errors', APP_DEBUG ? '1' : '0');
 ini_set('log_errors', '1');
 error_reporting(E_ALL);

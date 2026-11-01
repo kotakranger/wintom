@@ -6,6 +6,7 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/admin-modal.php';
 require_once __DIR__ . '/../includes/admin-actions.php';
 require_once __DIR__ . '/../includes/admin-sidebar.php';
+require_once __DIR__ . '/../includes/admin-table.php';
 require_super_admin();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') csrf_check();
 
@@ -67,7 +68,8 @@ if ($action === 'delete') {
     }
 }
 
-$users = $db->query("SELECT id, username, role, created_at FROM admins ORDER BY (role = '" . ROLE_SUPER . "') DESC, username ASC")->fetchAll();
+$pg = admin_paginate((int)$db->query('SELECT COUNT(*) FROM admins')->fetchColumn());
+$users = $db->query("SELECT id, username, role, created_at FROM admins ORDER BY (role = '" . ROLE_SUPER . "') DESC, username ASC LIMIT " . (int)$pg['per'] . " OFFSET " . (int)$pg['offset'])->fetchAll();
 
 /** Isian password + tombol "Buat acak" (JS kecil di bawah). */
 function user_pw_field(string $id): void { ?>
@@ -84,7 +86,7 @@ admin_page_start('Pengguna', 'users');
   <div class="mb-6 flex items-center justify-between gap-4">
     <div>
       <h1 class="font-playfair font-semibold text-dark text-[26px]">Pengguna</h1>
-      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= count($users) ?> akun · hanya Super Admin yang bisa menambah, menghapus, dan mengatur ulang password Admin.</p>
+      <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= $pg['total'] ?> akun · hanya Super Admin yang bisa menambah, menghapus, dan mengatur ulang password Admin.</p>
     </div>
     <button type="button" data-modal-open="add-user" class="bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-[#6a041c] transition-colors">+ Tambah Admin</button>
   </div>
@@ -105,7 +107,7 @@ admin_page_start('Pengguna', 'users');
           <td class="px-4 py-3">
             <span class="inline-block font-jakarta text-[11px] px-2.5 py-1 rounded-full border <?= $is_super ? 'bg-brand/10 text-brand border-brand/20' : 'bg-cream-dark text-muted border-border' ?>"><?= admin_role_label($u['role']) ?></span>
           </td>
-          <td class="px-4 py-3 font-jakarta text-muted text-[12px] hidden md:table-cell"><?= htmlspecialchars(date('d M Y', strtotime($u['created_at']))) ?></td>
+          <td class="px-4 py-3 font-jakarta text-muted text-[12px] hidden md:table-cell"><?= htmlspecialchars(admin_date($u['created_at'])) ?></td>
           <td class="px-4 py-3">
             <div class="flex items-center justify-end gap-1.5">
               <?php if ($is_super): ?>
@@ -126,6 +128,7 @@ admin_page_start('Pengguna', 'users');
       <?php endforeach; ?>
       </tbody>
     </table>
+    <?php admin_pagination($pg); ?>
   </div>
   <p class="font-jakarta text-muted text-[12px] mt-4 leading-[18px]">Admin dan Super Admin punya akses fitur yang sama. Bedanya, hanya Super Admin yang bisa membuka halaman ini, dan akun Super Admin tidak bisa dihapus atau diubah perannya.</p>
 
