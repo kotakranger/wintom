@@ -384,6 +384,8 @@ if ($editing) {
 .input{display:block;width:100%;border:1px solid #ece8e1;border-radius:4px;padding:9px 12px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#242424;background:#fff;transition:border-color 0.15s;}
 .input:focus{border-color:#860524;}
 select.input{appearance:auto;}
+.peer:checked + .sw-track{background:#10b981;}
+.peer:checked + .sw-track .sw-knob{transform:translateX(20px);}
 .variant-card{border:1px solid #ece8e1;border-radius:6px;background:#fff;padding:16px;margin-bottom:12px;}
 .variant-card.is-size{border-left:3px solid #860524;}
 .opt-row{display:flex;gap:8px;align-items:center;margin-top:6px;}
@@ -580,16 +582,15 @@ select.input{appearance:auto;}
 
         <div>
           <label class="label">Status Produk</label>
-          <div class="flex items-center gap-4">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="is_active" value="1" <?= ($editing['is_active'] ?? 1) == 1 ? 'checked' : '' ?> class="accent-[#860524]"/>
-              <span class="font-jakarta text-[13px] text-dark">Aktif <span class="text-green-600 text-[11px]">●</span></span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="is_active" value="0" <?= ($editing['is_active'] ?? 1) == 0 ? 'checked' : '' ?> class="accent-[#860524]"/>
-              <span class="font-jakarta text-[13px] text-dark">Nonaktif <span class="text-red-500 text-[11px]">●</span></span>
-            </label>
-          </div>
+          <input type="hidden" name="is_active" value="0"/>
+          <label class="flex items-center gap-3 cursor-pointer select-none rounded-[6px] border border-border bg-cream/60 px-4 py-3">
+            <input type="checkbox" name="is_active" value="1" <?= ($editing['is_active'] ?? 1) == 1 ? 'checked' : '' ?> class="peer sr-only"/>
+            <span class="sw-track relative inline-block h-[24px] w-[44px] shrink-0 rounded-full bg-[#cfcac2] transition-colors duration-200 peer-focus-visible:ring-2 peer-focus-visible:ring-brand/40">
+              <span class="sw-knob absolute top-[3px] left-[3px] size-[18px] rounded-full bg-white shadow transition-transform duration-200"></span>
+            </span>
+            <span class="font-jakarta font-semibold text-[13px] text-muted peer-checked:hidden">Nonaktif <span class="font-normal text-[11px]">· disembunyikan dari katalog</span></span>
+            <span class="hidden font-jakarta font-semibold text-[13px] text-emerald-700 peer-checked:inline">Aktif <span class="font-normal text-[11px] text-muted">· tampil di katalog</span></span>
+          </label>
           <p class="font-jakarta text-muted text-[10px] mt-1.5">Nonaktif = tersembunyi dari katalog publik</p>
         </div>
 
@@ -672,9 +673,14 @@ select.input{appearance:auto;}
       <h1 class="font-playfair font-semibold text-dark text-[26px]">Manajemen Produk</h1>
       <p class="font-jakarta text-muted text-[13px] mt-0.5"><?= count($products) ?> produk terdaftar</p>
     </div>
-    <a href="products.php?add=1" class="bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-[#6a041c] transition-colors">
-      + TAMBAH PRODUK
-    </a>
+    <div class="flex items-center gap-3">
+      <a href="products-import.php" class="bg-white text-brand border border-brand/40 font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-brand/5 transition-colors">
+        ⬆ IMPOR CSV
+      </a>
+      <a href="products.php?add=1" class="bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-[#6a041c] transition-colors">
+        + TAMBAH PRODUK
+      </a>
+    </div>
   </div>
 
   <div class="bg-white border border-border rounded-[6px] overflow-hidden">
@@ -684,7 +690,7 @@ select.input{appearance:auto;}
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-16">Cover</th>
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Nama Produk</th>
           <th class="px-4 py-3 text-left font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase hidden lg:table-cell">Kategori</th>
-          <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-20">Status</th>
+          <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-36">Status</th>
           <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-20 hidden lg:table-cell">Stok</th>
           <th class="px-4 py-3 text-right font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase">Harga</th>
           <th class="px-4 py-3 text-center font-jakarta font-semibold text-muted text-[11px] tracking-[1px] uppercase w-44">Aksi</th>
@@ -695,7 +701,7 @@ select.input{appearance:auto;}
         <tr class="border-t border-border hover:bg-cream/50 transition-colors <?= !$p['is_active'] ? 'opacity-60' : '' ?>">
           <td class="px-4 py-3">
             <div class="size-12 rounded-[3px] overflow-hidden border border-border bg-cream-dark shrink-0">
-              <img src="<?= htmlspecialchars(img_src($p['cover_image'], 480)) ?>" alt="" class="w-full h-full object-cover"/>
+              <img src="<?= htmlspecialchars(img_src((string)$p['cover_image'], 480)) ?>" alt="" class="w-full h-full object-cover"/>
             </div>
           </td>
           <td class="px-4 py-3">
@@ -703,20 +709,23 @@ select.input{appearance:auto;}
             <?php if ($p['badge']): ?>
             <span class="inline-block mt-1 bg-brand/10 text-brand font-jakarta text-[10px] tracking-[0.5px] uppercase px-1.5 py-0.5 rounded-[2px]"><?= htmlspecialchars($p['badge']) ?></span>
             <?php endif; ?>
-            <p class="font-jakarta text-muted text-[11px] mt-0.5">REF: <?= htmlspecialchars($p['ref_code']) ?> · slug: <?= htmlspecialchars($p['slug']) ?></p>
+            <p class="font-jakarta text-muted text-[11px] mt-0.5">REF: <?= htmlspecialchars($p['ref_code']) ?></p>
           </td>
           <td class="px-4 py-3 hidden lg:table-cell">
             <span class="font-jakarta text-muted text-[12px]"><?= htmlspecialchars($p['category']) ?></span>
           </td>
           <td class="px-4 py-3 text-center">
-            <form method="POST" class="inline">
+            <form method="POST" class="inline-flex">
               <input type="hidden" name="_action" value="toggle_active"/>
               <input type="hidden" name="product_id" value="<?= $p['id'] ?>"/>
               <?= csrf_field() ?>
-              <button type="submit" title="<?= $p['is_active'] ? 'Klik untuk nonaktifkan' : 'Klik untuk aktifkan' ?>"
-                      class="font-jakarta text-[10px] tracking-[0.5px] uppercase px-2 py-1 rounded-full border transition-colors
-                             <?= $p['is_active'] ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' ?>">
-                <?= $p['is_active'] ? '● Aktif' : '○ Nonaktif' ?>
+              <button type="submit" role="switch" aria-checked="<?= $p['is_active'] ? 'true' : 'false' ?>"
+                      title="<?= $p['is_active'] ? 'Aktif — klik untuk menyembunyikan dari katalog' : 'Nonaktif — klik untuk menampilkan di katalog' ?>"
+                      class="group inline-flex items-center gap-2.5 whitespace-nowrap rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-cream-dark">
+                <span class="relative inline-block h-[22px] w-[40px] shrink-0 rounded-full transition-colors duration-200 <?= $p['is_active'] ? 'bg-emerald-500' : 'bg-[#cfcac2]' ?>">
+                  <span class="absolute top-[3px] left-[3px] size-4 rounded-full bg-white shadow transition-transform duration-200 <?= $p['is_active'] ? 'translate-x-[18px]' : '' ?>"></span>
+                </span>
+                <span class="font-jakarta font-semibold text-[12px] <?= $p['is_active'] ? 'text-emerald-700' : 'text-muted' ?>"><?= $p['is_active'] ? 'Aktif' : 'Nonaktif' ?></span>
               </button>
             </form>
           </td>
