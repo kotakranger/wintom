@@ -25,21 +25,28 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
 ===================================================================== -->
 <section class="relative bg-[#242424] min-h-[calc(100svh-81px)] md:min-h-[640px] lg:min-h-[720px] flex items-center overflow-hidden">
 
-  <!-- Background video -->
-  <!-- Video (4,9 MB) hanya dimuat di layar ≥768px & bila pengunjung tidak mengaktifkan mode hemat data;
-       HP cukup menampilkan poster yang ringan. -->
-  <!-- Gambar hero = elemen terbesar (LCP): responsif & diprioritaskan; video menimpanya bila dimuat -->
+  <!-- Gambar hero = elemen terbesar (LCP): responsif & diprioritaskan. Video (4,9 MB) dimuat SESUDAH
+       halaman selesai tampil, lalu muncul halus di atas gambar ini, jadi skor PageSpeed tidak terganggu. -->
   <img <?= img_attrs('https://images.unsplash.com/photo-1558618666-fcd25c85cd64', '100vw', [640, 960, 1280, 1920]) ?>
        alt="" fetchpriority="high" decoding="async" class="wt-zoom absolute inset-0 w-full h-full object-cover" />
-  <video id="hero-video" class="wt-zoom absolute inset-0 w-full h-full object-cover" muted loop playsinline preload="none" aria-hidden="true"
-         data-src="<?= BASE_URL ?>/assets/video/hero.mp4"></video>
+  <video id="hero-video" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000"
+         muted loop playsinline preload="none" aria-hidden="true" data-src="<?= BASE_URL ?>/assets/video/hero.mp4"></video>
   <script>
     (function () {
       var v = document.getElementById('hero-video'), c = navigator.connection || {};
-      if (!v || c.saveData || /(^|-)2g$/.test(c.effectiveType || '') || !matchMedia('(min-width:768px)').matches
-          || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      v.src = v.dataset.src; v.preload = 'auto'; v.autoplay = true;
-      var p = v.play(); if (p && p.catch) p.catch(function () {});
+      // Tetap gambar saja untuk mode hemat data, koneksi 2G, atau pengunjung yang meminta gerakan dikurangi
+      if (!v || c.saveData || /(^|-)2g$/.test(c.effectiveType || '') || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      function start() {
+        v.src = v.dataset.src; v.preload = 'auto';
+        v.addEventListener('playing', function () { v.classList.remove('opacity-0'); }, { once: true });
+        var p = v.play(); if (p && p.catch) p.catch(function () {});
+        // Hemat CPU/baterai: jeda saat hero tidak terlihat
+        if ('IntersectionObserver' in window) new IntersectionObserver(function (en) {
+          if (en[0].isIntersecting) { var q = v.play(); if (q && q.catch) q.catch(function () {}); } else v.pause();
+        }).observe(v);
+      }
+      var go = function () { setTimeout(start, 300); };
+      if (document.readyState === 'complete') go(); else addEventListener('load', go, { once: true });
     })();
   </script>
 
