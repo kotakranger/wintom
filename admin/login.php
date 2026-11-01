@@ -20,10 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $admin = $stmt->fetch();
         if ($admin && password_verify($password, $admin['password_hash'])) {
             login_admin((int) $admin['id']);
+            if ($password === ADMIN_DEFAULT_PASSWORD) {
+                $_SESSION['weak_pw'] = true;   // sidebar menampilkan peringatan sampai password diganti
+            }
             header('Location: ' . BASE_URL . '/admin/index.php');
             exit;
         }
     }
+    usleep(400000);   // memperlambat tebakan password beruntun
     $error = 'Username atau password salah.';
 }
 ?>
@@ -107,7 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           MASUK
         </button>
       </form>
-      <p class="font-jakarta text-muted text-[11px] text-center mt-5">Default: <strong>admin</strong> / <strong>wintom2024</strong></p>
     </div>
     <p class="text-center font-jakarta text-muted text-[11px] mt-5">← <a href="../" class="hover:text-brand transition-colors">Kembali ke Website</a></p>
   </div>

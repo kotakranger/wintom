@@ -60,9 +60,10 @@ function ensure_schema(PDO $pdo): void {
                  OR (table_name = 'products' AND column_name = 'use_category_price')
                  OR (table_name = 'categories' AND column_name = 'image_url')
                  OR (table_name = 'categories' AND column_name = 'whatsapp')
-                 OR (table_name = 'inquiries' AND column_name = 'routed_whatsapp')))"
+                 OR (table_name = 'inquiries' AND column_name = 'routed_whatsapp')
+                 OR (table_name = 'admins' AND column_name = 'role')))"
     )->fetch(PDO::FETCH_NUM));
-    if ($have === 10 && $upgrades === 8) {
+    if ($have === 10 && $upgrades === 9) {
         return;
     }
 
@@ -70,7 +71,10 @@ function ensure_schema(PDO $pdo): void {
         "CREATE TABLE IF NOT EXISTS admins (
             id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             username      VARCHAR(100) NOT NULL UNIQUE,
-            password_hash VARCHAR(255) NOT NULL
+            password_hash VARCHAR(255) NOT NULL,
+            role          VARCHAR(20)  NOT NULL DEFAULT 'admin',      -- 'superadmin' | 'admin'
+            session_version INT UNSIGNED NOT NULL DEFAULT 1,           -- dinaikkan saat password diganti/direset: sesi lama otomatis keluar
+            created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 
         // price_per_meter: harga dasar per meter, diwarisi semua produk di kategori ini
@@ -213,6 +217,15 @@ function ensure_schema(PDO $pdo): void {
         $st->execute([$table, $col]);
         return (int)$st->fetchColumn() > 0;
     };
+
+    // Upgrade: peran pengguna. Akun pertama (id terkecil) menjadi Super Admin; sisanya Admin.
+    if (!$has_col('admins', 'role')) {
+        $pdo->exec("ALTER TABLE admins
+            ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'admin' AFTER password_hash,
+            ADD COLUMN session_version INT UNSIGNED NOT NULL DEFAULT 1 AFTER role,
+            ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER session_version");
+        $pdo->exec("UPDATE admins SET role = 'superadmin' ORDER BY id ASC LIMIT 1");
+    }
 
     // Upgrade: ukuran terstruktur (lebar × tinggi × jumlah) pada inquiry lama
     if (!$has_col('inquiries', 'width_cm')) {
@@ -383,7 +396,7 @@ function seed_defaults(PDO $pdo): void {
     if ((int)$pdo->query("SELECT COUNT(*) FROM admins")->fetchColumn() === 0) {
         // SECURITY: Change this default password immediately after first login
         $hash = password_hash('wintom2024', PASSWORD_DEFAULT);
-        $pdo->prepare("INSERT INTO admins (username, password_hash) VALUES (?, ?)")
+        $pdo->prepare("INSERT INTO admins (username, password_hash, role) VALUES (?, ?, 'superadmin')")
             ->execute(['admin', $hash]);
     }
 

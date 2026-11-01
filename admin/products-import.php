@@ -2,6 +2,7 @@
 // admin/products-import.php — Impor produk massal dari CSV: unduh template -> unggah -> pratinjau -> konfirmasi.
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/admin-sidebar.php';
 require_once __DIR__ . '/../includes/product-import.php';
 require_login();
 start_session();
@@ -98,29 +99,7 @@ select.input{appearance:auto;}
 </head>
 <body class="font-jakarta bg-[#f5f3f0] text-dark antialiased flex min-h-screen">
 
-<!-- ===== SIDEBAR ===== -->
-<aside class="w-[220px] shrink-0 bg-white border-r border-border flex flex-col min-h-screen fixed top-0 left-0 h-full z-20">
-  <div class="p-6 border-b border-border">
-    <a href="../" target="_blank" class="flex flex-col group">
-      <span class="font-playfair font-bold text-brand text-[22px] leading-[28px]">wintom</span>
-      <span class="font-jakarta font-semibold text-muted text-[8px] tracking-[2.5px] uppercase group-hover:text-brand transition-colors">CURTAIN ADMIN</span>
-    </a>
-  </div>
-  <nav class="flex flex-col p-4 gap-1 flex-1">
-    <a href="index.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Dashboard</a>
-    <a href="inquiries.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Inquiry</a>
-    <a href="products.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium bg-brand/10 text-brand">Produk</a>
-    <a href="categories.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Kategori</a>
-    <a href="gallery.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Galeri Portofolio</a>
-    <a href="videos.php" class="flex items-center gap-3 px-3 py-2.5 rounded-[4px] font-jakarta text-[13px] font-medium text-muted hover:bg-cream hover:text-dark transition-colors">Konten Video</a>
-  </nav>
-  <div class="p-4 border-t border-border">
-    <form method="POST" action="logout.php">
-      <?= csrf_field() ?>
-      <button type="submit" class="block w-full text-left px-3 py-2 text-muted hover:text-brand font-jakarta text-[13px] transition-colors bg-transparent border-0 cursor-pointer">Logout</button>
-    </form>
-  </div>
-</aside>
+<?php admin_sidebar('products'); ?>
 
 <!-- ===== MAIN ===== -->
 <main class="ml-[220px] flex-1 p-8 min-h-screen max-w-[1100px]">
