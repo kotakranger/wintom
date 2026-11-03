@@ -27,6 +27,8 @@ $quote_categories = $quote_categories
   <!-- Font judul (Libre Caslon Text) di-host sendiri: tidak memblokir render & tanpa koneksi ke Google -->
   <link rel="preload" href="<?= BASE_URL ?>/assets/fonts/libre-caslon-text-400.woff2" as="font" type="font/woff2" crossorigin />
 
+  <?php include __DIR__ . '/analytics.php'; ?>
+
   <!-- Penanda JS aktif: konten [data-reveal] hanya disembunyikan bila script animasi bisa berjalan -->
   <script>document.documentElement.classList.add('js');</script>
 
