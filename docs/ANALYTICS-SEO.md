@@ -1,8 +1,29 @@
 # Wintom — Rencana Google Analytics & SEO
 
-Terakhir diperbarui: 2026-11-01 · Branch kerja: `feat/analytics-seo`
+Terakhir diperbarui: 2026-11-03 · Kode GA4 & SEO fase 1 sudah di `main` dan live di https://wintom.co.id
 
 Legenda: `[x]` selesai · `[ ]` belum · **(Kamu)** perlu tindakan pemilik situs · **(Claude)** dikerjakan di kode
+
+---
+
+## Status & langkah berikutnya (2026-11-03)
+
+**Sudah selesai & live:** SEO fase 1 (URL bersih + redirect 301, meta/canonical/Open Graph, JSON-LD, `sitemap.xml`, `robots.txt`, noindex admin/pencarian). Kode GA4 sudah ter-merge tapi **nonaktif** sampai `GA_MEASUREMENT_ID` diisi.
+
+**Berikutnya, berurutan:**
+1. **(Kamu)** Buat Property GA4 → Web stream `https://wintom.co.id` → kirim Measurement ID `G-XXXXXXXXXX`. Tidak perlu verifikasi bisnis; cukup akun Google biasa. _Status: menunggu akun GA siap._
+2. **(Claude)** Isi `GA_MEASUREMENT_ID` (di `includes/config.php`), push ke `main`, purge CDN, cek GA › Realtime bahwa kunjungan dan event (`generate_lead`, `contact_whatsapp`, `contact_phone`, `quote_open`) masuk.
+3. **(Kamu)** GA › Admin › Events: tandai `generate_lead` dan `contact_whatsapp` sebagai Key event.
+4. **(Kamu, opsional, bisa kapan saja)** Google Search Console tipe **Domain** (`wintom.co.id`): kirim kode TXT verifikasi ke Claude untuk ditambah ke DNS, lalu kirim `sitemap.xml`. Tidak diperlukan untuk GA.
+5. **(Claude)** Cek ulang Lighthouse SEO ≥ 95 dan Rich Results Test (belum dijalankan; kuota API PageSpeed Google habis pada 2026-11-03, ulangi lewat pagespeed.web.dev).
+6. **(Ditunda)** Google Business Profile (butuh verifikasi kartu pos/telepon) dan ulasan Google: hanya untuk Maps/pencarian lokal, bukan untuk analytics.
+7. **(Claude, setelah GA live)** Fase 3 konten: teks pengantar kategori + FAQ (schema FAQ), halaman per proyek portofolio.
+
+**Catatan operasional**
+- Setelah deploy yang menambah rute baru, purge CDN (Hostinger CDN sempat menyimpan 404 lama): `hosting_cache_clear` scope `cdn`.
+- `mod_rewrite` mati di MAMP lokal. Tes URL bersih dengan salinan `httpd.conf` MAMP di port lain (rewrite aktif), bukan dengan mengubah MAMP.
+- Auto-deploy GitHub sekarang ke wintom.co.id (branch `main`). Situs dummy `lightslategrey-…hostingersite.com` dibekukan sebagai cadangan.
+- Load situs terukur naik-turun (0,2–3,5 dtk) pada 2026-11-03, termasuk untuk file statis CDN dan situs Uvora di server yang sama, jadi bukan murni masalah kode Wintom. Kalau berulang: catat halaman, jam, dan jaringan, lalu cek hPanel › Statistik/penggunaan resource.
 
 ---
 
