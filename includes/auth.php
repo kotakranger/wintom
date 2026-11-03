@@ -4,6 +4,11 @@
 
 require_once __DIR__ . '/config.php';
 
+// Halaman admin tidak boleh muncul di hasil pencarian Google.
+if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/admin/') !== false && !headers_sent()) {
+    header('X-Robots-Tag: noindex, nofollow');
+}
+
 function start_session(): void
 {
     if (session_status() === PHP_SESSION_NONE) {

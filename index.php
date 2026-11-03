@@ -5,6 +5,11 @@ require_once __DIR__ . '/includes/db.php';
 
 $page_title = 'Gorden & Blinds Custom di PIK, Jakarta';
 $active_nav = 'home';
+if (is_legacy_url()) redirect_clean('/');   // /index.php -> /
+require_once __DIR__ . '/includes/seo.php';
+$meta_description = 'Wintom Curtain: gorden premium, roller blind, zebra blind & motorized smart curtain di PIK, Jakarta Utara. Ready stock atau custom, survei dan pasang se-Jabodetabek.';
+$canonical_route  = '/';
+$schema           = [seo_local_business()];
 
 $db = get_db();
 require_once __DIR__ . '/includes/youtube.php';
@@ -89,7 +94,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
              class="bg-brand text-white font-jakarta font-semibold text-[14px] leading-[16px] px-8 py-[16px] rounded-[3px] hover:bg-[#6a041c] hover:-translate-y-0.5 transition-all duration-200 shadow-lg">
             Konsultasi Gratis
           </button>
-          <a href="<?= BASE_URL ?>/products.php"
+          <a href="<?= url_for(route_catalog()) ?>"
              class="text-center backdrop-blur-[2px] bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.6)] text-white font-jakarta font-medium text-[14px] leading-[16px] px-[33px] py-[15px] rounded-[3px] shadow-sm hover:bg-[rgba(255,255,255,0.2)] transition-colors duration-200 whitespace-nowrap">
             Jelajahi Koleksi
           </a>
@@ -110,7 +115,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
     <?php foreach ($home_categories as $i => $cat):
         $img = $cat['image_url'] ?: $cat['fallback_image'];
     ?>
-    <a href="<?= BASE_URL ?>/products.php?category=<?= urlencode($cat['name']) ?>" data-reveal style="--d:<?= ($i % 3) * 100 ?>ms"
+    <a href="<?= url_for(route_catalog($cat['name'])) ?>" data-reveal style="--d:<?= ($i % 3) * 100 ?>ms"
        class="group bg-white border border-[rgba(236,232,225,0.8)] rounded-[2px] overflow-hidden flex flex-col p-px hover:shadow-[0_24px_48px_-24px_rgba(34,34,32,0.4)] transition-shadow duration-300">
       <div class="bg-[#ece8e1] aspect-[4/3] relative overflow-hidden">
         <?php if ($img): ?>

@@ -219,7 +219,7 @@ function category_select(array $cats, ?int $selected, string $id): string {
       <p class="font-jakarta text-muted text-[13px] mt-0.5">Proyek pemasangan, dikelompokkan per kategori produk.</p>
     </div>
     <div class="flex items-center gap-2">
-      <a href="../gallery.php" target="_blank" class="font-jakarta text-[12px] text-brand tracking-[1px] uppercase border border-brand/30 px-4 py-2.5 rounded-[4px] hover:bg-brand/5 transition-colors">
+      <a href="../galeri" target="_blank" class="font-jakarta text-[12px] text-brand tracking-[1px] uppercase border border-brand/30 px-4 py-2.5 rounded-[4px] hover:bg-brand/5 transition-colors">
         Lihat Galeri Publik ↗
       </a>
       <button type="button" data-modal-open="add-project"

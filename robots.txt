@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /includes/
+Disallow: /database/
+Disallow: /*?q=
+Disallow: /*&q=
+
+Sitemap: https://wintom.co.id/sitemap.xml

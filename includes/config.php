@@ -63,6 +63,54 @@ foreach ([
     }
 }
 
+// Alamat utama situs (absolut, tanpa slash akhir): dipakai canonical, Open Graph, sitemap & data terstruktur.
+// Produksi = domain resmi; di localhost otomatis mengikuti alamat yang sedang dibuka. Bisa di-override di config.local.php.
+if (!defined('SITE_URL')) {
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    $isLocal = $host !== '' && (preg_match('/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/', $host) || preg_match('/\.(localhost|test)(:\d+)?$/', $host));
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    define('SITE_URL', $isLocal ? $scheme . '://' . $host . BASE_URL : 'https://wintom.co.id');
+}
+
+// ---------------------------------------------------------------------------
+// URL bersih. "route_*" = path relatif situs (tanpa BASE_URL); "url_for" menambah BASE_URL
+// untuk link di halaman; "abs_url" menambah SITE_URL untuk canonical/sitemap/Open Graph.
+// Aturan rewrite-nya ada di .htaccess.
+// ---------------------------------------------------------------------------
+function cat_slug(string $name): string
+{
+    $s = strtolower(trim(str_replace('&', '', $name)));
+    return trim(preg_replace('/[^a-z0-9]+/', '-', $s), '-');
+}
+function route_catalog(?string $category = null): string
+{
+    $slug = $category !== null && $category !== '' ? cat_slug($category) : '';
+    return $slug !== '' ? '/katalog/' . $slug : '/katalog';
+}
+function route_product(string $slug): string { return '/produk/' . rawurlencode($slug); }
+function url_for(string $route): string { return BASE_URL . $route; }
+function abs_url(string $route): string { return SITE_URL . $route; }
+/** URL absolut untuk gambar (upload lokal atau sudah http). */
+function abs_asset(string $url): string
+{
+    if (preg_match('#^https?://#i', $url)) return $url;
+    return SITE_URL . '/' . ltrim($url, '/');
+}
+
+/** True bila halaman dibuka lewat alamat teknis lama (mis. /products.php, /index.html), bukan URL bersih. */
+function is_legacy_url(): bool
+{
+    $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
+    return (bool)preg_match('/\.(php|html?)$/i', $path);
+}
+/** Alihkan permanen (301) ke URL bersih, membawa query yang tersisa. */
+function redirect_clean(string $route, array $query = []): void
+{
+    $query = array_filter($query, fn($v) => $v !== '' && $v !== null);
+    header('Location: ' . BASE_URL . $route . ($query ? '?' . http_build_query($query) : ''), true, 301);
+    exit;
+}
+
 // Google Analytics 4 — Measurement ID "G-XXXXXXXXXX" (Admin GA › Aliran data › Web).
 // Kosong = GA tidak dimuat. Bisa juga di-override di config.local.php.
 if (!defined('GA_MEASUREMENT_ID')) define('GA_MEASUREMENT_ID', '');

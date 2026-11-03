@@ -6,7 +6,7 @@
 
 function render_product_card(array $prod, int $delay = 0): void
 {
-    $detail_url = BASE_URL . '/product-detail.php?slug=' . urlencode($prod['slug']);
+    $detail_url = url_for(route_product($prod['slug']));
     $pp         = product_price($prod);
     $feat_list  = !empty($prod['features']) ? array_slice(explode('|', $prod['features']), 0, 2) : [];
     ?>

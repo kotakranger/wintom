@@ -38,7 +38,7 @@ $categories = ['Semua Koleksi' => ''];
 $active_category = null;   // kategori terpilih -> judul & deskripsi hero mengikuti kategori
 foreach ($db_cats as $c) {
     $categories[$c['name']] = $c['name'];
-    if ($selected_cat !== '' && strcasecmp($c['name'], $selected_cat) === 0) {
+    if ($selected_cat !== '' && (strcasecmp($c['name'], $selected_cat) === 0 || cat_slug($c['name']) === cat_slug($raw_cat))) {
         $active_category = $c;
         $selected_cat = $c['name'];   // pakai ejaan resmi dari master kategori
     }
@@ -46,6 +46,27 @@ foreach ($db_cats as $c) {
 if ($active_category) {
     $page_title = $active_category['name'] . ' — Katalog Gorden & Blinds';
 }
+
+// URL bersih: /katalog atau /katalog/<kategori>. Alamat lama (products.php?category=...) dialihkan permanen.
+$catalog_route = route_catalog($active_category['name'] ?? null);
+if (is_legacy_url() && ($raw_cat === '' || $active_category)) {
+    redirect_clean($catalog_route, ['q' => $search_query, 'sort' => $sort_by !== 'newest' ? $sort_by : '']);
+}
+if ($raw_cat !== '' && !$active_category) {   // kategori tidak ada
+    http_response_code(404);
+    $noindex = true;
+}
+
+require_once __DIR__ . '/includes/seo.php';
+$meta_description = $active_category
+    ? ($active_category['tagline'] ? $active_category['name'] . ': ' . $active_category['tagline'] . '. ' : '')
+        . 'Koleksi ' . $active_category['name'] . ' Wintom Curtain: siap pasang atau custom sesuai ukuran jendela. Survei dan pemasangan di Jakarta dan sekitarnya.'
+    : 'Katalog gorden, roller blind, zebra blind, roman blind, vertical blind dan motorized curtain Wintom. Ready stock atau custom, harga per meter transparan.';
+$canonical_route = $catalog_route;
+if ($search_query !== '') $noindex = true;   // halaman hasil pencarian tidak perlu diindeks
+$schema = [seo_breadcrumbs($active_category
+    ? ['Beranda' => '/', 'Katalog' => '/katalog', $active_category['name'] => null]
+    : ['Beranda' => '/', 'Katalog' => null])];
 
 $products = [];
 $error_db = null;
@@ -123,11 +144,7 @@ include_once __DIR__ . '/includes/header.php';
       </p>
 
       <!-- Search & Sort Filter Bar -->
-      <form action="<?= BASE_URL ?>/products.php" method="GET" data-catalog-form class="wt-in flex flex-col sm:flex-row gap-3" style="--d:360ms">
-        <?php if (!empty($selected_cat)): ?>
-          <input type="hidden" name="category" value="<?= htmlspecialchars($selected_cat) ?>">
-        <?php endif; ?>
-
+      <form action="<?= url_for($catalog_route) ?>" method="GET" data-catalog-form class="wt-in flex flex-col sm:flex-row gap-3" style="--d:360ms">
         <div class="relative flex-1">
           <input
             type="text"
@@ -173,9 +190,8 @@ include_once __DIR__ . '/includes/header.php';
     <div class="flex items-center gap-2 md:gap-3 overflow-x-auto py-3.5 px-4 sm:px-6 md:px-12 no-scrollbar">
       <?php foreach ($categories as $label => $val):
         $isActive = ($selected_cat === $val);
-        $catUrl = BASE_URL . '/products.php';
+        $catUrl = url_for(route_catalog($val));
         $queryArr = [];
-        if (!empty($val)) $queryArr['category'] = $val;
         if (!empty($search_query)) $queryArr['q'] = $search_query;
         if ($sort_by !== 'newest') $queryArr['sort'] = $sort_by;
         if (!empty($queryArr)) $catUrl .= '?' . http_build_query($queryArr);
@@ -208,7 +224,7 @@ include_once __DIR__ . '/includes/header.php';
       </div>
 
       <?php if (!empty($selected_cat) || !empty($search_query) || $sort_by !== 'newest'): ?>
-        <a href="<?= BASE_URL ?>/products.php" class="text-[12px] text-brand hover:underline font-semibold flex items-center gap-1.5 self-start sm:self-auto">
+        <a href="<?= url_for(route_catalog()) ?>" class="text-[12px] text-brand hover:underline font-semibold flex items-center gap-1.5 self-start sm:self-auto">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
@@ -229,7 +245,7 @@ include_once __DIR__ . '/includes/header.php';
         <p class="font-jakarta text-[14px] text-muted mb-6 leading-relaxed">
           Tidak ada produk yang cocok dengan pencarian Anda. Coba gunakan kata kunci lain atau lihat seluruh koleksi kami.
         </p>
-        <a href="<?= BASE_URL ?>/products.php" class="inline-block bg-brand text-white px-6 py-2.5 rounded-[3px] text-[12px] font-semibold tracking-wider uppercase hover:bg-brand-dark transition-colors">
+        <a href="<?= url_for(route_catalog()) ?>" class="inline-block bg-brand text-white px-6 py-2.5 rounded-[3px] text-[12px] font-semibold tracking-wider uppercase hover:bg-brand-dark transition-colors">
           Lihat Semua Koleksi
         </a>
       </div>
@@ -281,7 +297,7 @@ include_once __DIR__ . '/includes/header.php';
         </a>
 
         <a
-          href="<?= BASE_URL ?>/about.php#contact"
+          href="<?= url_for('/tentang') ?>#contact"
           class="inline-flex items-center justify-center border border-white/30 hover:border-white text-white font-jakarta font-semibold text-[12px] tracking-widest-3 uppercase px-6 py-3.5 rounded-[3px] transition-colors text-center"
         >
           KUNJUNGI SHOWROOM
@@ -300,7 +316,8 @@ include_once __DIR__ . '/includes/header.php';
   const cache = new Map();
   let current = null;
 
-  const sameCatalog = url => url.origin === location.origin && url.pathname === location.pathname;
+  const CATALOG = <?= json_encode(url_for(route_catalog())) ?>;
+  const sameCatalog = url => url.origin === location.origin && (url.pathname === CATALOG || url.pathname.startsWith(CATALOG + '/'));
   const load = href => {
     if (!cache.has(href)) {
       cache.set(href, fetch(href, { headers: { 'X-Requested-With': 'fetch' }, credentials: 'same-origin' })
@@ -342,7 +359,7 @@ include_once __DIR__ . '/includes/header.php';
 
   // Tab kategori, "Reset Filter", "Lihat Semua Koleksi"
   document.addEventListener('click', function (e) {
-    const a = e.target.closest('#catalog-tabs a, #catalog-results a[href*="products.php"]:not([href*="product-detail"])');
+    const a = e.target.closest('#catalog-tabs a, #catalog-results a[href^="<?= url_for(route_catalog()) ?>"]');
     if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0 || a.target === '_blank') return;
     const url = new URL(a.href, location.href);
     if (!sameCatalog(url)) return;

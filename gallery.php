@@ -1,9 +1,15 @@
 <?php
 // gallery.php — Galeri Portofolio Wintom Curtain
+require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/seo.php';
 
 $page_title  = 'Galeri Portofolio';
 $active_nav  = 'gallery';
+if (is_legacy_url()) redirect_clean('/galeri', ['cat' => $_GET['cat'] ?? '']);
+$meta_description = 'Galeri proyek Wintom Curtain: gorden, roller blind, zebra blind dan motorized curtain untuk rumah, apartemen, hotel dan kantor di Jakarta dan sekitarnya.';
+$canonical_route  = '/galeri';
+$schema           = [seo_breadcrumbs(['Beranda' => '/', 'Galeri Portofolio' => null])];
 
 // --- Query & Filter ---
 $db = get_db();

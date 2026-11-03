@@ -3,6 +3,30 @@ DirectoryIndex index.php index.html
 # Disable directory listing
 Options -Indexes
 
+# ---------------------------------------------------------------------------
+# URL bersih & SEO. Alamat teknis lama (products.php?category=..., product-detail.php?slug=...)
+# dialihkan 301 oleh PHP (is_legacy_url + redirect_clean di includes/config.php).
+# ---------------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # www -> tanpa www (satu alamat resmi)
+    RewriteCond %{HTTP_HOST} ^www\.wintom\.co\.id$ [NC]
+    RewriteRule ^ https://wintom.co.id%{REQUEST_URI} [R=301,L]
+
+    # Halaman statis versi lama -> diteruskan ke PHP, yang mengalihkan 301 ke / dan /katalog
+    RewriteRule ^index\.html$ index.php [L]
+    RewriteRule ^products\.html$ products.php [L]
+
+    # URL bersih -> skrip PHP
+    RewriteRule ^produk/([^/]+)/?$ product-detail.php?slug=$1 [L,QSA]
+    RewriteRule ^katalog/?$ products.php [L,QSA]
+    RewriteRule ^katalog/([^/]+)/?$ products.php?category=$1 [L,QSA]
+    RewriteRule ^galeri/?$ gallery.php [L,QSA]
+    RewriteRule ^tentang/?$ about.php [L,QSA]
+    RewriteRule ^sitemap\.xml$ sitemap.php [L]
+</IfModule>
+
 # Deny access to sensitive files
 <FilesMatch "\.(md|sqlite|sqlite3|db|php-cs-fixer)$|^(package(-lock)?\.json|tailwind\.config\.js)$">
     Require all denied

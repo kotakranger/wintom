@@ -8,7 +8,7 @@ Legenda: `[x]` selesai · `[ ]` belum · **(Kamu)** perlu tindakan pemilik situs
 
 ## 0. Kondisi saat ini
 
-- Situs live sementara di `lightslategrey-wombat-883743.hostingersite.com`. Hostinger memblokir Googlebot di alamat ini lewat `robots.txt` otomatis, jadi **Google belum mengindeks apa pun**. SEO baru berjalan setelah domain sendiri aktif.
+- Situs live di **https://wintom.co.id** (sejak 2026-11-03). Situs dummy `lightslategrey-wombat-883743.hostingersite.com` masih online sebagai cadangan; Hostinger memblokir Googlebot di sana. Google belum mengindeks apa pun sampai sitemap dikirim di Search Console.
 - Kecepatan mobile (Lighthouse) 97–99. Pertahankan: jangan menambah script yang memblokir render.
 - Hasil audit awal:
   - Semua halaman memakai meta description yang sama.
@@ -48,27 +48,27 @@ Legenda: `[x]` selesai · `[ ]` belum · **(Kamu)** perlu tindakan pemilik situs
 
 ## 2. SEO
 
-### Fase 1 — Teknis (bisa dikerjakan sekarang, sebelum domain dibeli)
-- [ ] **(Claude)** Satu konstanta `SITE_URL` untuk alamat utama situs (ganti satu baris saat pindah domain).
-- [ ] **(Claude)** Meta description unik per halaman; produk dan kategori diambil otomatis dari deskripsinya (maks. ±155 karakter).
-- [ ] **(Claude)** Tag `canonical` di semua halaman publik.
-- [ ] **(Claude)** Open Graph + Twitter Card (judul, deskripsi, foto produk sebagai gambar pratinjau di WhatsApp / Instagram / Facebook).
-- [ ] **(Claude)** Data terstruktur JSON-LD:
+### Fase 1 — Teknis (selesai 2026-11-03)
+- [x] **(Claude)** Satu konstanta `SITE_URL` untuk alamat utama situs (ganti satu baris saat pindah domain).
+- [x] **(Claude)** Meta description unik per halaman; produk dan kategori diambil otomatis dari deskripsinya (maks. ±155 karakter).
+- [x] **(Claude)** Tag `canonical` di semua halaman publik.
+- [x] **(Claude)** Open Graph + Twitter Card (judul, deskripsi, foto produk sebagai gambar pratinjau di WhatsApp / Instagram / Facebook).
+- [x] **(Claude)** Data terstruktur JSON-LD:
   - `LocalBusiness` (nama, alamat PIK, telepon, jam buka, peta, media sosial)
   - `Product` (nama, foto, harga per meter) di halaman produk
   - `BreadcrumbList`
-- [ ] **(Claude)** `sitemap.xml` dinamis (halaman utama, kategori, produk, portofolio).
-- [ ] **(Claude)** `robots.txt` sendiri: blok `/admin`, `/includes`, `/database`; cantumkan alamat sitemap.
-- [ ] **(Claude)** URL bersih dengan redirect 301 dari alamat lama:
+- [x] **(Claude)** `sitemap.xml` dinamis (halaman utama, kategori, produk, portofolio).
+- [x] **(Claude)** `robots.txt` sendiri: blok `/admin`, `/includes`, `/database`; cantumkan alamat sitemap.
+- [x] **(Claude)** URL bersih dengan redirect 301 dari alamat lama:
   - `/produk/<slug>`, `/katalog/<kategori>`, `/galeri`, `/tentang`
-- [ ] **(Claude)** Hapus `index.html` dan `products.html`.
-- [ ] **(Claude)** `noindex` untuk halaman admin dan halaman yang tidak perlu muncul di Google.
-- [ ] **(Claude)** Cek ulang: Lighthouse SEO ≥ 95 dan tes **Rich Results** Google untuk schema.
+- [x] **(Claude)** Hapus `index.html` dan `products.html`.
+- [x] **(Claude)** `noindex` untuk halaman admin dan halaman yang tidak perlu muncul di Google.
+- [ ] **(Claude)** Cek ulang: Lighthouse SEO ≥ 95 dan tes **Rich Results** Google untuk schema (setelah deploy; Lighthouse belum dijalankan).
 
 ### Fase 2 — Saat domain baru aktif
-- [ ] **(Kamu)** Beli dan sambungkan domain di Hostinger (skill `connect-domain`); pastikan SSL aktif dan HTTP → HTTPS.
-- [ ] **(Claude)** Ganti `SITE_URL`, lalu pastikan `robots.txt` di domain baru tidak lagi memblokir Googlebot.
-- [ ] **(Kamu)** Alihkan permanen (301) alamat `hostingersite.com` ke domain baru.
+- [x] **(Kamu)** Beli dan sambungkan domain **wintom.co.id** di Hostinger; SSL aktif dan HTTP → HTTPS (2026-11-03).
+- [x] **(Claude)** `SITE_URL` = `https://wintom.co.id` (otomatis; di localhost mengikuti alamat yang dibuka) dan `robots.txt` sendiri mengizinkan Googlebot.
+- [ ] **(Kamu)** Alihkan permanen (301) alamat `hostingersite.com` ke domain baru. _Ditunda: situs dummy sengaja dibiarkan online sebagai cadangan (auto-deploy sudah dimatikan)._
 - [ ] **(Kamu)** Daftar **Google Search Console** (verifikasi domain via DNS), kirim `sitemap.xml`, hubungkan ke GA4.
 - [ ] **(Kamu)** Buat dan verifikasi **Google Business Profile** untuk Wintom di PIK. Nama, alamat, dan nomor telepon harus **persis sama** dengan di website. Isi kategori bisnis, jam buka, foto, dan tautan website.
 - [ ] **(Kamu)** Minta pelanggan lama memberi ulasan Google (target awal: 10+ ulasan).

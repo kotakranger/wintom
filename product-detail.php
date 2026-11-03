@@ -1,20 +1,26 @@
 <?php
 // product-detail.php — Detail Produk Wintom Curtain
 // Variant System Overhaul: loads from product_variants tables, accordion UI, image linking
+require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/product-card.php';
+require_once __DIR__ . '/includes/seo.php';
 
 $slug = $_GET['slug'] ?? '';
 $db = get_db();
 
+// Alamat lama (product-detail.php?slug=...) dialihkan permanen ke /produk/<slug>
+if ($slug !== '' && is_legacy_url()) redirect_clean(route_product($slug));
+
 if (!$slug) {
     http_response_code(404);
+    $noindex = true;
     include_once __DIR__ . '/includes/header.php';
     ?>
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12 py-16 text-center">
       <h1 class="font-playfair font-normal text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] text-dark mb-4">Produk Tidak Ditemukan</h1>
       <p class="font-jakarta text-muted text-lg mb-8">Maaf, produk yang Anda cari tidak ada atau telah dihapus.</p>
-      <a href="<?= BASE_URL ?>/products.php" class="inline-block bg-brand text-white px-6 py-3 rounded hover:bg-[#6a041c]">Kembali ke Katalog</a>
+      <a href="<?= url_for(route_catalog()) ?>" class="inline-block bg-brand text-white px-6 py-3 rounded hover:bg-[#6a041c]">Kembali ke Katalog</a>
     </div>
     <?php
     include_once __DIR__ . '/includes/footer.php';
@@ -26,12 +32,13 @@ $stmt->execute([$slug]);
 $product = $stmt->fetch();
 if (!$product) {
     http_response_code(404);
+    $noindex = true;
     include_once __DIR__ . '/includes/header.php';
     ?>
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12 py-16 text-center">
       <h1 class="font-playfair font-normal text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] text-dark mb-4">Produk Tidak Ditemukan</h1>
       <p class="font-jakarta text-muted text-lg mb-8">Maaf, produk yang Anda cari tidak ada atau telah dihapus.</p>
-      <a href="<?= BASE_URL ?>/products.php" class="inline-block bg-brand text-white px-6 py-3 rounded hover:bg-[#6a041c]">Kembali ke Katalog</a>
+      <a href="<?= url_for(route_catalog()) ?>" class="inline-block bg-brand text-white px-6 py-3 rounded hover:bg-[#6a041c]">Kembali ke Katalog</a>
     </div>
     <?php
     include_once __DIR__ . '/includes/footer.php';
@@ -65,13 +72,52 @@ $related_stmt->execute([$product['category_id'], $slug]);
 $related = $related_stmt->fetchAll();
 
 // WhatsApp message
-$product_url = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')
-             . BASE_URL . '/product-detail.php?slug=' . urlencode($product['slug']);
+$product_url = abs_url(route_product($product['slug']));
 // Pesan dasar (tanpa JS). Dengan JS, pesan dilengkapi varian, ukuran & estimasi saat tombol diklik.
 $wa_msg = rawurlencode("Halo Wintom, saya tertarik dengan produk *{$product['name']}* ({$product['category']}). Boleh minta info lebih lanjut?\n\n{$product_url}");
 
 $page_title = $product['name'];
 $active_nav  = 'products';
+
+// --- SEO: deskripsi unik, canonical, Open Graph & data terstruktur Product ---
+$meta_description = seo_excerpt(trim((string)$product['description']) !== ''
+    ? $product['description']
+    : $product['name'] . ' (' . $product['category'] . ') dari Wintom Curtain. Ready stock atau custom sesuai ukuran jendela, survei dan pasang di Jakarta dan sekitarnya.');
+$canonical_route = route_product($product['slug']);
+$og_type  = 'product';
+$og_image = $product['cover_image'] ?: ($gallery_urls[0] ?? null);
+$seo_pp   = product_price($product);
+$seo_imgs = array_values(array_unique(array_map('abs_asset', array_filter($gallery_urls))));
+$seo_product = [
+    '@context'    => 'https://schema.org',
+    '@type'       => 'Product',
+    'name'        => $product['name'],
+    'description' => $meta_description,
+    'category'    => $product['category'],
+    'brand'       => ['@type' => 'Brand', 'name' => SITE_NAME],
+    'url'         => abs_url($canonical_route),
+];
+if ($seo_imgs) $seo_product['image'] = $seo_imgs;
+if ($seo_pp['amount'] > 0) {
+    $seo_offer = [
+        '@type'         => 'Offer',
+        'url'           => abs_url($canonical_route),
+        'priceCurrency' => 'IDR',
+        'price'         => (string)$seo_pp['amount'],
+    ];
+    if (!$seo_pp['custom']) {   // harga per meter
+        $seo_offer['priceSpecification'] = [
+            '@type' => 'UnitPriceSpecification', 'price' => (string)$seo_pp['amount'], 'priceCurrency' => 'IDR',
+            'referenceQuantity' => ['@type' => 'QuantitativeValue', 'value' => 1, 'unitCode' => 'MTR'],
+        ];
+    }
+    $seo_product['offers'] = $seo_offer;
+}
+$schema = [$seo_product, seo_breadcrumbs([
+    'Beranda' => '/', 'Katalog' => '/katalog',
+    $product['category'] => route_catalog($product['category']),
+    $product['name'] => null,
+])];
 
 include_once __DIR__ . '/includes/header.php';
 
@@ -106,9 +152,9 @@ foreach ($gallery_images as $gi) {
   <div class="max-w-[1280px] mx-auto flex items-center gap-2 min-w-0 overflow-hidden whitespace-nowrap text-[11px] tracking-[0.44px] text-[#5f5e5a] font-jakarta">
     <a href="<?= BASE_URL ?>/" class="hover:text-[#860524] transition-colors">Beranda</a>
     <svg class="size-[5px] shrink-0" viewBox="0 0 4 7" fill="none"><path d="M1 1l2.5 2.5L1 6" stroke="#5f5e5a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <a href="<?= BASE_URL ?>/products.php" class="hover:text-[#860524] transition-colors">Produk</a>
+    <a href="<?= url_for(route_catalog()) ?>" class="hover:text-[#860524] transition-colors">Produk</a>
     <svg class="size-[5px] shrink-0" viewBox="0 0 4 7" fill="none"><path d="M1 1l2.5 2.5L1 6" stroke="#5f5e5a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <a href="<?= BASE_URL ?>/products.php?category=<?= urlencode($product['category']) ?>" class="hover:text-[#860524] transition-colors"><?= htmlspecialchars($product['category']) ?></a>
+    <a href="<?= url_for(route_catalog($product['category'])) ?>" class="hover:text-[#860524] transition-colors"><?= htmlspecialchars($product['category']) ?></a>
     <svg class="size-[5px] shrink-0" viewBox="0 0 4 7" fill="none"><path d="M1 1l2.5 2.5L1 6" stroke="#5f5e5a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span class="font-semibold text-[#242424] truncate min-w-0"><?= htmlspecialchars($product['name']) ?></span>
   </div>
@@ -361,7 +407,7 @@ foreach ($gallery_images as $gi) {
         <p class="font-jakarta font-semibold text-[#5f5e5a] text-[11px] tracking-[1.65px] uppercase">KOLEKSI PENDAMPING</p>
         <h2 class="font-playfair font-normal text-[#242424] text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px]">Eksplorasi Kurasi Tekstil Lainnya</h2>
       </div>
-      <a href="<?= BASE_URL ?>/products.php" class="flex items-center gap-1.5 font-jakarta font-semibold text-[#860524] text-[12px] tracking-[1.2px] uppercase hover:gap-2.5 transition-all duration-200">
+      <a href="<?= url_for(route_catalog()) ?>" class="flex items-center gap-1.5 font-jakarta font-semibold text-[#860524] text-[12px] tracking-[1.2px] uppercase hover:gap-2.5 transition-all duration-200">
         LIHAT SELURUH KATALOG
         <svg class="size-[10px]" fill="none" viewBox="0 0 12 12" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2 6h8M7 3l3 3-3 3"/></svg>
       </a>

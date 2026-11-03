@@ -6,6 +6,7 @@
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/seo.php';
 $page_title = $page_title ?? SITE_NAME;
 $active_nav = $active_nav ?? '';
 
@@ -22,7 +23,7 @@ $quote_categories = $quote_categories
   <title><?= htmlspecialchars($page_title) ?> | <?= SITE_NAME ?></title>
   <link rel="icon" type="image/png" href="<?= BASE_URL ?>/assets/images/favicon.png" />
   <link rel="apple-touch-icon" href="<?= BASE_URL ?>/assets/images/favicon.png" />
-  <meta name="description" content="Wintom Curtain — Spesialis gorden premium, roller blind, dan motorized smart system untuk hunian dan komersial di Jabodetabek." />
+  <?php seo_head(); ?>
 
   <!-- Font judul (Libre Caslon Text) di-host sendiri: tidak memblokir render & tanpa koneksi ke Google -->
   <link rel="preload" href="<?= BASE_URL ?>/assets/fonts/libre-caslon-text-400.woff2" as="font" type="font/woff2" crossorigin />
@@ -140,9 +141,9 @@ $quote_categories = $quote_categories
 $nav_links = [
     // label => [url, key active_nav]
     'BERANDA'     => [BASE_URL . '/', 'home'],
-    'PRODUK'      => [BASE_URL . '/products.php', 'products'],
-    'GALERI'      => [BASE_URL . '/gallery.php', 'gallery'],
-    'TENTANG KAMI'=> [BASE_URL . '/about.php', 'about'],
+    'PRODUK'      => [url_for(route_catalog()), 'products'],
+    'GALERI'      => [url_for('/galeri'), 'gallery'],
+    'TENTANG KAMI'=> [url_for('/tentang'), 'about'],
     'KONTAK'      => [BASE_URL . '/#contact', 'contact'],
 ];
 foreach ($nav_links as $label => [$href, $key]):

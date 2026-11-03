@@ -5,6 +5,11 @@ require_once __DIR__ . '/includes/db.php';
 
 $page_title = 'Tentang Kami & Kontak';
 $active_nav  = 'about';
+if (is_legacy_url()) redirect_clean('/tentang');
+require_once __DIR__ . '/includes/seo.php';
+$meta_description = 'Kenali Wintom Curtain, showroom gorden dan blind di Ruko Soho Ebony, PIK, Jakarta Utara. Jam buka Senin–Sabtu 09.00–18.00. Hubungi kami via WhatsApp untuk survei gratis.';
+$canonical_route  = '/tentang';
+$schema           = [seo_local_business(), seo_breadcrumbs(['Beranda' => '/', 'Tentang Kami' => null])];
 
 include_once __DIR__ . '/includes/header.php';
 ?>
