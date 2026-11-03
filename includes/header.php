@@ -87,13 +87,16 @@ $quote_categories = $quote_categories
     /* ===== Google Translate widget (header, kanan atas) ===== */
     #gt-wrap { display: flex; align-items: center; margin-left: 16px; flex-shrink: 0; }
     [data-gt-reset][hidden] { display: none !important; }
-    #google_translate_element { line-height: 0; }
-    #google_translate_element .gt-ph { text-align: left; }
+    /* Slot berukuran tetap: tombol sementara & dropdown Google menumpuk di sini, jadi navbar tidak bergeser saat widget dimuat */
+    #gt-slot { position: relative; width: 132px; height: 38px; flex-shrink: 0; }
+    #gt-slot > * { position: absolute; top: 0; left: 0; }
+    #google_translate_element { line-height: 0; width: 100%; height: 100%; }
+    #gt-slot .gt-ph { text-align: left; }
     #google_translate_element .goog-te-gadget { font-size: 0; color: transparent; line-height: 0; }
     #google_translate_element .goog-te-gadget > span,
     #google_translate_element .goog-te-gadget > div:not(:first-child),
     #google_translate_element .goog-logo-link { display: none !important; }
-    #google_translate_element :is(.goog-te-combo, .gt-ph) {
+    #gt-slot :is(.goog-te-combo, .gt-ph) {
       appearance: none; -webkit-appearance: none;
       margin: 0; width: 132px; max-width: 100%; height: 38px;
       font: 600 11px/1 Arial, Helvetica, sans-serif; letter-spacing: 0.06em; text-transform: uppercase;
@@ -101,18 +104,20 @@ $quote_categories = $quote_categories
       border: 1px solid #ece8e1; border-radius: 3px; padding: 0 30px 0 12px; cursor: pointer;
       transition: border-color .2s;
     }
-    #google_translate_element :is(.goog-te-combo, .gt-ph):hover,
-    #google_translate_element :is(.goog-te-combo, .gt-ph):focus { border-color: #860524; outline: none; }
+    #gt-slot :is(.goog-te-combo, .gt-ph):hover,
+    #gt-slot :is(.goog-te-combo, .gt-ph):focus { border-color: #860524; outline: none; }
     /* Sembunyikan banner/tooltip bawaan Google & cegah layout bergeser */
     body { top: 0 !important; }
     .skiptranslate > iframe, iframe.goog-te-banner-frame, #goog-gt-tt, .goog-tooltip { display: none !important; }
     .goog-text-highlight { background: none !important; box-shadow: none !important; }
     @media (max-width: 1023px) {
       #gt-wrap { margin-left: 8px; }
-      #google_translate_element :is(.goog-te-combo, .gt-ph) { width: 120px; padding: 0 26px 0 10px; font-size: 10px; background-position: right 10px center; }
+      #gt-slot { width: 120px; }
+      #gt-slot :is(.goog-te-combo, .gt-ph) { width: 120px; padding: 0 26px 0 10px; font-size: 10px; background-position: right 10px center; }
     }
     @media (max-width: 479px) {
-      #google_translate_element :is(.goog-te-combo, .gt-ph) { width: 116px; padding: 0 24px 0 9px; letter-spacing: 0.02em; background-position: right 9px center; }
+      #gt-slot { width: 116px; }
+      #gt-slot :is(.goog-te-combo, .gt-ph) { width: 116px; padding: 0 24px 0 9px; letter-spacing: 0.02em; background-position: right 9px center; }
     }
   </style>
 </head>
@@ -156,8 +161,10 @@ foreach ($nav_links as $label => [$href, $key]):
     </button>
 
     <div id="gt-wrap" class="notranslate" translate="no">
-      <div id="google_translate_element" aria-label="Pilih bahasa">
-        <!-- Pengganti sementara: script Google Translate (±110 KB) baru dimuat saat pengunjung berinteraksi -->
+      <div id="gt-slot">
+        <div id="google_translate_element" aria-label="Pilih bahasa"></div>
+        <!-- Pengganti sementara: script Google Translate (±110 KB) baru dimuat saat pengunjung berinteraksi.
+             Tetap tampil sampai dropdown Google siap (lihat gtReady), lalu dihapus. -->
         <button type="button" class="gt-ph" data-gt-load>Pilih Bahasa</button>
       </div>
       <!-- Muncul setelah pengunjung memilih bahasa lain: kembali ke Bahasa Indonesia (bawaan) -->
@@ -203,13 +210,18 @@ foreach ($nav_links as $label => [$href, $key]):
       layout: google.translate.TranslateElement.InlineLayout.VERTICAL,
       autoDisplay: false
     }, 'google_translate_element');
-    var ph = document.querySelector('#google_translate_element .gt-ph');
-    if (ph) ph.remove();
+    // Dropdown Google dirender menyusul (±0,5 dtk): tombol sementara baru dihapus setelah dropdown ada
+    var el = document.getElementById('google_translate_element');
+    if (!gtReady()) new MutationObserver(function (_, obs) { if (gtReady()) obs.disconnect(); }).observe(el, { childList: true, subtree: true, attributes: true });
+  }
+  function gtReady() {
     var combo = document.querySelector('#google_translate_element .goog-te-combo');
-    if (combo) {
-      combo.addEventListener('change', function () { setTimeout(gtSyncReset, 300); });
-      if (gtWantsPicker) { combo.focus(); try { combo.showPicker(); } catch (e) {} }
-    }
+    if (!combo || !combo.offsetWidth) return false;   // belum ada / belum punya ukuran: biarkan tombol sementara tampil
+    var ph = document.querySelector('#gt-slot .gt-ph');
+    if (ph) ph.remove();
+    combo.addEventListener('change', function () { setTimeout(gtSyncReset, 300); });
+    if (gtWantsPicker) { combo.focus(); try { combo.showPicker(); } catch (e) {} }
+    return true;
   }
 
   // Muat script Google Translate hanya bila perlu: langsung bila bahasa lain sedang aktif,
