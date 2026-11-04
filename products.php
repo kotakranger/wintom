@@ -4,7 +4,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/product-card.php';
 
-$page_title = 'Katalog Koleksi Gorden & Blinds';
+$page_title = 'Katalog Gorden & Blinds Custom di PIK, Jakarta';
 $active_nav = 'products';
 
 // Ambil parameter filter & query
@@ -47,6 +47,20 @@ if ($active_category) {
     $page_title = $active_category['name'] . ' — Katalog Gorden & Blinds';
 }
 
+// Judul & deskripsi SEO untuk kategori utama (kata yang dicari orang). Kategori lain / hasil rename di admin
+// otomatis memakai format umum di atas. Hanya <title> dan meta description yang berubah, bukan tampilan halaman.
+$seo_cat_terms = [
+    'curtain'                => ['Jual Gorden Custom Jakarta Utara', 'gorden custom'],
+    'roller-blind-blackout'  => ['Jual Roller Blind Blackout Jakarta', 'roller blind blackout'],
+    'roller-blind-sunscreen' => ['Jual Roller Blind Sunscreen Jakarta', 'roller blind sunscreen'],
+    'zebra-blind'            => ['Jual Zebra Blind Jakarta', 'zebra blind'],
+    'vitrase'                => ['Jual Vitrase Jakarta', 'vitrase'],
+];
+$seo_cat_term = $active_category ? ($seo_cat_terms[cat_slug($active_category['name'])] ?? null) : null;
+if ($seo_cat_term) {
+    $page_title = $seo_cat_term[0];
+}
+
 // URL bersih: /katalog atau /katalog/<kategori>. Alamat lama (products.php?category=...) dialihkan permanen.
 $catalog_route = route_catalog($active_category['name'] ?? null);
 if (is_legacy_url() && ($raw_cat === '' || $active_category)) {
@@ -58,10 +72,12 @@ if ($raw_cat !== '' && !$active_category) {   // kategori tidak ada
 }
 
 require_once __DIR__ . '/includes/seo.php';
-$meta_description = $active_category
+$meta_description = $seo_cat_term
+    ? 'Jual ' . $seo_cat_term[1] . ' di Jakarta dari Wintom Curtain, showroom di PIK, Jakarta Utara. Lihat pilihan dan harga, survei dan pengukuran gratis untuk area Jabodetabek.'
+    : ($active_category
     ? ($active_category['tagline'] ? $active_category['name'] . ': ' . $active_category['tagline'] . '. ' : '')
         . 'Koleksi ' . $active_category['name'] . ' dari Wintom Curtain, showroom gorden dan blind di PIK, Jakarta Utara. Lihat pilihan dan harga, konsultasi via WhatsApp.'
-    : 'Katalog gorden, roller blind, zebra blind, roman blind, vertical blind dan motorized curtain Wintom. Ready stock atau custom, harga per meter transparan.';
+    : 'Katalog gorden, roller blind, zebra blind, roman blind, vertical blind dan motorized curtain Wintom. Ready stock atau custom, harga per meter transparan.');
 $canonical_route = $catalog_route;
 if ($search_query !== '') $noindex = true;   // halaman hasil pencarian tidak perlu diindeks
 $schema = [seo_breadcrumbs($active_category

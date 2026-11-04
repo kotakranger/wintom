@@ -3,11 +3,11 @@
 require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 
-$page_title = 'Gorden & Blinds Custom di PIK, Jakarta';
+$page_title = 'Gorden, Roller Blind & Zebra Blind di PIK, Jakarta';
 $active_nav = 'home';
 if (is_legacy_url()) redirect_clean('/');   // /index.php -> /
 require_once __DIR__ . '/includes/seo.php';
-$meta_description = 'Wintom Curtain: gorden premium, roller blind, zebra blind & motorized smart curtain di PIK, Jakarta Utara. Ready stock atau custom, survei dan pasang se-Jabodetabek.';
+$meta_description = 'Wintom Curtain: gorden custom, roller blind, zebra blind & motorized smart curtain di PIK, Jakarta Utara. Ready stock atau custom, survei gratis dan pasang se-Jabodetabek.';
 $canonical_route  = '/';
 $schema           = [seo_local_business()];
 // Pertanyaan Umum (ditampilkan di bagian FAQ di bawah) — dipakai juga untuk data terstruktur FAQPage
