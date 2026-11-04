@@ -33,7 +33,7 @@ $selected_cat = $cat_aliases[$normalized_key] ?? $raw_cat;
 
 // Load categories from database (dynamic)
 $pdo = get_db();
-$db_cats = $pdo->query("SELECT name, tagline, price_per_meter FROM categories ORDER BY sort_order ASC, name ASC")->fetchAll();
+$db_cats = $pdo->query("SELECT name, tagline FROM categories ORDER BY sort_order ASC, name ASC")->fetchAll();
 $categories = ['Semua Koleksi' => ''];
 $active_category = null;   // kategori terpilih -> judul & deskripsi hero mengikuti kategori
 foreach ($db_cats as $c) {
@@ -60,7 +60,7 @@ if ($raw_cat !== '' && !$active_category) {   // kategori tidak ada
 require_once __DIR__ . '/includes/seo.php';
 $meta_description = $active_category
     ? ($active_category['tagline'] ? $active_category['name'] . ': ' . $active_category['tagline'] . '. ' : '')
-        . 'Koleksi ' . $active_category['name'] . ' Wintom Curtain: siap pasang atau custom sesuai ukuran jendela. Survei dan pemasangan di Jakarta dan sekitarnya.'
+        . 'Koleksi ' . $active_category['name'] . ' dari Wintom Curtain, showroom gorden dan blind di PIK, Jakarta Utara. Lihat pilihan dan harga, konsultasi via WhatsApp.'
     : 'Katalog gorden, roller blind, zebra blind, roman blind, vertical blind dan motorized curtain Wintom. Ready stock atau custom, harga per meter transparan.';
 $canonical_route = $catalog_route;
 if ($search_query !== '') $noindex = true;   // halaman hasil pencarian tidak perlu diindeks
@@ -262,7 +262,6 @@ include_once __DIR__ . '/includes/header.php';
     <?php if ($active_category && $search_query === '' && !empty($products)):
       // Teks pengantar kategori (SEO): hanya fakta dari database & informasi yang sudah ada di situs
       $intro_count = count($products);
-      $intro_price = (int)($active_category['price_per_meter'] ?? 0);
     ?>
     <div class="mt-14 md:mt-20 pt-10 md:pt-14 border-t border-border max-w-3xl">
       <h2 class="font-playfair font-normal text-dark text-[24px] md:text-[30px] leading-[1.25] tracking-[-0.5px] mb-4">
@@ -270,12 +269,11 @@ include_once __DIR__ . '/includes/header.php';
       </h2>
       <p class="font-jakarta text-muted text-[15px] leading-[1.7] mb-4">
         <?php if (!empty($active_category['tagline'])): ?><?= htmlspecialchars(rtrim($active_category['tagline'], '. ')) ?>. <?php endif; ?>
-        Wintom Curtain menyediakan <?= htmlspecialchars($active_category['name']) ?> dalam <?= $intro_count ?> pilihan koleksi,
-        <?php if ($intro_price > 0): ?>dengan harga acuan Rp <?= number_format($intro_price, 0, ',', '.') ?> per meter,<?php endif; ?>
-        tersedia ready stock maupun custom sesuai ukuran jendela hunian atau kantor Anda di Jakarta dan sekitarnya.
+        Wintom Curtain menyediakan <?= htmlspecialchars($active_category['name']) ?> dalam <?= $intro_count ?> pilihan koleksi
+        untuk hunian dan kantor di Jakarta dan sekitarnya. Lihat detail dan harga di setiap produk di atas.
       </p>
       <p class="font-jakarta text-muted text-[15px] leading-[1.7] mb-4">
-        Tim kami melayani survei dan pengukuran ke lokasi tanpa biaya untuk area Jabodetabek. Anda juga bisa melihat contoh bahan langsung di showroom kami
+        Butuh bantuan memilih? Tim kami melayani survei dan pengukuran ke lokasi tanpa biaya untuk area Jabodetabek. Anda juga bisa melihat contoh bahan langsung di showroom kami
         di <?= htmlspecialchars(SITE_ADDRESS_SHORT) ?> (<?= htmlspecialchars(SITE_HOURS) ?>), atau
         <a href="<?= WA_URL ?>?text=<?= rawurlencode('Halo Wintom, saya ingin konsultasi ' . $active_category['name']) ?>" target="_blank" rel="noopener" class="text-brand font-semibold hover:underline">konsultasi lewat WhatsApp</a>.
       </p>
