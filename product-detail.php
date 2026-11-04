@@ -126,6 +126,9 @@ function fmt_price(int $price): string {
 }
 
 // Build gallery image map for JS (id → url) for variant-image linking
+// Versi besar tiap foto (urutan sama dengan thumbnail) untuk lightbox
+$lightbox_images = array_map(fn($u) => img_src((string)$u, 1600), $gallery_urls);
+
 $gallery_map = [];
 foreach ($gallery_images as $gi) {
     $gallery_map[$gi['id']] = $gi['image_url'];
@@ -168,12 +171,17 @@ foreach ($gallery_images as $gi) {
     <div class="col-span-12 lg:col-span-6 flex flex-col gap-4 min-w-0 lg:sticky lg:top-[100px] lg:self-start" data-reveal>
 
       <!-- Main Viewport -->
-      <div class="bg-[#efeeeb] border border-[#e2ddd5] rounded-[2px] overflow-hidden relative" id="main-viewport">
+      <div class="bg-[#efeeeb] border border-[#e2ddd5] rounded-[2px] overflow-hidden relative cursor-zoom-in" id="main-viewport"
+           role="button" tabindex="0" aria-label="Perbesar foto produk">
         <?php $main = img_parts($gallery_urls[0]); ?>
         <img id="main-img" sizes="(min-width:1024px) 600px, 100vw"
              src="<?= htmlspecialchars($main['src']) ?>"<?= $main['srcset'] !== '' ? ' srcset="' . htmlspecialchars($main['srcset']) . '"' : '' ?>
              alt="<?= htmlspecialchars($product['name']) ?>"
              class="w-full aspect-[3/4] object-cover transition-opacity duration-300" />
+        <span class="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 backdrop-blur-[2px] px-3 py-1.5 font-jakarta font-semibold text-[#242424] text-[11px] tracking-[0.5px] shadow-sm" aria-hidden="true">
+          <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M11 8v6M8 11h6"/></svg>
+          Perbesar
+        </span>
       </div>
 
       <!-- Thumbnail Strip -->
@@ -423,6 +431,8 @@ foreach ($gallery_images as $gi) {
 </section>
 <?php endif; ?>
 
+<?php include __DIR__ . '/includes/lightbox.php'; ?>
+
 <script>
 /* ==========================================================
    GALLERY IMAGE MAP (for variant-image linking)
@@ -455,7 +465,11 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ==========================================================
    SWITCH MAIN IMAGE
    ========================================================== */
+let pdIndex = 0;   // foto yang sedang tampil (urutan = thumbnail)
 function switchImg(url, btn) {
+  const thumbs = Array.from(document.querySelectorAll('.thumbnail-btn'));
+  const ti = btn ? thumbs.indexOf(btn) : thumbs.findIndex(b => b.dataset.imgUrl === url);
+  if (ti >= 0) pdIndex = ti;
   const img = document.getElementById('main-img');
   img.style.opacity = '0';
   setTimeout(() => {
@@ -476,6 +490,23 @@ function switchImg(url, btn) {
     btn.className = btn.className.replace('border border-[#e2ddd5]', 'border-2 border-[#860524]');
   }
 }
+
+/* ==========================================================
+   LIGHTBOX: klik foto utama -> tampil utuh (tanpa crop), bisa digeser antar foto
+   ========================================================== */
+const PD_LIGHTBOX = <?= json_encode($lightbox_images, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+function openProductLightbox() {
+  openLightbox(PD_LIGHTBOX, pdIndex, <?= json_encode($product['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
+               <?= json_encode($product['category'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>, function (i) {
+    // Setelah ditutup, foto utama mengikuti foto terakhir yang dilihat di lightbox
+    if (i !== pdIndex) { const b = document.querySelectorAll('.thumbnail-btn')[i]; if (b) b.click(); }
+  });
+}
+(function () {
+  const vp = document.getElementById('main-viewport');
+  vp.addEventListener('click', openProductLightbox);
+  vp.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProductLightbox(); } });
+})();
 
 /* ==========================================================
    SELECT VARIANT OPTION

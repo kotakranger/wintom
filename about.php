@@ -68,53 +68,6 @@ include_once __DIR__ . '/includes/header.php';
   </div>
 </section>
 
-<!-- ===== TIM INTI ===== -->
-<?php
-// Jajaran direksi / tim inti. PLACEHOLDER — ganti nama, jabatan & foto (isi 'photo' dengan URL/path foto, mis. /assets/images/team/nama.jpg).
-$team = [
-    ['name' => 'Nama Anggota Tim', 'role' => 'Direktur Utama',            'photo' => ''],
-    ['name' => 'Nama Anggota Tim', 'role' => 'Direktur Operasional',      'photo' => ''],
-    ['name' => 'Nama Anggota Tim', 'role' => 'Kepala Desain & Konsultasi', 'photo' => ''],
-    ['name' => 'Nama Anggota Tim', 'role' => 'Kepala Produksi',           'photo' => ''],
-    ['name' => 'Nama Anggota Tim', 'role' => 'Kepala Instalasi',          'photo' => ''],
-    ['name' => 'Nama Anggota Tim', 'role' => 'Manajer Layanan Pelanggan', 'photo' => ''],
-];
-?>
-<section class="bg-[#f4f1ea] border-t border-[#ece8e1] py-16 md:py-24">
-  <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12 flex flex-col gap-10 md:gap-14">
-
-    <!-- Judul: gaya sama dengan section di landing page -->
-    <div class="flex flex-col gap-3 items-center w-full" data-reveal>
-      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] tracking-[-0.5px] text-center leading-[1.2] m-0">Tim Kami</h2>
-      <div class="bg-brand h-[2px] w-12"></div>
-    </div>
-
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6">
-      <?php foreach ($team as $i => $m): ?>
-      <figure class="m-0 group bg-white border border-[#ece8e1] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] p-3 flex flex-col"
-              data-reveal style="--d:<?= ($i % 6) * 70 ?>ms">
-        <div class="relative aspect-square overflow-hidden rounded-[2px] bg-[#ece8e1]">
-          <?php if ($m['photo']): ?>
-          <img <?= img_attrs($m['photo'], '(min-width:1024px) 200px, (min-width:640px) 33vw, 50vw', [240, 480]) ?> alt="<?= htmlspecialchars($m['name'] . ', ' . $m['role']) ?>" loading="lazy"
-               class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.05]"/>
-          <?php else: ?>
-          <!-- Placeholder siluet sampai foto asli tersedia -->
-          <svg class="absolute inset-0 w-full h-full text-[#d9d2c5]" viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
-            <circle cx="50" cy="42" r="15" fill="currentColor"/>
-            <path d="M22 100v-4c0-14 12.5-24 28-24s28 10 28 24v4z" fill="currentColor"/>
-          </svg>
-          <?php endif; ?>
-        </div>
-        <figcaption class="pt-3 px-1 pb-1">
-          <p class="font-playfair font-normal text-dark text-[15px] sm:text-[16px] leading-[1.3] m-0"><?= htmlspecialchars($m['name']) ?></p>
-          <p class="font-jakarta font-semibold text-muted text-[10px] tracking-[1.2px] uppercase leading-[1.4] mt-1 m-0"><?= htmlspecialchars($m['role']) ?></p>
-        </figcaption>
-      </figure>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
-
 <!-- ===== BRAND VALUES ===== -->
 <section class="bg-cream py-14 md:py-[80px]">
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12">
