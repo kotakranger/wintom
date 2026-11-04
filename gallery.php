@@ -189,19 +189,19 @@ include_once __DIR__ . '/includes/header.php';
 <section class="bg-[#860524] py-14 md:py-[72px]">
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12 flex flex-col lg:flex-row lg:items-center justify-between gap-8 lg:gap-10">
     <div data-reveal>
-      <p class="font-jakarta font-semibold text-white/60 text-[11px] tracking-[2.64px] uppercase mb-3">MULAI PROYEK ANDA</p>
+      <p class="font-jakarta font-semibold text-white/60 text-[11px] tracking-[2.64px] uppercase mb-3">Mulai Proyek Anda Bersama Wintom</p>
       <h2 class="font-playfair font-normal text-white text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] max-w-[480px]">
-        Jadwalkan Survei &amp; Pengukuran Gratis ke Lokasi Anda
+        Wujudkan Ruangan Impian Bersama WINTOM
       </h2>
     </div>
     <div class="flex flex-col items-stretch sm:items-start lg:items-end gap-4 shrink-0" data-reveal style="--d:120ms">
       <p class="font-jakarta text-white/70 text-[14px] leading-[22px] max-w-[300px] lg:text-right">
-        Tim konsultan kami siap datang ke lokasi untuk survei, membawa swatch kain fisik, dan memberikan estimasi biaya transparan tanpa biaya apapun.
+        Konsultasikan kebutuhan gorden dan blinds Anda bersama WINTOM. Kami menyediakan layanan survei, pengukuran, hingga pemasangan profesional dengan penawaran yang disesuaikan dengan kebutuhan proyek Anda.
       </p>
-      <a href="<?= WA_URL ?>?text=Halo+Wintom%2C+saya+ingin+jadwalkan+survei+gratis+untuk+proyek+saya"
+      <a href="<?= WA_URL ?>?text=Halo+Wintom%2C+saya+ingin+konsultasi+dan+jadwalkan+survei+untuk+proyek+saya"
          target="_blank" rel="noopener"
          class="inline-flex items-center justify-center gap-3 bg-white text-brand font-semibold text-[12px] tracking-[1.8px] uppercase px-7 py-[14px] rounded-[2px] hover:bg-cream transition-colors duration-200">
-        JADWALKAN SURVEI GRATIS
+        Konsultasi dan jadwalkan survei
       </a>
     </div>
   </div>

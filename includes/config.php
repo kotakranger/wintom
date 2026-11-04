@@ -11,7 +11,7 @@ ini_set('display_errors', APP_DEBUG ? '1' : '0');
 ini_set('log_errors', '1');
 error_reporting(E_ALL);
 
-define('WA_NUMBER', '6282258877769');   // Format: 628xxxxxxxxxx (tanpa +). Nomor utama
+define('WA_NUMBER', '6282260132823');   // Format: 628xxxxxxxxxx (tanpa +). Nomor utama
 define('WA_NUMBER_2', '6282258877759'); // Nomor kedua
 define('WA_URL', 'https://wa.me/' . WA_NUMBER);
 define('WA_URL_2', 'https://wa.me/' . WA_NUMBER_2);
@@ -19,8 +19,8 @@ define('WA_URL_2', 'https://wa.me/' . WA_NUMBER_2);
 define('SITE_NAME', 'Wintom Curtain');
 define('SITE_TAGLINE', 'Gorden & Roller Blind — Ready Stock atau Custom');
 define('SITE_EMAIL', 'wintomconceptstore@gmail.com');
-define('SITE_PHONE', '0822-5887-7769');
-define('SITE_PHONE_RAW', '+6282258877769');
+define('SITE_PHONE', '0822-6013-2823');
+define('SITE_PHONE_RAW', '+6282260132823');
 define('SITE_PHONE_2', '0822-5887-7759');
 define('SITE_PHONE_2_RAW', '+6282258877759');
 define('SITE_ADDRESS', 'Ruko Soho Ebony, Jl. Laksamana Yos Sudarso, Jl. Pantai Indah Kapuk No.2 Blok A12, Kamal Muara, Kec. Penjaringan, DKI Jakarta 14470');
