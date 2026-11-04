@@ -172,13 +172,18 @@ require_once __DIR__ . '/inquiry-form.php';
       }
 
       setLoading(true, 'MENYIMPAN…');
+      // Batas waktu: bila balasan server tak kunjung sampai (jaringan tersendat), jangan "Menyimpan…" selamanya.
+      const ctl = new AbortController();
+      const timer = window.setTimeout(function () { ctl.abort(); }, 20000);
       try {
         const res = await fetch(form.action, {
           method: 'POST',
           body: new FormData(form),
           headers: { 'Accept': 'application/json' },
-          credentials: 'same-origin'
+          credentials: 'same-origin',
+          signal: ctl.signal
         });
+        window.clearTimeout(timer);
         let data = null;
         try { data = await res.json(); } catch (_) {}
 
@@ -198,7 +203,18 @@ require_once __DIR__ . '/inquiry-form.php';
         }
         showAlert((data && data.message) || 'Maaf, terjadi kesalahan. Silakan coba lagi.', false);
       } catch (err) {
-        showAlert('Tidak dapat terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.', false);
+        window.clearTimeout(timer);
+        if (err && err.name === 'AbortError') {
+          // Data kemungkinan sudah tersimpan, hanya balasannya yang tertahan: tawarkan jalur langsung ke WhatsApp.
+          showAlert('Balasan server terlalu lama. Data Anda mungkin sudah kami terima. Silakan coba lagi, atau hubungi kami langsung lewat WhatsApp: ', false);
+          const a = document.createElement('a');
+          a.href = <?= json_encode(WA_URL . '?text=' . rawurlencode('Halo Wintom, saya ingin meminta penawaran.')) ?>;
+          a.target = '_blank'; a.rel = 'noopener'; a.className = 'font-semibold underline';
+          a.textContent = 'Buka WhatsApp';
+          alertBox.appendChild(a);
+        } else {
+          showAlert('Tidak dapat terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.', false);
+        }
       }
       setLoading(false);
     });
