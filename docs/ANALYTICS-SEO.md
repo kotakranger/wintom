@@ -15,7 +15,8 @@ Legenda: `[x]` selesai · `[ ]` belum · **(Kamu)** perlu tindakan pemilik situs
 2. **(Claude)** Isi `GA_MEASUREMENT_ID` (di `includes/config.php`), push ke `main`, purge CDN, cek GA › Realtime bahwa kunjungan dan event (`generate_lead`, `contact_whatsapp`, `contact_phone`, `quote_open`) masuk.
 3. **(Kamu)** GA › Admin › Events: tandai `generate_lead` dan `contact_whatsapp` sebagai Key event.
 4. **(Kamu, opsional, bisa kapan saja)** Google Search Console tipe **Domain** (`wintom.co.id`): kirim kode TXT verifikasi ke Claude untuk ditambah ke DNS, lalu kirim `sitemap.xml`. Tidak diperlukan untuk GA.
-5. **(Claude)** Cek ulang Lighthouse SEO ≥ 95 dan Rich Results Test (belum dijalankan; kuota API PageSpeed Google habis pada 2026-11-03, ulangi lewat pagespeed.web.dev).
+5. **(Claude)** ~~Cek Lighthouse~~ Selesai 2026-11-04 (lokal, mobile): SEO 100, Performance 96–98, Best Practices 100, CLS 0, Accessibility 84–91 (temuan: kontras warna, urutan heading, label `select`, ARIA). Rich Results Test Google belum bisa dijalankan.
+5b. **(Penting, Kamu/Hostinger)** CDN Hostinger (`server: hcdn`) membalas **403** untuk User-Agent Googlebot/Bingbot palsu dan untuk Chrome headless di `wintom.co.id` (juga di Uvora & situs dummy). Belum terbukti Googlebot asli ikut diblokir. Cara memastikan: Search Console › Inspeksi URL › **Uji URL Langsung**. Jika gagal, minta Hostinger mengizinkan crawler terverifikasi.
 6. **(Ditunda)** Google Business Profile (butuh verifikasi kartu pos/telepon) dan ulasan Google: hanya untuk Maps/pencarian lokal, bukan untuk analytics.
 7. **(Claude, setelah GA live)** Fase 3 konten: teks pengantar kategori + FAQ (schema FAQ), halaman per proyek portofolio.
 
@@ -97,8 +98,10 @@ Legenda: `[x]` selesai · `[ ]` belum · **(Kamu)** perlu tindakan pemilik situs
 - [ ] Setelah ±1–2 minggu: cek di Search Console bahwa halaman terindeks dan tidak ada error.
 
 ### Fase 3 — Konten (berkelanjutan)
-- [ ] Teks pengantar 150–300 kata di tiap halaman kategori dengan kata kunci lokal (mis. "roller blind Jakarta Utara", "gorden motorized PIK").
-- [ ] Bagian FAQ (+ schema FAQ): lama pengerjaan, survei gratis, area layanan, cara mengukur, garansi.
+- [x] Teks pengantar di tiap halaman kategori (2026-11-04): dibangun otomatis dari data (jumlah koleksi, harga acuan per meter, tagline) + info yang sudah ada di situs (survei gratis Jabodetabek, showroom PIK, WhatsApp) + tautan ke kategori lain. Pendek (±90 kata) karena hanya memakai fakta yang pasti.
+- [ ] **(Kamu)** Teks lebih panjang/kaya kata kunci per kategori butuh fakta dari pemilik: lama pengerjaan custom, garansi, bahan unggulan, cara mengukur jendela. Kirim poin-poinnya, nanti Claude yang menulis.
+- [x] FAQ + schema `FAQPage` di beranda (5 pertanyaan, termasuk survei gratis). Catatan: Google sejak 2023 hanya menampilkan rich result FAQ untuk situs tertentu, jadi manfaat utamanya relevansi, bukan tampilan khusus.
+- [ ] **(Kamu)** FAQ tambahan (lama pengerjaan, garansi, cara mengukur) menunggu jawaban resmi dari pemilik.
 - [ ] Satu halaman per proyek portofolio, dengan lokasi dan jenis produk.
 - [ ] Seragamkan judul dan alt text portofolio ke Bahasa Indonesia.
 - [ ] Opsional: artikel panduan ("Cara mengukur jendela untuk gorden", "Roller blind vs zebra blind").

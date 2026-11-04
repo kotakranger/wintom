@@ -10,6 +10,22 @@ require_once __DIR__ . '/includes/seo.php';
 $meta_description = 'Wintom Curtain: gorden premium, roller blind, zebra blind & motorized smart curtain di PIK, Jakarta Utara. Ready stock atau custom, survei dan pasang se-Jabodetabek.';
 $canonical_route  = '/';
 $schema           = [seo_local_business()];
+// Pertanyaan Umum (ditampilkan di bagian FAQ di bawah) — dipakai juga untuk data terstruktur FAQPage
+$faqs = [
+    ['Apa bedanya ready stock dan custom?', 'Ready stock bisa langsung dibawa atau dipasang. Custom dibuat mengikuti ukuran jendela dan bahan pilihan Anda, sehingga hasilnya pas sempurna.'],
+    ['Bagaimana cara memesan?', 'Hubungi kami lewat WhatsApp atau form penawaran. Untuk custom, tim kami mengukur dan membantu memilih bahan, lalu Anda menerima penawaran rinci. Setelah setuju, kami produksi dan pasang di lokasi Anda.'],
+    ['Apakah survei dan pengukuran ke lokasi gratis?', 'Ya. Tim Wintom datang ke hunian atau kantor Anda untuk mengukur jendela dan membantu memilih bahan, tanpa biaya survei untuk area Jabodetabek.'],
+    ['Apakah melayani proyek komersial?', 'Ya. Kami menangani hunian, kantor, hingga hotel &amp; villa. Lihat hasilnya di halaman Galeri.'],
+    ['Bisakah saya melihat bahannya langsung?', 'Tentu. Kunjungi showroom kami di Ruko Soho Ebony, PIK, Jakarta Utara, setiap Senin–Sabtu pukul 09.00–18.00.'],
+];
+$schema[] = [
+    '@context'   => 'https://schema.org',
+    '@type'      => 'FAQPage',
+    'mainEntity' => array_map(fn($f) => [
+        '@type' => 'Question', 'name' => html_entity_decode($f[0], ENT_QUOTES, 'UTF-8'),
+        'acceptedAnswer' => ['@type' => 'Answer', 'text' => html_entity_decode($f[1], ENT_QUOTES, 'UTF-8')],
+    ], $faqs),
+];
 
 $db = get_db();
 require_once __DIR__ . '/includes/youtube.php';
@@ -442,14 +458,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
       <div class="bg-brand h-[2px] w-12"></div>
     </div>
     <div class="flex flex-col gap-3">
-      <?php
-      $faqs = [
-        ['Apa bedanya ready stock dan custom?', 'Ready stock bisa langsung dibawa atau dipasang. Custom dibuat mengikuti ukuran jendela dan bahan pilihan Anda, sehingga hasilnya pas sempurna.'],
-        ['Bagaimana cara memesan?', 'Hubungi kami lewat WhatsApp atau form penawaran. Untuk custom, tim kami mengukur dan membantu memilih bahan, lalu Anda menerima penawaran rinci. Setelah setuju, kami produksi dan pasang di lokasi Anda.'],
-        ['Apakah melayani proyek komersial?', 'Ya. Kami menangani hunian, kantor, hingga hotel &amp; villa. Lihat hasilnya di halaman Galeri.'],
-        ['Bisakah saya melihat bahannya langsung?', 'Tentu. Kunjungi showroom kami di Ruko Soho Ebony, PIK, Jakarta Utara, setiap Senin–Sabtu pukul 09.00–18.00.'],
-      ];
-      foreach ($faqs as $i => [$q, $a]): ?>
+      <?php foreach ($faqs as $i => [$q, $a]): ?>
       <details class="group bg-white border border-[#ece8e1] rounded-[2px]" <?= $i === 0 ? 'open' : '' ?>>
         <summary class="flex items-center justify-between gap-4 cursor-pointer list-none px-5 sm:px-6 py-5 font-jakarta font-semibold text-dark text-[16px] sm:text-[17px] leading-[1.4] [&::-webkit-details-marker]:hidden">
           <?= $q ?>
