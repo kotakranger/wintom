@@ -11,6 +11,18 @@ $order_steps = [
     ['num' => '04', 'title' => 'PRODUKSI & PEMASANGAN', 'desc' => 'Gorden diproduksi, lalu dipasang rapi oleh tim kami di lokasi Anda.',
      'img' => 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=600&q=80&fit=crop', 'alt' => 'Pemasangan gorden'],
 ];
+
+// Copy baru (flag FEATURE_COPY_V2) hanya untuk beranda: halaman yang meng-include harus menyetel $order_steps_v2 = copy_v2().
+// Halaman lain (detail produk, tentang) tetap memakai teks di atas.
+if (!empty($order_steps_v2)) {
+    foreach ([
+        ['Konsultasi Kebutuhan', 'Sampaikan kebutuhan gorden atau blinds melalui WhatsApp, website, atau kunjungan langsung ke showroom. Kami siap membantu menentukan pilihan yang sesuai dengan ruangan Anda.'],
+        ['Survei, Ukur &amp; Pilih Bahan', 'Pilih material, warna, dan model sesuai kebutuhan. Tersedia layanan survei dan pengukuran langsung di lokasi, serta beragam koleksi bahan yang dapat dilihat di showroom.'],
+        ['Penawaran &amp; Konfirmasi', 'Dapatkan penawaran harga berdasarkan pilihan produk, material, dan ukuran yang telah disepakati. Seluruh rincian pesanan dikonfirmasi sebelum masuk proses produksi.'],
+        ['Produksi &amp; Pemasangan', 'Pesanan diproduksi sesuai spesifikasi yang telah disetujui, kemudian dipasang oleh tim berpengalaman dengan memperhatikan ketepatan ukuran, kerapian, dan fungsi produk.'],
+    ] as $k => [$st, $sd]) { $order_steps[$k]['title'] = $st; $order_steps[$k]['desc'] = $sd; }
+}
+$order_steps_v2 = false;   // jangan bocor ke include berikutnya di halaman yang sama
 ?>
 <section class="<?= $order_steps_bg ?? 'bg-[#faf8f5]' ?> py-16 md:py-24">
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12 flex flex-col gap-10 md:gap-14">

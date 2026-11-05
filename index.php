@@ -11,19 +11,27 @@ $meta_description = 'Wintom Curtain: gorden custom, roller blind, zebra blind & 
 $canonical_route  = '/';
 $schema           = [seo_local_business()];
 // Pertanyaan Umum (ditampilkan di bagian FAQ di bawah) — dipakai juga untuk data terstruktur FAQPage
-$faqs = [
+$faqs_v1 = [
     ['Apa bedanya ready stock dan custom?', 'Ready stock bisa langsung dibawa atau dipasang. Custom dibuat mengikuti ukuran jendela dan bahan pilihan Anda, sehingga hasilnya pas sempurna.'],
     ['Bagaimana cara memesan?', 'Hubungi kami lewat WhatsApp atau form penawaran. Untuk custom, tim kami mengukur dan membantu memilih bahan, lalu Anda menerima penawaran rinci. Setelah setuju, kami produksi dan pasang di lokasi Anda.'],
     ['Apakah survei dan pengukuran ke lokasi gratis?', 'Ya. Tim Wintom datang ke hunian atau kantor Anda untuk mengukur jendela dan membantu memilih bahan, tanpa biaya survei untuk area Jabodetabek.'],
     ['Apakah melayani proyek komersial?', 'Ya. Kami menangani hunian, kantor, hingga hotel &amp; villa. Lihat hasilnya di halaman Galeri.'],
     ['Bisakah saya melihat bahannya langsung?', 'Tentu. Kunjungi showroom kami di Ruko Soho Ebony, PIK, Jakarta Utara, setiap Senin–Sabtu pukul 09.00–18.00.'],
 ];
+$faqs_v2 = [
+    ['Apakah bisa melihat langsung koleksi gorden dan blinds?', 'Tentu. Kamu bisa mengunjungi showroom kami di PIK 2 untuk melihat berbagai pilihan bahan, warna, motif, dan tekstur secara langsung.'],
+    ['Apakah tersedia layanan survei dan pemasangan?', 'Ya, tersedia layanan konsultasi, pengukuran, hingga pemasangan profesional di wilayah Jabodetabek. Biaya disesuaikan dengan jarak dan kebutuhan di lokasi.'],
+    ['Apakah gorden dan blinds bisa custom ukuran?', 'Bisa. Diproduksi langsung dari pabrik dengan beragam pilihan bahan, warna, model, dan ukuran custom, mulai dari gorden, vitrase, roller blind, zebra blind, hingga tirai motorized.'],
+    ['Apakah melayani pemesanan untuk proyek?', 'Ya, kami melayani kebutuhan rumah, apartemen, kantor, hotel, restoran, hingga proyek komersial, baik untuk pemesanan satuan maupun jumlah besar.'],
+    ['Apa perbedaan blackout, semi blackout, dan sunscreen?', 'Blackout: Menghalangi cahaya secara maksimal, cocok untuk kamar tidur dan ruang meeting.<br>Semi blackout: Menyaring sebagian cahaya agar ruangan tetap nyaman, ideal untuk ruang tamu, kamar, dan kantor.<br>Sunscreen: Mengurangi panas dan silau dengan tetap memungkinkan pandangan ke luar, cocok untuk kantor, jendela besar, teras, dan garasi beratap.'],
+];
+$faqs = copy_v2() ? $faqs_v2 : $faqs_v1;
 $schema[] = [
     '@context'   => 'https://schema.org',
     '@type'      => 'FAQPage',
     'mainEntity' => array_map(fn($f) => [
         '@type' => 'Question', 'name' => html_entity_decode($f[0], ENT_QUOTES, 'UTF-8'),
-        'acceptedAnswer' => ['@type' => 'Answer', 'text' => html_entity_decode($f[1], ENT_QUOTES, 'UTF-8')],
+        'acceptedAnswer' => ['@type' => 'Answer', 'text' => trim(html_entity_decode(strip_tags(str_replace('<br>', "\n", $f[1])), ENT_QUOTES, 'UTF-8'))],
     ], $faqs),
 ];
 
@@ -90,18 +98,20 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
         <!-- Eyebrow label -->
         <div class="wt-in flex items-center pb-4" style="--d:100ms">
           <span class="font-jakarta font-semibold text-[11px] sm:text-[12px] text-[rgba(255,255,255,0.8)] tracking-[2px] sm:tracking-[2.64px] uppercase leading-[16px]">
-            SPESIALIS GORDEN &amp; BLINDS · PIK, JAKARTA
+            <?= copy_v2() ? 'SPESIALIS GORDEN &amp; BLINDS · JAKARTA' : 'SPESIALIS GORDEN &amp; BLINDS · PIK, JAKARTA' ?>
           </span>
         </div>
 
         <!-- Main heading -->
         <h1 class="wt-in font-playfair font-normal text-white text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] tracking-[-0.5px] max-w-[760px] m-0 drop-shadow-[0px_1px_0.5px_rgba(0,0,0,0.05)]" style="--d:220ms">
-          Gorden &amp; Blinds yang Pas Sempurna di Setiap Jendela
+          <?php if (copy_v2()): ?>Gorden &amp; Blinds Elegan,<br>Sentuhan Sempurna untuk Ruangan Anda<?php else: ?>Gorden &amp; Blinds yang Pas Sempurna di Setiap Jendela<?php endif; ?>
         </h1>
 
         <!-- Sub-headline -->
         <p class="wt-in font-jakarta text-[16px] md:text-[18px] text-[rgba(255,255,255,0.9)] leading-[1.6] m-0 mt-6 max-w-[560px]" style="--d:420ms">
-          Pilih koleksi siap pasang atau buat sesuai ukuran. Tim kami datang mengukur, membawa sampel bahan, dan memasang hingga rapi — Anda tinggal menikmati hasilnya.
+          <?php if (copy_v2()): ?>Pilih gorden atau blinds custom langsung dari pabrik, sesuai kebutuhan ruangan Anda. Kami mendampingi setiap tahap, mulai dari konsultasi dan pengukuran hingga pemasangan profesional, disertai garansi serta dukungan purna jual.
+          <span class="block mt-3">Belum tahu ukuran atau bahan yang cocok? Kami siap membantu.</span>
+          <?php else: ?>Pilih koleksi siap pasang atau buat sesuai ukuran. Tim kami datang mengukur, membawa sampel bahan, dan memasang hingga rapi — Anda tinggal menikmati hasilnya.<?php endif; ?>
         </p>
 
         <!-- CTA Buttons -->
@@ -112,7 +122,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
           </button>
           <a href="<?= url_for(route_catalog()) ?>"
              class="text-center backdrop-blur-[2px] bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.6)] text-white font-jakarta font-medium text-[14px] leading-[16px] px-[33px] py-[15px] rounded-[3px] shadow-sm hover:bg-[rgba(255,255,255,0.2)] transition-colors duration-200 whitespace-nowrap">
-            Jelajahi Koleksi
+            <?= copy_v2() ? 'Lihat Koleksi Produk' : 'Jelajahi Koleksi' ?>
           </a>
         </div>
         <p class="wt-in font-jakarta text-[13px] text-[rgba(255,255,255,0.75)] leading-[1.5] pt-3 m-0" style="--d:640ms">Respon cepat di jam operasional.</p>
@@ -206,6 +216,14 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
         ['title' => 'Garansi &amp; Layanan Purna Jual', 'desc' => 'Jaminan kualitas material dan pemasangan dengan garansi mekanik resmi serta dukungan perbaikan purna jual responsif demi kenyamanan jangka panjang Anda.',
          'icon' => '<path d="M10 1.875 3.75 4.375v4.583c0 3.95 2.6 7.35 6.25 9.167 3.65-1.817 6.25-5.217 6.25-9.167V4.375L10 1.875Z" stroke="#242424" stroke-width="1.25" stroke-linejoin="round"/><path d="m7.083 10 2.084 2.083 3.75-4.166" stroke="#242424" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>'],
       ];
+      if (copy_v2()) {
+        foreach ([
+          ['Produksi Sendiri, Custom Sesuai Kebutuhan', 'Gorden dan blinds diproduksi langsung di pabrik kami dengan pilihan bahan, model, dan ukuran yang dapat disesuaikan. Setiap proses dikerjakan dengan perhatian terhadap kualitas dan hasil akhir.'],
+          ['Pilih Material Langsung di Showroom', 'Kunjungi showroom kita yang ada di PIK 2 untuk melihat koleksi gorden dan roller blind, membandingkan warna, serta merasakan tekstur bahan sebelum menentukan pilihan.'],
+          ['Pengukuran &amp; Pemasangan Profesional', 'Kami melayani konsultasi, pengukuran, hingga pemasangan gorden dan blinds untuk hunian maupun ruang komersial. Seluruh proses ditangani oleh tim berpengalaman agar hasilnya rapi dan sesuai kebutuhan.'],
+          ['Garansi &amp; Layanan Purna Jual', 'Layanan WINTOM berlanjut setelah pemasangan selesai. Kami menyediakan garansi sesuai ketentuan serta dukungan purna jual untuk memastikan produk tetap berfungsi dengan baik.'],
+        ] as $k => [$ft, $fd]) { $features[$k]['title'] = $ft; $features[$k]['desc'] = $fd; }
+      }
       foreach ($features as $i => $f): ?>
       <div class="flex flex-col items-center text-center px-2" data-reveal style="--d:<?= $i * 100 ?>ms">
         <span class="size-14 rounded-full bg-white border border-[#ece8e1] flex items-center justify-center mb-4 shadow-sm">
@@ -226,9 +244,9 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
 <section class="bg-[#f4f1ea] border-b border-[#ece8e1] py-16 md:py-24">
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12">
     <div class="max-w-[820px] mx-auto text-center mb-10 md:mb-14" data-reveal>
-      <p class="font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase mb-4">MENGAPA MEMILIH WINTOM?</p>
-      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] m-0 mb-5">Konsultasi Praktis dari Rumah, Pemasangan Presisi di Lokasi</h2>
-      <p class="font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6] m-0">Pilih model dan konsultasi langsung dari ponsel Anda. Saat siap, tim kami datang membawa sampel bahan grade A, mengukur dengan presisi, lalu memasang serapi standar hotel bintang lima.</p>
+      <p class="font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase mb-4"><?= copy_v2() ? 'MENGAPA MEMILIH KAMI?' : 'MENGAPA MEMILIH WINTOM?' ?></p>
+      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] m-0 mb-5"><?= copy_v2() ? '20 Tahun Pengalaman, dari Produksi hingga Pemasangan' : 'Konsultasi Praktis dari Rumah, Pemasangan Presisi di Lokasi' ?></h2>
+      <p class="font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6] m-0"><?php if (copy_v2()): ?>Memilih gorden atau blinds bukan hanya soal desain dan warna. Kualitas material, ketepatan ukuran, serta hasil pemasangan menjadi bagian penting dalam menciptakan ruangan yang nyaman. Dengan pengalaman selama 20 tahun dan fasilitas produksi sendiri, setiap proses ditangani secara menyeluruh, mulai dari konsultasi hingga pemasangan akhir.<?php else: ?>Pilih model dan konsultasi langsung dari ponsel Anda. Saat siap, tim kami datang membawa sampel bahan grade A, mengukur dengan presisi, lalu memasang serapi standar hotel bintang lima.<?php endif; ?></p>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
       <?php
@@ -237,6 +255,12 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
         ['Konsultasi Online atau Kunjungan', 'Diskusikan kebutuhan Anda lewat WhatsApp atau website, atau jadwalkan tim kami datang membawa buku sampel ke tempat Anda.'],
         ['Garansi Ukuran Presisi 100%', 'Tidak perlu khawatir salah ukur. Ikuti panduan dari tim ahli kami, atau biarkan kami yang mengukur langsung di lokasi.'],
         ['Terima Beres & Bergaransi', 'Dari pemilihan desain, produksi, hingga pemasangan yang bersih — dengan rel kokoh yang bergerak mulus tanpa macet.'],
+      ];
+      if (copy_v2()) $usp = [
+        ['Pilihan Gorden & Blinds Lengkap', 'Tersedia beragam pilihan gorden blackout, semi blackout, vitrase, roller blind, zebra blind, vertical blind, hingga berbagai model tirai lainnya dengan pilihan bahan, warna, dan desain sesuai kebutuhan ruangan.'],
+        ['Produksi Sendiri & Custom Ukuran', 'Diproduksi langsung dari pabrik dengan material pilihan dan pengerjaan yang memperhatikan setiap detail. Tersedia layanan custom ukuran untuk kebutuhan hunian, perkantoran, hingga proyek komersial.'],
+        ['Konsultasi & Pengukuran Profesional', 'Konsultasikan kebutuhan gorden dan blinds secara online maupun langsung di showroom. Tersedia layanan survei dan pengukuran di lokasi untuk membantu menentukan pilihan bahan, model, serta ukuran yang tepat.'],
+        ['Pemasangan Profesional & Bergaransi', 'Mulai dari proses produksi hingga pemasangan, setiap tahap ditangani oleh tim berpengalaman dengan mengutamakan kerapian dan ketepatan hasil. Dilengkapi garansi sesuai ketentuan serta layanan purna jual.'],
       ];
       foreach ($usp as $i => [$t, $d]): ?>
       <div class="bg-white border border-[#ece8e1] rounded-[2px] p-6 sm:p-8 flex gap-4 sm:gap-5 hover:-translate-y-1 hover:shadow-[0_18px_40px_-20px_rgba(34,34,32,0.3)] transition-all duration-300" data-reveal style="--d:<?= ($i % 2) * 120 ?>ms">
@@ -255,7 +279,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
 <!-- ===================================================================
      HOW IT WORKS — Cara Pesan (komponen bersama)
 ===================================================================== -->
-<?php include __DIR__ . '/includes/order-steps.php'; ?>
+<?php $order_steps_v2 = copy_v2(); include __DIR__ . '/includes/order-steps.php'; ?>
 
 
 <!-- ===================================================================

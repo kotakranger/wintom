@@ -111,6 +111,25 @@ function redirect_clean(string $route, array $query = []): void
     exit;
 }
 
+// ---------------------------------------------------------------------------
+// Feature flag: copy baru dari dokumen "Daftar Kebutuhan Konten" (kolom DHANI), 2026-11-05. EKSPERIMEN.
+//   FEATURE_COPY_V2 = true  -> teks baru; false -> teks lama (kembali seperti sebelum 2026-11-05).
+// Matikan tanpa deploy: tambahkan  define('FEATURE_COPY_V2', false);  di includes/config.local.php server
+// (atau env WINTOM_COPY_V2=0). Pratinjau per halaman: tambahkan ?copy=v1 atau ?copy=v2 di URL (tidak diindeks).
+// ---------------------------------------------------------------------------
+if (!defined('FEATURE_COPY_V2')) define('FEATURE_COPY_V2', getenv('WINTOM_COPY_V2') !== '0');
+function copy_v2(): bool
+{
+    static $on = null;
+    if ($on === null) {
+        $on = (bool)FEATURE_COPY_V2;
+        $preview = $_GET['copy'] ?? '';
+        if ($preview === 'v1') $on = false;
+        elseif ($preview === 'v2') $on = true;
+    }
+    return $on;
+}
+
 // Google Analytics 4 — Measurement ID "G-XXXXXXXXXX" (Admin GA › Aliran data › Web).
 // Kosong = GA tidak dimuat. Bisa juga di-override di config.local.php.
 if (!defined('GA_MEASUREMENT_ID')) define('GA_MEASUREMENT_ID', 'G-ZKZ23JC4PW');

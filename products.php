@@ -146,7 +146,7 @@ include_once __DIR__ . '/includes/header.php';
 
       <!-- Main Heading -->
       <h1 class="wt-in font-playfair font-normal text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] tracking-[-0.5px] text-dark mb-5" style="--d:160ms">
-        <?= $active_category ? htmlspecialchars($active_category['name']) : 'Kurasi Tirai &amp; Blinds Arsitektural' ?>
+        <?= $active_category ? htmlspecialchars($active_category['name']) : (copy_v2() ? 'Koleksi Gorden &amp; Blinds untuk Setiap Ruangan' : 'Kurasi Tirai &amp; Blinds Arsitektural') ?>
       </h1>
 
       <!-- Description -->
@@ -155,7 +155,7 @@ include_once __DIR__ . '/includes/header.php';
         <?= htmlspecialchars($active_category['tagline']
               ?: 'Jelajahi koleksi ' . $active_category['name'] . ' Wintom — tersedia siap pasang maupun custom sesuai ukuran jendela Anda.') ?>
         <?php else: ?>
-        Kombinasi material berstandar internasional, presisi hemming atelier, dan sistem rel silent mekanik bergaransi. Sempurna untuk hunian residensial mewah, apartemen, maupun ruang komersial.
+        <?php if (copy_v2()): ?>Jelajahi beragam pilihan gorden, vitrase, roller blind, zebra blind, vertical blind, hingga berbagai jenis tirai lainnya. Tersedia pilihan blackout, semi blackout, dan sunscreen dengan beragam bahan, warna, model, serta ukuran custom yang disesuaikan dengan kebutuhan hunian maupun ruang komersial.<?php else: ?>Kombinasi material berstandar internasional, presisi hemming atelier, dan sistem rel silent mekanik bergaransi. Sempurna untuk hunian residensial mewah, apartemen, maupun ruang komersial.<?php endif; ?>
         <?php endif; ?>
       </p>
 
@@ -314,14 +314,16 @@ include_once __DIR__ . '/includes/header.php';
       <div class="lg:col-span-8" data-reveal>
         <div class="flex items-center gap-3 mb-3">
             <span class="font-jakarta font-semibold text-[11px] tracking-widest-4 uppercase text-cream-dark">
-            LAYANAN ATELIER LANGSUNG KE LOKASI
+            <?= copy_v2() ? 'LAYANAN KONSULTASI &amp; PENGUKURAN' : 'LAYANAN ATELIER LANGSUNG KE LOKASI' ?>
           </span>
         </div>
         <h2 class="font-playfair font-normal text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] mb-4">
-          Bingung Menentukan Material & Ukuran Jendela?
+          <?= copy_v2() ? 'Temukan Gorden &amp; Blinds yang Tepat untuk Ruangan Anda' : 'Bingung Menentukan Material &amp; Ukuran Jendela?' ?>
         </h2>
         <p class="font-jakarta text-[14px] md:text-[15px] text-gray-300 leading-relaxed max-w-2xl">
+          <?php if (copy_v2()): ?>Masih bingung memilih bahan, model, atau ukuran yang sesuai? Tim kami siap membantu melalui konsultasi, pemilihan material, hingga survei dan pengukuran langsung di lokasi. Tersedia berbagai pilihan sampel bahan serta penawaran harga yang jelas, lengkap dengan layanan produksi custom dan pemasangan profesional.<?php else: ?>
           Tim spesialis Wintom siap datang ke hunian atau kantor Anda dengan membawa ratusan katalog swatch kain fisik asli. Kami melakukan pengukuran presisi laser millimeter dan memberikan estimasi transparan di tempat — 100% Bebas Biaya Survei Jabodetabek.
+          <?php endif; ?>
         </p>
       </div>
 

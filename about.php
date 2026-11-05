@@ -23,6 +23,17 @@ include_once __DIR__ . '/includes/header.php';
       <h1 class="wt-in font-playfair font-normal text-dark text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] tracking-[-0.5px] mb-6" style="--d:180ms">
         WINTOM Intelligent Solusi
       </h1>
+      <?php if (copy_v2()): ?>
+      <p class="wt-in font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6] mb-5" style="--d:280ms">
+        Dengan pengalaman lebih dari 20 tahun di industri gorden dan roller blind, WINTOM Intelligent Solusi hadir sebagai penyedia solusi tirai untuk hunian, apartemen, perkantoran, hotel, hingga berbagai ruang komersial. Kami menghadirkan beragam pilihan produk berkualitas yang mengutamakan fungsi, kenyamanan, serta keselarasan dengan desain interior.
+      </p>
+      <p class="wt-in font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6] mb-5" style="--d:360ms">
+        Didukung fasilitas produksi sendiri di Tangerang, kami menyediakan berbagai koleksi gorden, vitrase, roller blind, zebra blind, roman blind, vertical blind, hingga sistem tirai motorized. Tersedia pilihan material blackout, semi blackout, sunscreen, dimout, linen, serta beragam bahan lainnya yang dapat disesuaikan dengan kebutuhan dan karakter setiap ruangan.
+      </p>
+      <p class="wt-in font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6]" style="--d:440ms">
+        Melalui showroom di PIK 2, kami memberikan layanan menyeluruh mulai dari konsultasi, pemilihan bahan, pengukuran, produksi custom, hingga pemasangan profesional. Dengan mengutamakan kualitas material, ketelitian pengerjaan, dan kepuasan pelanggan, layanan kami dilengkapi garansi sesuai ketentuan serta dukungan purna jual.
+      </p>
+      <?php else: ?>
       <p class="wt-in font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6] mb-5" style="--d:280ms">
         WINTOM Intelligent Solusi menghadirkan curtain dan blinds beserta sistem motorized, rel, serta aksesori pendukung. Koleksinya mencakup roller, zebra, roman, dan vertical blinds, serta motorized curtain track.
       </p>
@@ -32,6 +43,7 @@ include_once __DIR__ . '/includes/header.php';
       <p class="wt-in font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6]" style="--d:440ms">
         Dari sentuhan kain hingga detail rel, WINTOM membantu Anda melengkapi jendela agar ruang terasa lebih nyaman digunakan.
       </p>
+      <?php endif; ?>
     </div>
     <!-- Image -->
     <div class="wt-in relative aspect-[4/3] rounded-[6px] overflow-hidden bg-border" style="--d:300ms">
@@ -48,12 +60,18 @@ include_once __DIR__ . '/includes/header.php';
   <div class="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-12 grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12">
     <div data-reveal>
       <p class="font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase mb-3">VISI</p>
-      <p class="font-playfair font-normal text-dark text-[22px] sm:text-[26px] leading-[1.35] m-0">Menjadi pilihan yang dipercaya untuk solusi tirai dan sistem jendela yang selaras dengan kebutuhan ruang.</p>
+      <p class="font-playfair font-normal text-dark text-[22px] sm:text-[26px] leading-[1.35] m-0"><?= copy_v2() ? 'Menjadi perusahaan gorden dan blinds terkemuka dan terpercaya di Indonesia dengan mengutamakan kualitas, inovasi, serta pelayanan profesional untuk menghadirkan kenyamanan dan nilai estetika pada setiap ruangan.' : 'Menjadi pilihan yang dipercaya untuk solusi tirai dan sistem jendela yang selaras dengan kebutuhan ruang.' ?></p>
     </div>
     <div data-reveal style="--d:120ms">
       <p class="font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase mb-3">MISI</p>
       <ul class="list-none p-0 m-0 space-y-4">
-        <?php foreach ([
+        <?php foreach (copy_v2() ? [
+          'Menyediakan beragam pilihan gorden dan blinds berkualitas dengan material, desain, serta ukuran yang sesuai kebutuhan hunian maupun ruang komersial.',
+          'Menjaga kualitas produk melalui proses produksi yang terkontrol, pemilihan material berkualitas, dan ketelitian dalam setiap tahap pengerjaan.',
+          'Memberikan layanan profesional dan menyeluruh, mulai dari konsultasi, pengukuran, produksi custom, hingga pemasangan serta layanan purna jual.',
+          'Mengembangkan inovasi produk dan teknologi tirai modern yang mengutamakan kenyamanan, fungsi, dan estetika.',
+          'Membangun kepercayaan dan kepuasan pelanggan melalui pelayanan yang responsif, hasil pengerjaan berkualitas, serta komitmen jangka panjang.',
+        ] : [
           'Menghadirkan pilihan curtain, blinds, sistem motorized, serta komponen pendukung dalam satu portofolio.',
           'Membantu pemilihan produk melalui pembahasan fungsi, tampilan, ukuran, dan kesiapan pemasangan.',
           'Menyampaikan spesifikasi, penawaran, serta cakupan dukungan produk dengan jelas.',
@@ -124,8 +142,8 @@ include_once __DIR__ . '/includes/header.php';
         <div class="absolute -right-16 -top-16 size-56 rounded-full bg-white/5"></div>
         <div class="absolute -right-4 bottom-[-72px] size-44 rounded-full bg-white/5"></div>
         <p class="relative font-jakarta font-semibold text-white/70 text-[11px] tracking-[2.4px] uppercase mb-3">KONSULTASI GRATIS</p>
-        <h3 class="relative font-playfair font-normal text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] mb-4">Ceritakan kebutuhan jendela Anda</h3>
-        <p class="relative font-jakarta text-white/80 text-[15px] leading-[1.6] mb-8 max-w-[440px]">Isi form singkat — jenis tirai, ukuran lebar &amp; tinggi, dan jumlahnya. Tim kami menyiapkan penawaran lalu melanjutkan obrolan lewat WhatsApp.</p>
+        <h3 class="relative font-playfair font-normal text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] mb-4"><?= copy_v2() ? 'Ceritakan Kebutuhan Gorden &amp; Blinds Anda' : 'Ceritakan kebutuhan jendela Anda' ?></h3>
+        <p class="relative font-jakarta text-white/80 text-[15px] leading-[1.6] mb-8 max-w-[440px]"><?= copy_v2() ? 'Isi formulir singkat sesuai kebutuhan, mulai dari jenis produk, perkiraan ukuran, hingga jumlah pesanan. Tim kami akan membantu menyiapkan penawaran harga dan menghubungi Anda melalui WhatsApp untuk konsultasi lebih lanjut.' : 'Isi form singkat — jenis tirai, ukuran lebar &amp; tinggi, dan jumlahnya. Tim kami menyiapkan penawaran lalu melanjutkan obrolan lewat WhatsApp.' ?></p>
         <div class="relative flex flex-col sm:flex-row gap-3">
           <button type="button" data-open-quote
                   class="inline-flex items-center justify-center gap-2 bg-white text-brand font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase px-7 py-[15px] rounded-[2px] hover:bg-cream transition-colors group">

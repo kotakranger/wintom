@@ -79,7 +79,7 @@ function seo_head(): void
     $e = fn(string $s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 
     echo '<meta name="description" content="', $e($desc), '" />', "\n";
-    if (!empty($noindex)) echo '  <meta name="robots" content="noindex,follow" />', "\n";
+    if (!empty($noindex) || isset($_GET['copy'])) echo '  <meta name="robots" content="noindex,follow" />', "\n";
     if ($canon) echo '  <link rel="canonical" href="', $e($canon), '" />', "\n";
 
     echo '  <meta property="og:site_name" content="', $e(SITE_NAME), '" />', "\n";

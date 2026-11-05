@@ -71,10 +71,10 @@ include_once __DIR__ . '/includes/header.php';
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12">
     <p class="wt-in font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase leading-[16.5px] mb-4" style="--d:60ms">PORTOFOLIO PROYEK</p>
     <h1 class="wt-in font-playfair font-normal text-dark text-[32px] sm:text-[40px] md:text-[48px] leading-[1.15] tracking-[-0.5px] max-w-[760px] mb-5" style="--d:160ms">
-      Sentuhan Elegan di Setiap Sudut Ruangan
+      <?= copy_v2() ? 'Hasil Pemasangan, Inspirasi untuk Setiap Ruangan' : 'Sentuhan Elegan di Setiap Sudut Ruangan' ?>
     </h1>
     <p class="wt-in font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6] max-w-[680px] mb-8" style="--d:260ms">
-      Jelajahi portofolio hasil pemasangan gorden kustom Wintom serta dokumentasi video proyek kami. Dari pemilihan bahan berkualitas hingga instalasi yang presisi untuk menyempurnakan estetika ruang Anda.
+      <?php if (copy_v2()): ?>Temukan inspirasi dan referensi dari berbagai hasil pemasangan gorden dan blinds untuk hunian, perkantoran, hingga ruang komersial. Lihat pilihan desain, bahan, dan warna melalui dokumentasi proyek kami untuk membantu mewujudkan interior yang sesuai dengan kebutuhan Anda.<?php else: ?>Jelajahi portofolio hasil pemasangan gorden kustom Wintom serta dokumentasi video proyek kami. Dari pemilihan bahan berkualitas hingga instalasi yang presisi untuk menyempurnakan estetika ruang Anda.<?php endif; ?>
     </p>
     <div class="wt-in flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4" style="--d:360ms">
       <button type="button" data-open-quote
@@ -189,14 +189,14 @@ include_once __DIR__ . '/includes/header.php';
 <section class="bg-[#860524] py-14 md:py-[72px]">
   <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12 flex flex-col lg:flex-row lg:items-center justify-between gap-8 lg:gap-10">
     <div data-reveal>
-      <p class="font-jakarta font-semibold text-white/60 text-[11px] tracking-[2.64px] uppercase mb-3">Mulai Proyek Anda Bersama Wintom</p>
+      <p class="font-jakarta font-semibold text-white/60 text-[11px] tracking-[2.64px] uppercase mb-3"><?= copy_v2() ? 'Hadirkan Kenyamanan di Setiap Ruangan' : 'Mulai Proyek Anda Bersama Wintom' ?></p>
       <h2 class="font-playfair font-normal text-white text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] max-w-[480px]">
         Wujudkan Ruangan Impian Bersama WINTOM
       </h2>
     </div>
     <div class="flex flex-col items-stretch sm:items-start lg:items-end gap-4 shrink-0" data-reveal style="--d:120ms">
       <p class="font-jakarta text-white/70 text-[14px] leading-[22px] max-w-[300px] lg:text-right">
-        Konsultasikan kebutuhan gorden dan blinds Anda bersama WINTOM. Kami menyediakan layanan survei, pengukuran, hingga pemasangan profesional dengan penawaran yang disesuaikan dengan kebutuhan proyek Anda.
+        <?= copy_v2() ? 'Konsultasikan kebutuhan gorden dan blinds Anda, mulai dari pemilihan bahan, pengukuran, hingga pemasangan profesional untuk hasil yang sesuai dengan kebutuhan ruangan.' : 'Konsultasikan kebutuhan gorden dan blinds Anda bersama WINTOM. Kami menyediakan layanan survei, pengukuran, hingga pemasangan profesional dengan penawaran yang disesuaikan dengan kebutuhan proyek Anda.' ?>
       </p>
       <a href="<?= WA_URL ?>?text=Halo+Wintom%2C+saya+ingin+konsultasi+dan+jadwalkan+survei+untuk+proyek+saya"
          target="_blank" rel="noopener"
