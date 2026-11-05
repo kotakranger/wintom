@@ -411,63 +411,175 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
       <div class="bg-brand h-[2px] w-12"></div>
     </div>
 
-    <!-- 3 Testimonial Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+    <!-- Carousel testimoni: autoplay + panah kiri/kanan + indikator progres -->
+    <?php
+    // DUMMY — 10 testimoni contoh. Ganti dengan testimoni pelanggan asli sebelum dipromosikan.
+    $testimonials = [
+      ['img' => 'photo-1493809842364-78817add7ffb', 'alt' => 'Rumah modern dengan gorden sheer Wintom',
+       'quote' => 'Hasilnya sangat rapi dan sesuai ekspektasi. Timnya profesional, mulai dari pengukuran hingga pemasangan tepat waktu.',
+       'location' => '— RUMAH TINGGAL, JAKARTA'],
+      ['img' => 'photo-1497366216548-37526070297c', 'alt' => 'Kantor dengan roller blind otomatis',
+       'quote' => 'Kualitas bagus, pemasangan cepat, layanan sangat baik. Roller blind motorized-nya bergerak sangat halus dan senyap.',
+       'location' => '— KANTOR, TANGERANG'],
+      ['img' => 'photo-1631049307264-da0ec9d70304', 'alt' => 'Kamar tidur utama dengan gorden blackout',
+       'quote' => 'Bahannya premium dan terlihat sangat elegan. Benar-benar 100% blackout untuk kamar tidur kami. Sangat puas!',
+       'location' => '— APARTEMEN, JAKARTA'],
+      ['img' => 'photo-1618221195710-dd6b41faaea6', 'alt' => 'Ruang keluarga dengan gorden ripple fold',
+       'quote' => 'Konsultasinya enak lewat WhatsApp, jadi kami tidak bingung memilih bahan. Waktu dipasang, ukurannya pas sekali di semua jendela.',
+       'location' => '— RUMAH TINGGAL, PIK'],
+      ['img' => 'photo-1600210492486-724fe5c67fb0', 'alt' => 'Ruang tamu dengan vitrase tipis',
+       'quote' => 'Vitrase-nya jatuh cantik dan cahaya masuk jadi lembut. Tamu yang datang sering bertanya beli di mana.',
+       'location' => '— RUMAH TINGGAL, JAKARTA BARAT'],
+      ['img' => 'photo-1583847268964-b28dc8f51f92', 'alt' => 'Kamar tidur dengan gorden tebal',
+       'quote' => 'Kamar jadi gelap dan tenang untuk tidur siang. Jahitannya rapi dan warnanya sama persis seperti sampel yang kami lihat di showroom.',
+       'location' => '— RUMAH TINGGAL, JAKARTA SELATAN'],
+      ['img' => 'photo-1616486338812-3dadae4b4ace', 'alt' => 'Ruang kerja dengan tirai otomatis',
+       'quote' => 'Tirai motorized untuk ruang meeting kami berfungsi mulus. Tim pemasang datang sesuai jadwal dan meninggalkan lokasi dalam keadaan bersih.',
+       'location' => '— KANTOR, JAKARTA PUSAT'],
+      ['img' => 'photo-1600585154340-be6161a56a0c', 'alt' => 'Villa dengan blind kayu',
+       'quote' => 'Kami pilih blind untuk jendela besar di villa. Hasilnya hangat dan natural, dan cara kerjanya mudah dipakai setiap hari.',
+       'location' => '— VILLA, BOGOR'],
+      ['img' => 'photo-1513694203232-719a280e022f', 'alt' => 'Ruang makan dengan gorden dua lapis',
+       'quote' => 'Gorden dua lapis di ruang makan terlihat mewah tapi tetap praktis. Pelayanannya ramah dan responsif dari awal sampai selesai.',
+       'location' => '— RUMAH TINGGAL, TANGERANG SELATAN'],
+      ['img' => 'photo-1507652313519-d4e9174996dd', 'alt' => 'Apartemen dengan gorden S-fold',
+       'quote' => 'Untuk apartemen kami butuh solusi cepat dan rapi. Dari ukur sampai pasang selesai dalam waktu singkat, dan hasilnya memuaskan.',
+       'location' => '— APARTEMEN, JAKARTA UTARA'],
+    ];
+    $t_total = count($testimonials);
+    ?>
+    <div id="testi" role="region" aria-roledescription="carousel" aria-label="Kata pelanggan kami" class="flex flex-col gap-8">
 
-      <?php
-      $testimonials = [
-        [
-          'img'      => 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600&q=80&fit=crop',
-          'alt'      => 'Modern residence with Wintom sheer curtains',
-          'quote'    => 'Hasilnya sangat rapi dan sesuai ekspektasi. Timnya profesional, mulai dari pengukuran hingga pemasangan tepat waktu.',
-          'location' => '— RUMAH TINGGAL, JAKARTA',
-        ],
-        [
-          'img'      => 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80&fit=crop',
-          'alt'      => 'Modern executive office with automated roller blinds',
-          'quote'    => 'Kualitas bagus, pemasangan cepat, layanan sangat baik. Roller blind motorized-nya bergerak sangat halus dan senyap.',
-          'location' => '— KANTOR, TANGERANG',
-        ],
-        [
-          'img'      => 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80&fit=crop',
-          'alt'      => 'Luxury master bedroom with blackout curtains',
-          'quote'    => 'Bahannya premium dan terlihat sangat elegan. Benar-benar 100% blackout untuk kamar tidur kami. Sangat puas!',
-          'location' => '— APARTEMEN, JAKARTA',
-        ],
-      ];
-      foreach ($testimonials as $i => $t): ?>
-
-      <div class="bg-white border border-[#ece8e1] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] flex flex-col items-start justify-between p-5 sm:p-[25px] min-w-0 hover:-translate-y-1 hover:shadow-[0_18px_40px_-20px_rgba(34,34,32,0.3)] transition-all duration-300" data-reveal style="--d:<?= $i * 120 ?>ms">
-        <!-- Top content -->
-        <div class="flex flex-col gap-[7.3px] w-full">
-          <!-- Photo -->
-          <div class="bg-[#ece8e1] h-[200px] md:h-[176px] overflow-hidden rounded-[2px] w-full relative">
-            <img
-              <?= img_attrs($t['img'], '(min-width:768px) 33vw, 100vw', [480, 800]) ?>
-              alt="<?= htmlspecialchars($t['alt']) ?>"
-              loading="lazy"
-              class="absolute inset-0 w-full h-full object-cover"
-            />
+      <div data-t-track tabindex="0" aria-live="off"
+           class="flex gap-6 lg:gap-8 overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth py-3 -my-3 focus:outline-none">
+        <?php foreach ($testimonials as $i => $t): ?>
+        <div role="group" aria-roledescription="slide" aria-label="<?= $i + 1 ?> dari <?= $t_total ?>"
+             class="snap-start shrink-0 basis-full md:basis-[calc((100%-1.5rem*2)/3)] lg:basis-[calc((100%-2rem*2)/3)] min-w-0 bg-white border border-[#ece8e1] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] flex flex-col items-start justify-between p-5 sm:p-[25px]">
+          <div class="flex flex-col gap-[7.3px] w-full">
+            <div class="bg-[#ece8e1] h-[200px] md:h-[176px] overflow-hidden rounded-[2px] w-full relative">
+              <img <?= img_attrs('https://images.unsplash.com/' . $t['img'], '(min-width:768px) 33vw, 100vw', [480, 800]) ?>
+                   alt="<?= htmlspecialchars($t['alt']) ?>" loading="lazy" draggable="false"
+                   class="absolute inset-0 w-full h-full object-cover" />
+            </div>
+            <div class="pt-[16.7px]">
+              <span class="font-playfair font-normal text-brand text-[36px] leading-[36px]">"</span>
+            </div>
+            <p class="font-jakarta font-normal text-dark text-[14px] leading-[22.75px] m-0"><?= htmlspecialchars($t['quote']) ?></p>
           </div>
-          <!-- Opening quote mark -->
-          <div class="pt-[16.7px]">
-            <span class="font-playfair font-normal text-brand text-[36px] leading-[36px]">"</span>
-          </div>
-          <!-- Quote text -->
-          <p class="font-jakarta font-normal text-dark text-[14px] leading-[22.75px] m-0"><?= htmlspecialchars($t['quote']) ?></p>
-        </div>
-        <!-- Bottom: stars + location -->
-        <div class="pt-6 w-full">
-          <div class="border-t border-[#ece8e1] pt-[17px] flex flex-col gap-[7px]">
-            <span class="text-[#f59e0b] text-[12px] leading-[16px]">★★★★★</span>
-            <span class="font-jakarta font-semibold text-muted text-[11px] tracking-[1.65px] uppercase leading-[16.5px]"><?= htmlspecialchars($t['location']) ?></span>
+          <div class="pt-6 w-full">
+            <div class="border-t border-[#ece8e1] pt-[17px] flex flex-col gap-[7px]">
+              <span class="text-[#f59e0b] text-[12px] leading-[16px]" aria-label="5 dari 5 bintang">★★★★★</span>
+              <span class="font-jakarta font-semibold text-muted text-[11px] tracking-[1.65px] uppercase leading-[16.5px]"><?= htmlspecialchars($t['location']) ?></span>
+            </div>
           </div>
         </div>
+        <?php endforeach; ?>
       </div>
 
-      <?php endforeach; ?>
-
+      <!-- Kontrol: panah kiri/kanan + titik indikator posisi (dibuat oleh JS, satu titik per posisi geser) -->
+      <div class="flex items-center justify-center gap-4">
+        <button type="button" data-t-prev aria-label="Testimoni sebelumnya"
+                class="size-11 shrink-0 flex items-center justify-center rounded-full border border-[#ece8e1] bg-white text-dark hover:border-brand hover:text-brand transition-colors">
+          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div data-t-dots class="flex items-center justify-center gap-2 flex-wrap max-w-[260px]" role="group" aria-label="Pilih testimoni"></div>
+        <button type="button" data-t-next aria-label="Testimoni berikutnya"
+                class="size-11 shrink-0 flex items-center justify-center rounded-full border border-[#ece8e1] bg-white text-dark hover:border-brand hover:text-brand transition-colors">
+          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
     </div>
+
+    <script>
+    (function () {
+      const root = document.getElementById('testi');
+      const track = root.querySelector('[data-t-track]');
+      const dotsBox = root.querySelector('[data-t-dots]');
+      const INTERVAL = 5000;   // jeda antar geser otomatis (ms)
+      const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let elapsed = 0, hover = false, focus = false, touching = false, visible = false, dots = [];
+
+      const maxScroll = () => track.scrollWidth - track.clientWidth;
+      const stepPx = () => {
+        const c = track.children[0], gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+        return c.getBoundingClientRect().width + gap;
+      };
+      const positions = () => Math.max(1, Math.round(maxScroll() / stepPx()) + 1);   // 8 di desktop (3 kartu), 10 di HP
+      const current = () => Math.min(positions() - 1, Math.round(track.scrollLeft / stepPx()));
+
+      function buildDots() {
+        const n = positions();
+        dotsBox.replaceChildren();
+        dots = [];
+        for (let i = 0; i < n; i++) {
+          const d = document.createElement('button');
+          d.type = 'button';
+          d.setAttribute('aria-label', 'Ke testimoni ' + (i + 1));
+          d.className = 'size-2.5 rounded-full transition-all duration-300 bg-[#d9d2c5] hover:bg-[#b9ad9b]';
+          d.addEventListener('click', () => scrollToIndex(i));
+          dotsBox.appendChild(d);
+          dots.push(d);
+        }
+        paint();
+      }
+      function paint() {
+        const cur = current();
+        dots.forEach((d, i) => {
+          const on = i === cur;
+          d.classList.toggle('bg-brand', on);
+          d.classList.toggle('scale-125', on);
+          d.classList.toggle('bg-[#d9d2c5]', !on);
+          if (on) d.setAttribute('aria-current', 'true'); else d.removeAttribute('aria-current');
+        });
+      }
+      function scrollToIndex(i) {
+        track.scrollTo({ left: Math.min(maxScroll(), i * stepPx()), behavior: reduced ? 'auto' : 'smooth' });
+        elapsed = 0;
+      }
+      function go(dir) {
+        const at = track.scrollLeft, max = maxScroll();
+        let target = at + dir * stepPx();
+        if (dir > 0 && at >= max - 2) target = 0;            // ujung kanan -> kembali ke awal
+        else if (dir < 0 && at <= 2) target = max;           // ujung kiri -> loncat ke akhir
+        track.scrollTo({ left: Math.max(0, Math.min(max, target)), behavior: reduced ? 'auto' : 'smooth' });
+        elapsed = 0;
+      }
+
+      root.querySelector('[data-t-prev]').addEventListener('click', () => go(-1));
+      root.querySelector('[data-t-next]').addEventListener('click', () => go(1));
+      track.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
+      });
+      // titik mengikuti posisi; geser manual (jari / trackpad) menyetel ulang hitungan autoplay
+      let settle = 0;
+      track.addEventListener('scroll', () => {
+        paint();
+        clearTimeout(settle); settle = setTimeout(() => { elapsed = 0; }, 150);
+      }, { passive: true });
+      window.addEventListener('resize', buildDots);
+      // jeda saat disentuh, diarahkan kursor, atau difokuskan
+      root.addEventListener('mouseenter', () => { hover = true; });
+      root.addEventListener('mouseleave', () => { hover = false; });
+      // hanya fokus keyboard yang menjeda (fokus bekas klik mouse pada tombol tidak boleh menghentikan autoplay)
+      root.addEventListener('focusin', e => { focus = !!(e.target.matches && e.target.matches(':focus-visible')); });
+      root.addEventListener('focusout', () => { focus = false; });
+      root.addEventListener('touchstart', () => { touching = true; }, { passive: true });
+      root.addEventListener('touchend', () => { setTimeout(() => { touching = false; }, 1500); }, { passive: true });
+      // autoplay hanya jalan saat section terlihat
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(es => { visible = es[0].isIntersecting; }, { threshold: 0.3 }).observe(root);
+      } else { visible = true; }
+      if (!reduced) {
+        setInterval(() => {
+          if (!visible || hover || focus || touching || document.hidden) return;
+          elapsed += 100;
+          if (elapsed >= INTERVAL) go(1);
+        }, 100);
+      }
+      buildDots();
+    })();
+    </script>
   </div>
 </section>
 

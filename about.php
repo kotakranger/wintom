@@ -45,13 +45,41 @@ include_once __DIR__ . '/includes/header.php';
       </p>
       <?php endif; ?>
     </div>
-    <!-- Image -->
-    <div class="wt-in relative aspect-[4/3] rounded-[6px] overflow-hidden bg-border" style="--d:300ms">
-      <img <?= img_attrs('https://images.unsplash.com/photo-1618221195710-dd6b41faaea6', '(min-width:1024px) 50vw, 100vw') ?>
-           alt="Wintom Curtain Atelier"
-           class="wt-zoom w-full h-full object-cover" />
-      <div class="absolute inset-0 bg-gradient-to-br from-transparent to-[rgba(34,34,32,0.2)]"></div>
+    <!-- Foto perusahaan: satu card, 3 foto bergantian otomatis (fade) -->
+    <?php
+    // DUMMY — ganti dengan foto perusahaan asli: simpan di assets/images/company/ lalu isi 'src' dengan path-nya (mis. '/assets/images/company/showroom.jpg').
+    $company_photos = [
+        ['src' => 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6', 'alt' => 'Wintom Curtain — suasana showroom'],
+        ['src' => 'https://images.unsplash.com/photo-1505691938895-1758d7feb511', 'alt' => 'Wintom Curtain — koleksi gorden dan blinds'],
+        ['src' => 'https://images.unsplash.com/photo-1513694203232-719a280e022f', 'alt' => 'Wintom Curtain — hasil pemasangan'],
+    ];
+    ?>
+    <div id="company-photos" class="wt-in relative aspect-[4/3] rounded-[6px] overflow-hidden bg-border" style="--d:300ms"
+         role="img" aria-label="Foto perusahaan Wintom Curtain">
+      <div class="wt-zoom absolute inset-0">
+        <?php foreach ($company_photos as $i => $ph): ?>
+        <img <?= img_attrs($ph['src'], '(min-width:1024px) 50vw, 100vw') ?>
+             alt="<?= htmlspecialchars($ph['alt']) ?>" <?= $i === 0 ? '' : 'loading="lazy"' ?>
+             class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 <?= $i === 0 ? 'opacity-100' : 'opacity-0' ?>" data-cp-slide />
+        <?php endforeach; ?>
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-br from-transparent to-[rgba(34,34,32,0.2)] pointer-events-none"></div>
     </div>
+    <script>
+    (function () {
+      const box = document.getElementById('company-photos');
+      const slides = Array.from(box.querySelectorAll('[data-cp-slide]'));
+      if (slides.length < 2 || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+      let cur = 0, visible = true;
+      if ('IntersectionObserver' in window) new IntersectionObserver(es => { visible = es[0].isIntersecting; }, { threshold: 0.2 }).observe(box);
+      setInterval(function () {
+        if (!visible || document.hidden) return;
+        slides[cur].classList.replace('opacity-100', 'opacity-0');
+        cur = (cur + 1) % slides.length;
+        slides[cur].classList.replace('opacity-0', 'opacity-100');
+      }, 4500);   // ganti foto tiap 4,5 detik, fade 1 detik
+    })();
+    </script>
   </div>
 </section>
 
