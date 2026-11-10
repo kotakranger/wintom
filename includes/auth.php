@@ -151,10 +151,10 @@ function request_password_reset(PDO $db, string $identity): void
           . "Kami menerima permintaan untuk mengatur ulang password dashboard admin " . SITE_NAME . ".\r\n"
           . "Buka tautan berikut (berlaku 60 menit, hanya bisa dipakai sekali):\r\n\r\n{$link}\r\n\r\n"
           . "Jika Anda tidak merasa memintanya, abaikan email ini — password Anda tidak berubah.\r\n";
-    $headers = 'From: ' . SITE_NAME . ' <' . SITE_EMAIL . ">\r\n"
+    $headers = 'From: ' . SITE_NAME . ' <' . MAIL_FROM . ">\r\n"
              . 'Reply-To: ' . SITE_EMAIL . "\r\n"
              . "Content-Type: text/plain; charset=UTF-8\r\n";
-    $ok = @mail($a['email'], '=?UTF-8?B?' . base64_encode('Atur ulang password admin ' . SITE_NAME) . '?=', $body, $headers, '-f' . SITE_EMAIL);
+    $ok = @mail($a['email'], '=?UTF-8?B?' . base64_encode('Atur ulang password admin ' . SITE_NAME) . '?=', $body, $headers, '-f' . MAIL_FROM);
     if (!$ok) error_log('[wintom] gagal mengirim email reset password ke akun #' . $a['id']);
 }
 
