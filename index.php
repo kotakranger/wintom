@@ -186,14 +186,14 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
       <div class="lg:col-span-9 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <?php
         $macro_tiles = [
-          ['url' => 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80&fit=crop', 'alt' => 'Macro sheer fabric texture'],
-          ['url' => 'https://images.unsplash.com/photo-1578898887932-dce23a595ad4?w=400&q=80&fit=crop', 'alt' => 'Close-up textured blackout drapery weave'],
-          ['url' => 'https://images.unsplash.com/photo-1540932239986-30128078f3c5?w=400&q=80&fit=crop', 'alt' => 'Folded luxury curtain textiles'],
-          ['url' => 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80&fit=crop', 'alt' => 'High precision curtain hardware'],
+          ['img' => 'quality/detail-1', 'alt' => 'Produksi gorden dan blinds di pabrik Wintom'],
+          ['img' => 'quality/detail-2', 'alt' => 'Memilih bahan gorden di showroom Wintom'],
+          ['img' => 'quality/detail-3', 'alt' => 'Pengukuran jendela oleh tim Wintom'],
+          ['img' => 'quality/detail-4', 'alt' => 'Showroom Wintom di PIK'],
         ];
         foreach ($macro_tiles as $i => $tile): ?>
         <div class="group bg-[#ece8e1] aspect-square sm:aspect-auto sm:h-[208px] overflow-hidden rounded-[2px] relative min-w-0" data-reveal style="--d:<?= $i * 90 ?>ms">
-          <img <?= img_attrs($tile['url'], '(min-width:640px) 25vw, 50vw', [300, 600]) ?> alt="<?= htmlspecialchars($tile['alt']) ?>" loading="lazy"
+          <img src="<?= BASE_URL ?>/assets/images/<?= $tile['img'] ?>-600.webp" srcset="<?= BASE_URL ?>/assets/images/<?= $tile['img'] ?>-300.webp 300w, <?= BASE_URL ?>/assets/images/<?= $tile['img'] ?>-600.webp 600w" sizes="(min-width:640px) 25vw, 50vw" alt="<?= htmlspecialchars($tile['alt']) ?>" loading="lazy"
                class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
           <div class="absolute inset-0 bg-[rgba(0,0,0,0.1)]"></div>
         </div>
