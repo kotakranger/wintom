@@ -27,7 +27,7 @@ function fmt_price(int $price): string { return 'Rp ' . number_format($price, 0,
 <head>
   <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — Wintom Admin</title>
-<link rel="icon" type="image/png" href="../assets/images/favicon.png"/>
+<link rel="icon" type="image/png" href="../assets/images/favicon.png?v=3"/>
 <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{fontFamily:{playfair:['Georgia','"Times New Roman"','serif'],jakarta:['Arial','Helvetica','sans-serif']},colors:{brand:{DEFAULT:'#860524',dark:'#6a041c'},dark:'#242424',muted:'#686561',cream:'#faf8f5','cream-dark':'#f4f1ea',border:'#ece8e1'}}}}</script>
   <style>*{box-sizing:border-box;}</style>

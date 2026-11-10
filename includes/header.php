@@ -21,8 +21,8 @@ $quote_categories = $quote_categories
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><?= htmlspecialchars($page_title) ?> | <?= SITE_NAME ?></title>
-  <link rel="icon" type="image/png" href="<?= BASE_URL ?>/assets/images/favicon.png" />
-  <link rel="apple-touch-icon" href="<?= BASE_URL ?>/assets/images/favicon.png" />
+  <link rel="icon" type="image/png" href="<?= BASE_URL ?>/assets/images/favicon.png?v=<?= @filemtime(__DIR__ . '/../assets/images/favicon.png') ?: 3 ?>" />
+  <link rel="apple-touch-icon" href="<?= BASE_URL ?>/assets/images/favicon.png?v=<?= @filemtime(__DIR__ . '/../assets/images/favicon.png') ?: 3 ?>" />
   <?php seo_head(); ?>
 
   <!-- Font judul (Libre Caslon Text) di-host sendiri: tidak memblokir render & tanpa koneksi ke Google -->

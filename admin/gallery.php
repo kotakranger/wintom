@@ -198,7 +198,7 @@ function category_select(array $cats, ?int $selected, string $id): string {
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Galeri Portofolio — Wintom Admin</title>
-<link rel="icon" type="image/png" href="../assets/images/favicon.png"/>
+<link rel="icon" type="image/png" href="../assets/images/favicon.png?v=3"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{fontFamily:{playfair:['Georgia','"Times New Roman"','serif'],jakarta:['Arial','Helvetica','sans-serif']},colors:{brand:{DEFAULT:'#860524',dark:'#6a041c'},dark:'#242424',muted:'#686561',cream:'#faf8f5','cream-dark':'#f4f1ea',border:'#ece8e1'}}}}</script>
 <style>*{box-sizing:border-box;} .label{display:block;font-family:Arial,Helvetica,sans-serif;font-weight:500;font-size:12px;letter-spacing:0.6px;text-transform:uppercase;color:#686561;margin-bottom:6px;} .input{display:block;width:100%;border:1px solid #ece8e1;border-radius:4px;padding:9px 12px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#242424;background:#fff;transition:border-color 0.15s;} .input:focus{border-color:#860524;outline:none;} select.input{appearance:auto;}</style>

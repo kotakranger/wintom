@@ -38,13 +38,13 @@ $chev = '<svg class="size-4 shrink-0 text-muted transition-transform group-hover
     <div class="bg-brand text-white px-5 pt-4 pb-5 shrink-0">
       <div class="flex items-start justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
-          <span class="relative size-10 shrink-0 rounded-full bg-white flex items-center justify-center">
-            <img src="<?= BASE_URL ?>/assets/images/favicon.png" alt="" class="size-7 object-contain">
-            <span class="absolute bottom-0 right-0 size-2.5 rounded-full bg-[#25d366] ring-2 ring-brand"></span>
+          <span class="relative h-10 w-[52px] shrink-0 rounded-[10px] bg-white flex items-center justify-center">
+            <img src="<?= BASE_URL ?>/assets/images/wintom-logo-480.png" alt="Wintom Curtain" width="480" height="174" class="w-[42px] h-auto object-contain">
+            <span class="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-[#25d366] ring-2 ring-brand"></span>
           </span>
           <div class="min-w-0">
             <p id="wa-fab-title" class="font-jakarta font-semibold text-[14px] leading-tight m-0">Wintom Customer Service</p>
-            <p class="font-jakarta text-white/75 text-[11px] m-0 mt-0.5">Respon cepat di jam operasional</p>
+            <p class="font-jakarta text-white/75 text-[11px] m-0 mt-0.5">Belum tahu ukuran atau bahan yang cocok? Kami siap membantu.</p>
           </div>
         </div>
         <button type="button" data-wa-close aria-label="Tutup" class="size-8 -mr-2 -mt-1 shrink-0 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors">
@@ -57,7 +57,7 @@ $chev = '<svg class="size-4 shrink-0 text-muted transition-transform group-hover
       <!-- Langkah 1: topik -->
       <div data-wa-step="topics" class="p-4">
         <div class="bg-white border border-border rounded-[10px] rounded-tl-[2px] px-4 py-3 mb-4 shadow-sm max-w-[92%]">
-          <p class="font-jakarta text-dark text-[13px] leading-[1.5] m-0">Halo! 👋 Ada yang bisa kami bantu? Pilih topik di bawah, kami lanjutkan obrolannya di WhatsApp.</p>
+          <p class="font-jakarta text-dark text-[13px] leading-[1.5] m-0">Halo, Kak! 👋 Lagi cari gorden atau blinds yang cocok? Tenang, kami siap bantu! 😊</p>
         </div>
         <ul class="list-none m-0 p-0 flex flex-col gap-2">
           <?php foreach ($fab_topics as $t): ?>
