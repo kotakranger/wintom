@@ -116,6 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
     <p class="text-center font-jakarta text-muted text-[11px] mt-5">← <a href="../" class="hover:text-brand transition-colors">Kembali ke Website</a></p>
   </div>
+<?php include __DIR__ . '/../includes/pw-toggle.php'; ?>
 </body>
 
 </html>

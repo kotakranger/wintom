@@ -71,13 +71,11 @@ admin_page_start('Akun Saya', 'account', 'max-w-[560px]');
       <label class="label" for="conf">Ulangi password baru</label>
       <input id="conf" type="password" name="confirm_password" class="input pw" required autocomplete="new-password"/>
     </div>
-    <label class="flex items-center gap-2 font-jakarta text-[12px] text-muted cursor-pointer select-none">
-      <input type="checkbox" class="accent-[#860524]" onchange="document.querySelectorAll('.pw').forEach(function(i){i.type=this.checked?'text':'password'}.bind(this))"/> Tampilkan password
-    </label>
     <button type="submit" class="self-start bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.5px] uppercase px-5 py-3 rounded-[4px] hover:bg-[#6a041c] transition-colors">Simpan Password</button>
   </form>
 
   <?php if (!is_super_admin()): ?>
   <p class="font-jakarta text-muted text-[12px] mt-4 leading-[18px]">Lupa password? Minta Super Admin untuk mengatur ulang lewat menu <b>Pengguna</b>.</p>
   <?php endif; ?>
+<?php include __DIR__ . '/../includes/pw-toggle.php'; ?>
 <?php admin_page_end(); ?>
