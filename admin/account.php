@@ -49,6 +49,7 @@ admin_page_start('Akun Saya', 'account', 'max-w-[560px]');
     <span class="flex size-12 shrink-0 items-center justify-center rounded-full bg-brand text-white font-jakarta font-semibold text-[18px] uppercase"><?= htmlspecialchars(mb_substr($me['username'], 0, 1)) ?></span>
     <div>
       <p class="font-jakarta font-semibold text-dark text-[15px]"><?= htmlspecialchars($me['username']) ?></p>
+      <?php if (!empty($me['email'])): ?><p class="font-jakarta text-muted text-[12px]"><?= htmlspecialchars($me['email']) ?></p><?php endif; ?>
       <p class="font-jakarta text-muted text-[12px]"><?= admin_role_label($me['role']) ?></p>
     </div>
   </div>

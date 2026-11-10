@@ -51,7 +51,7 @@ function ensure_schema(PDO $pdo): void {
            (SELECT COUNT(*) FROM information_schema.tables
              WHERE table_schema = DATABASE()
                AND table_name IN ('admins','categories','products','product_images','product_variants',
-                                  'product_variant_options','galleries','gallery_images','inquiries','content_videos')),
+                                  'product_variant_options','galleries','gallery_images','inquiries','content_videos','password_resets')),
            (SELECT COUNT(*) FROM information_schema.columns
              WHERE table_schema = DATABASE()
                AND ((table_name = 'inquiries' AND column_name = 'width_cm')
@@ -62,16 +62,27 @@ function ensure_schema(PDO $pdo): void {
                  OR (table_name = 'categories' AND column_name = 'image_url')
                  OR (table_name = 'categories' AND column_name = 'whatsapp')
                  OR (table_name = 'inquiries' AND column_name = 'routed_whatsapp')
-                 OR (table_name = 'admins' AND column_name = 'role')))"
+                 OR (table_name = 'admins' AND column_name = 'role')
+                 OR (table_name = 'admins' AND column_name = 'email')))"
     )->fetch(PDO::FETCH_NUM));
-    if ($have === 10 && $upgrades === 9) {
+    if ($have === 11 && $upgrades === 10) {
         return;
     }
 
     $tables = [
+        "CREATE TABLE IF NOT EXISTS password_resets (
+            id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            admin_id   INT UNSIGNED NOT NULL,
+            token_hash CHAR(64)     NOT NULL UNIQUE,                   -- SHA-256 dari token; token asli hanya ada di email
+            expires_at DATETIME     NOT NULL,
+            used_at    DATETIME     NULL DEFAULT NULL,
+            created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY idx_pr_admin (admin_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
         "CREATE TABLE IF NOT EXISTS admins (
             id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
             username      VARCHAR(100) NOT NULL UNIQUE,
+            email         VARCHAR(190) NULL DEFAULT NULL UNIQUE,      -- bisa dipakai untuk login & reset password
             password_hash VARCHAR(255) NOT NULL,
             role          VARCHAR(20)  NOT NULL DEFAULT 'admin',      -- 'superadmin' | 'admin'
             session_version INT UNSIGNED NOT NULL DEFAULT 1,           -- dinaikkan saat password diganti/direset: sesi lama otomatis keluar
@@ -227,6 +238,13 @@ function ensure_schema(PDO $pdo): void {
             ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER session_version");
         $pdo->exec("UPDATE admins SET role = 'superadmin' ORDER BY id ASC LIMIT 1");
     }
+
+    // Upgrade: email akun admin (bisa dipakai untuk login). Super Admin dikaitkan ke ADMIN_SUPER_EMAIL.
+    if (!$has_col('admins', 'email')) {
+        $pdo->exec("ALTER TABLE admins ADD COLUMN email VARCHAR(190) NULL DEFAULT NULL AFTER username, ADD UNIQUE KEY uq_admins_email (email)");
+    }
+    $pdo->prepare("UPDATE admins SET email = ? WHERE role = 'superadmin' AND (email IS NULL OR email = '') ORDER BY id ASC LIMIT 1")
+        ->execute([ADMIN_SUPER_EMAIL]);
 
     // Upgrade: ukuran terstruktur (lebar × tinggi × jumlah) pada inquiry lama
     if (!$has_col('inquiries', 'width_cm')) {

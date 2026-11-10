@@ -15,8 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     if ($username && $password) {
         $db = get_db();
-        $stmt = $db->prepare('SELECT id, password_hash FROM admins WHERE username = ?');
-        $stmt->execute([$username]);
+        // masuk dengan username ATAU email akun
+        $stmt = $db->prepare('SELECT id, password_hash FROM admins WHERE username = ? OR email = ? LIMIT 1');
+        $stmt->execute([$username, strtolower($username)]);
         $admin = $stmt->fetch();
         if ($admin && password_verify($password, $admin['password_hash'])) {
             login_admin((int) $admin['id']);
@@ -28,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     usleep(400000);   // memperlambat tebakan password beruntun
-    $error = 'Username atau password salah.';
+    $error = 'Username/email atau password salah.';
 }
 ?>
 <!DOCTYPE html>
@@ -95,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <form method="POST" autocomplete="off" class="flex flex-col gap-4">
         <?= csrf_field() ?>
         <div>
-          <label class="font-jakarta font-medium text-dark text-[12px] tracking-[0.6px] uppercase block mb-1.5">Username</label>
+          <label class="font-jakarta font-medium text-dark text-[12px] tracking-[0.6px] uppercase block mb-1.5">Username atau Email</label>
           <input type="text" name="username" id="username" required autofocus
             class="w-full border border-border rounded-[4px] px-3 py-2.5 font-jakarta text-dark text-[14px] focus:outline-none focus:border-brand transition-colors"
             placeholder="admin" />
@@ -110,6 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           class="w-full bg-brand text-white font-jakarta font-semibold text-[12px] tracking-[1.8px] uppercase py-3 rounded-[3px] hover:bg-[#6a041c] transition-colors duration-200 mt-2">
           MASUK
         </button>
+        <a href="forgot-password.php" class="text-center font-jakarta text-muted text-[12px] hover:text-brand transition-colors">Lupa password?</a>
       </form>
     </div>
     <p class="text-center font-jakarta text-muted text-[11px] mt-5">← <a href="../" class="hover:text-brand transition-colors">Kembali ke Website</a></p>

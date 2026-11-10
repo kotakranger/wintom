@@ -47,7 +47,7 @@ function current_admin(bool $refresh = false): ?array
     $id = (int)($_SESSION['admin_id'] ?? 0);
     if ($id > 0) {
         require_once __DIR__ . '/db.php';
-        $st = get_db()->prepare('SELECT id, username, role, session_version, created_at FROM admins WHERE id = ?');
+        $st = get_db()->prepare('SELECT id, username, email, role, session_version, created_at FROM admins WHERE id = ?');
         $st->execute([$id]);
         $a = $st->fetch() ?: null;
         if ($a && (int)($_SESSION['admin_sv'] ?? 0) === (int)$a['session_version']) {
@@ -122,6 +122,50 @@ function set_admin_password(PDO $db, int $id, string $password): void
 {
     $db->prepare('UPDATE admins SET password_hash = ?, session_version = session_version + 1 WHERE id = ?')
        ->execute([password_hash($password, PASSWORD_DEFAULT), $id]);
+}
+
+/**
+ * Lupa password: buat tautan sekali pakai (berlaku 60 menit) dan kirim ke email akun.
+ * Selalu aman dipanggil: tidak membocorkan apakah email terdaftar. Maksimal 1 permintaan per 2 menit per akun.
+ * Token asli hanya ada di email; database hanya menyimpan hash SHA-256-nya.
+ */
+function request_password_reset(PDO $db, string $identity): void
+{
+    $identity = strtolower(trim($identity));
+    if ($identity === '') return;
+    $st = $db->prepare('SELECT id, username, email FROM admins WHERE email = ? LIMIT 1');
+    $st->execute([$identity]);
+    $a = $st->fetch();
+    if (!$a || empty($a['email'])) return;
+    $recent = $db->prepare('SELECT 1 FROM password_resets WHERE admin_id = ? AND created_at > (NOW() - INTERVAL 2 MINUTE) LIMIT 1');
+    $recent->execute([$a['id']]);
+    if ($recent->fetchColumn()) return;
+
+    $db->prepare('DELETE FROM password_resets WHERE admin_id = ? OR expires_at < NOW()')->execute([$a['id']]);
+    $token = bin2hex(random_bytes(32));
+    $db->prepare('INSERT INTO password_resets (admin_id, token_hash, expires_at) VALUES (?, ?, NOW() + INTERVAL 60 MINUTE)')
+       ->execute([$a['id'], hash('sha256', $token)]);
+
+    $link = abs_url('/admin/reset-password.php?token=' . $token);
+    $body = "Halo {$a['username']},\r\n\r\n"
+          . "Kami menerima permintaan untuk mengatur ulang password dashboard admin " . SITE_NAME . ".\r\n"
+          . "Buka tautan berikut (berlaku 60 menit, hanya bisa dipakai sekali):\r\n\r\n{$link}\r\n\r\n"
+          . "Jika Anda tidak merasa memintanya, abaikan email ini — password Anda tidak berubah.\r\n";
+    $headers = 'From: ' . SITE_NAME . ' <' . SITE_EMAIL . ">\r\n"
+             . 'Reply-To: ' . SITE_EMAIL . "\r\n"
+             . "Content-Type: text/plain; charset=UTF-8\r\n";
+    $ok = @mail($a['email'], '=?UTF-8?B?' . base64_encode('Atur ulang password admin ' . SITE_NAME) . '?=', $body, $headers, '-f' . SITE_EMAIL);
+    if (!$ok) error_log('[wintom] gagal mengirim email reset password ke akun #' . $a['id']);
+}
+
+/** Baris admin untuk token reset yang masih berlaku dan belum dipakai, atau null. */
+function find_password_reset(PDO $db, string $token): ?array
+{
+    if (!preg_match('/^[a-f0-9]{64}$/', $token)) return null;
+    $st = $db->prepare('SELECT r.id AS rid, a.id, a.username FROM password_resets r JOIN admins a ON a.id = r.admin_id
+                        WHERE r.token_hash = ? AND r.used_at IS NULL AND r.expires_at > NOW()');
+    $st->execute([hash('sha256', $token)]);
+    return $st->fetch() ?: null;
 }
 
 function logout_admin(): void

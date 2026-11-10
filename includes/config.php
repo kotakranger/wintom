@@ -18,7 +18,8 @@ define('WA_URL_2', 'https://wa.me/' . WA_NUMBER_2);
 
 define('SITE_NAME', 'Wintom Curtain');
 define('SITE_TAGLINE', 'Gorden & Roller Blind — Ready Stock atau Custom');
-define('SITE_EMAIL', 'wintomconceptstore@gmail.com');
+define('SITE_EMAIL', 'hello@wintom.co.id');   // email kontak untuk pengunjung (footer, kontak, JSON-LD)
+define('ADMIN_SUPER_EMAIL', 'admindashboard@wintom.co.id');   // email akun Super Admin (login admin)
 define('SITE_PHONE', '0822-6013-2823');
 define('SITE_PHONE_RAW', '+6282260132823');
 define('SITE_PHONE_2', '0822-5887-7759');
