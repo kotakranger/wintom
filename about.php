@@ -114,44 +114,8 @@ include_once __DIR__ . '/includes/header.php';
   </div>
 </section>
 
-<!-- ===== BRAND VALUES ===== -->
-<section class="bg-cream py-14 md:py-[80px]">
-  <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12">
-    <div class="text-center mb-10 md:mb-14" data-reveal>
-      <p class="font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase mb-3">MENGAPA MEMILIH WINTOM?</p>
-      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] max-w-[760px] mx-auto mb-4">Gorden Custom Premium: Praktis Secara Online, Presisi Secara Offline.</h2>
-      <p class="font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6] max-w-[760px] mx-auto">Kemudahan konsultasi dan pilih model gorden dari genggaman, dipadukan dengan jaminan kualitas bahan grade A, survei bawakan sampel ke lokasi, hingga instalasi rapi setara hotel bintang lima.</p>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-px bg-border rounded-[6px] overflow-hidden">
-      <?php
-      $values = [
-        ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/>',
-         'title' => 'Kualitas Bahan & Jahitan Terbaik',
-         'desc'  => 'Menggunakan material pilihan yang tebal, awet, dan jatuh bergelombang rapi sempurna.'],
-        ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z"/>',
-         'title' => 'Fleksibel Online & Offline',
-         'desc'  => 'Konsultasi praktis via WhatsApp/Website, atau jadwalkan tim kami datang membawa buku sampel bahan langsung ke tempat Anda.'],
-        ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>',
-         'title' => 'Garansi Ukuran Presisi 100%',
-         'desc'  => 'Bebas risiko salah ukuran dengan panduan ukur online dari tim ahli atau layanan survei pengukuran langsung ke lokasi.'],
-        ['icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>',
-         'title' => 'Terima Beres & Bergaransi',
-         'desc'  => 'Mulai dari pemilihan desain, produksi, hingga pemasangan bersih menggunakan komponen rel yang kokoh dan tidak macet.'],
-      ];
-      foreach ($values as $i => $v): ?>
-      <div class="bg-cream p-6 sm:p-8 hover:bg-cream-dark transition-colors duration-200" data-reveal style="--d:<?= ($i % 2) * 120 ?>ms">
-        <div class="size-10 rounded-full bg-brand/10 flex items-center justify-center mb-5">
-          <svg class="size-5 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-            <?= $v['icon'] ?>
-          </svg>
-        </div>
-        <h3 class="font-playfair font-normal text-dark text-[20px] sm:text-[22px] leading-[1.3] mb-3"><?= $v['title'] ?></h3>
-        <p class="font-jakarta text-muted text-[16px] leading-[1.6]"><?= $v['desc'] ?></p>
-      </div>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
+<!-- ===== MENGAPA MEMILIH WINTOM (komponen bersama dengan Beranda) ===== -->
+<?php include __DIR__ . '/includes/why-choose.php'; ?>
 
 <!-- ===== CARA PESAN (komponen bersama) ===== -->
 <?php $order_steps_bg = 'bg-cream-dark border-t border-border'; include __DIR__ . '/includes/order-steps.php'; ?>

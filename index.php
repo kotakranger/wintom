@@ -110,7 +110,6 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
         <!-- Sub-headline -->
         <p class="wt-in font-jakarta text-[16px] md:text-[18px] text-[rgba(255,255,255,0.9)] leading-[1.6] m-0 mt-6 max-w-[560px]" style="--d:420ms">
           <?php if (copy_v2()): ?>Pilih gorden atau blinds custom langsung dari pabrik, sesuai kebutuhan ruangan Anda. Kami mendampingi setiap tahap, mulai dari konsultasi dan pengukuran hingga pemasangan profesional, disertai garansi serta dukungan purna jual.
-          <span class="block mt-3">Belum tahu ukuran atau bahan yang cocok? Kami siap membantu.</span>
           <?php else: ?>Pilih koleksi siap pasang atau buat sesuai ukuran. Tim kami datang mengukur, membawa sampel bahan, dan memasang hingga rapi — Anda tinggal menikmati hasilnya.<?php endif; ?>
         </p>
 
@@ -125,7 +124,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
             <?= copy_v2() ? 'Lihat Koleksi Produk' : 'Jelajahi Koleksi' ?>
           </a>
         </div>
-        <p class="wt-in font-jakarta text-[13px] text-[rgba(255,255,255,0.75)] leading-[1.5] pt-3 m-0" style="--d:640ms">Respon cepat di jam operasional.</p>
+        <p class="wt-in font-jakarta text-[13px] text-[rgba(255,255,255,0.75)] leading-[1.5] pt-3 m-0" style="--d:640ms"><?= copy_v2() ? 'Belum tahu ukuran atau bahan yang cocok? Kami siap membantu.' : 'Respon cepat di jam operasional.' ?></p>
       </div>
 
     </div>
@@ -238,42 +237,7 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
 </section>
 
 
-<!-- ===================================================================
-     USP — Mengapa Memilih Wintom
-===================================================================== -->
-<section class="bg-[#f4f1ea] border-b border-[#ece8e1] py-16 md:py-24">
-  <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-12">
-    <div class="max-w-[820px] mx-auto text-center mb-10 md:mb-14" data-reveal>
-      <p class="font-jakarta font-semibold text-brand text-[12px] tracking-[2.64px] uppercase mb-4"><?= copy_v2() ? 'MENGAPA MEMILIH KAMI?' : 'MENGAPA MEMILIH WINTOM?' ?></p>
-      <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] leading-[1.2] tracking-[-0.5px] m-0 mb-5"><?= copy_v2() ? '20 Tahun Pengalaman, dari Produksi hingga Pemasangan' : 'Konsultasi Praktis dari Rumah, Pemasangan Presisi di Lokasi' ?></h2>
-      <p class="font-jakarta text-muted text-[16px] md:text-[17px] leading-[1.6] m-0"><?php if (copy_v2()): ?>Memilih gorden atau blinds bukan hanya soal desain dan warna. Kualitas material, ketepatan ukuran, serta hasil pemasangan menjadi bagian penting dalam menciptakan ruangan yang nyaman. Dengan pengalaman selama 20 tahun dan fasilitas produksi sendiri, setiap proses ditangani secara menyeluruh, mulai dari konsultasi hingga pemasangan akhir.<?php else: ?>Pilih model dan konsultasi langsung dari ponsel Anda. Saat siap, tim kami datang membawa sampel bahan grade A, mengukur dengan presisi, lalu memasang serapi standar hotel bintang lima.<?php endif; ?></p>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-      <?php
-      $usp = [
-        ['Bahan & Jahitan Berkualitas', 'Material pilihan yang tebal dan awet, dijahit rapi agar gorden jatuh bergelombang dengan sempurna.'],
-        ['Konsultasi Online atau Kunjungan', 'Diskusikan kebutuhan Anda lewat WhatsApp atau website, atau jadwalkan tim kami datang membawa buku sampel ke tempat Anda.'],
-        ['Garansi Ukuran Presisi 100%', 'Tidak perlu khawatir salah ukur. Ikuti panduan dari tim ahli kami, atau biarkan kami yang mengukur langsung di lokasi.'],
-        ['Terima Beres & Bergaransi', 'Dari pemilihan desain, produksi, hingga pemasangan yang bersih — dengan rel kokoh yang bergerak mulus tanpa macet.'],
-      ];
-      if (copy_v2()) $usp = [
-        ['Pilihan Gorden & Blinds Lengkap', 'Tersedia beragam pilihan gorden blackout, semi blackout, vitrase, roller blind, zebra blind, vertical blind, hingga berbagai model tirai lainnya dengan pilihan bahan, warna, dan desain sesuai kebutuhan ruangan.'],
-        ['Produksi Sendiri & Custom Ukuran', 'Diproduksi langsung dari pabrik dengan material pilihan dan pengerjaan yang memperhatikan setiap detail. Tersedia layanan custom ukuran untuk kebutuhan hunian, perkantoran, hingga proyek komersial.'],
-        ['Konsultasi & Pengukuran Profesional', 'Konsultasikan kebutuhan gorden dan blinds secara online maupun langsung di showroom. Tersedia layanan survei dan pengukuran di lokasi untuk membantu menentukan pilihan bahan, model, serta ukuran yang tepat.'],
-        ['Pemasangan Profesional & Bergaransi', 'Mulai dari proses produksi hingga pemasangan, setiap tahap ditangani oleh tim berpengalaman dengan mengutamakan kerapian dan ketepatan hasil. Dilengkapi garansi sesuai ketentuan serta layanan purna jual.'],
-      ];
-      foreach ($usp as $i => [$t, $d]): ?>
-      <div class="bg-white border border-[#ece8e1] rounded-[2px] p-6 sm:p-8 flex gap-4 sm:gap-5 hover:-translate-y-1 hover:shadow-[0_18px_40px_-20px_rgba(34,34,32,0.3)] transition-all duration-300" data-reveal style="--d:<?= ($i % 2) * 120 ?>ms">
-        <span class="font-playfair font-normal text-brand text-[32px] leading-none shrink-0"><?= sprintf('%02d', $i + 1) ?></span>
-        <div>
-          <h3 class="font-playfair font-normal text-dark text-[20px] sm:text-[22px] leading-[1.3] m-0 mb-2"><?= htmlspecialchars($t) ?></h3>
-          <p class="font-jakarta text-muted text-[15px] sm:text-[16px] leading-[1.6] m-0"><?= htmlspecialchars($d) ?></p>
-        </div>
-      </div>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
+<?php include __DIR__ . '/includes/why-choose.php'; ?>
 
 
 <!-- ===================================================================
@@ -352,34 +316,54 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
       <h2 class="font-playfair font-normal text-dark text-[28px] md:text-[36px] tracking-[-0.5px] text-center leading-[1.2] m-0">Konten Wintom</h2>
       <div class="bg-brand h-[2px] w-12"></div>
     </div>
-    <div class="flex flex-wrap justify-center gap-4 md:gap-6">
-      <?php foreach ($home_videos as $v):
-          $vid = htmlspecialchars($v['youtube_id']);
-          $ttl = $v['title'] !== null && $v['title'] !== '' ? $v['title'] : 'Video Wintom';
-          $is_short = (bool)$v['is_short'];
-      ?>
-      <figure class="m-0 <?= $is_short ? 'w-[calc(50%-8px)] md:w-[calc(25%-18px)]' : 'w-full md:w-[calc(33.333%-16px)]' ?>" data-reveal>
-        <div class="yt-card relative w-full overflow-hidden rounded-[2px] bg-[#242424] <?= $is_short ? 'aspect-[9/16]' : 'aspect-video' ?>">
-          <button type="button" data-yt="<?= $vid ?>" data-title="<?= htmlspecialchars($ttl) ?>"
-                  class="yt-play group absolute inset-0 block w-full h-full"
-                  aria-label="Putar video: <?= htmlspecialchars($ttl) ?>">
-            <img src="https://i.ytimg.com/vi/<?= $vid ?>/hqdefault.jpg" alt="" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]">
-            <span class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></span>
-            <span class="absolute inset-0 flex items-center justify-center">
-              <span class="size-14 rounded-full bg-brand text-white flex items-center justify-center shadow-lg">
-                <svg class="size-6 ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    <div id="konten-slider" role="region" aria-roledescription="carousel" aria-label="Konten Wintom" class="flex flex-col gap-8">
+      <div data-c-track tabindex="0" aria-live="off"
+           class="flex items-start gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth py-3 -my-3 focus:outline-none">
+        <?php foreach ($home_videos as $vi => $v):
+            $vid = htmlspecialchars($v['youtube_id']);
+            $ttl = $v['title'] !== null && $v['title'] !== '' ? $v['title'] : 'Video Wintom';
+            $is_short = (bool)$v['is_short'];
+        ?>
+        <figure role="group" aria-roledescription="slide" aria-label="<?= $vi + 1 ?> dari <?= count($home_videos) ?>"
+                class="m-0 snap-start shrink-0 min-w-0 <?= $is_short ? 'basis-[calc(50%-8px)] md:basis-[calc(25%-18px)]' : 'basis-full md:basis-[calc(33.333%-16px)]' ?>">
+          <div class="yt-card relative w-full overflow-hidden rounded-[2px] bg-[#242424] <?= $is_short ? 'aspect-[9/16]' : 'aspect-video' ?>">
+            <button type="button" data-yt="<?= $vid ?>" data-title="<?= htmlspecialchars($ttl) ?>"
+                    class="yt-play group absolute inset-0 block w-full h-full"
+                    aria-label="Putar video: <?= htmlspecialchars($ttl) ?>">
+              <img src="https://i.ytimg.com/vi/<?= $vid ?>/hqdefault.jpg" alt="" loading="lazy" draggable="false" class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]">
+              <span class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></span>
+              <span class="absolute inset-0 flex items-center justify-center">
+                <span class="size-14 rounded-full bg-brand text-white flex items-center justify-center shadow-lg">
+                  <svg class="size-6 ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                </span>
               </span>
-            </span>
-          </button>
-        </div>
-        <?php if ($v['title']): ?>
-        <figcaption class="font-jakarta text-dark text-[15px] leading-[1.5] pt-3"><?= htmlspecialchars($v['title']) ?></figcaption>
-        <?php endif; ?>
-      </figure>
-      <?php endforeach; ?>
+            </button>
+          </div>
+          <?php if ($v['title']): ?>
+          <figcaption class="font-jakarta text-dark text-[15px] leading-[1.5] pt-3"><?= htmlspecialchars($v['title']) ?></figcaption>
+          <?php endif; ?>
+        </figure>
+        <?php endforeach; ?>
+      </div>
+      <div class="flex items-center justify-center gap-4">
+        <button type="button" data-c-prev aria-label="Video sebelumnya"
+                class="size-11 shrink-0 flex items-center justify-center rounded-full border border-[#ece8e1] bg-white text-dark hover:border-brand hover:text-brand transition-colors">
+          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div data-c-dots class="flex items-center justify-center gap-2 flex-wrap max-w-[260px]" role="group" aria-label="Pilih video"></div>
+        <button type="button" data-c-next aria-label="Video berikutnya"
+                class="size-11 shrink-0 flex items-center justify-center rounded-full border border-[#ece8e1] bg-white text-dark hover:border-brand hover:text-brand transition-colors">
+          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
     </div>
   </div>
 </section>
+<?php include __DIR__ . '/includes/carousel.php'; ?>
+<script>
+  // Autoplay dijeda selama ada video yang sedang diputar
+  wtCarousel(document.getElementById('konten-slider'), { label: 'video', pauseWhen: function () { return !!document.querySelector('#konten-slider iframe'); } });
+</script>
 <script>
   // Muat player YouTube hanya setelah diklik (halaman tetap ringan)
   document.querySelectorAll('.yt-play').forEach(function (btn) {
@@ -411,53 +395,53 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
       <div class="bg-brand h-[2px] w-12"></div>
     </div>
 
-    <!-- Carousel testimoni: autoplay + panah kiri/kanan + indikator progres -->
+    <!-- Carousel testimoni: autoplay + panah kiri/kanan + titik indikator (wtCarousel di includes/carousel.php) -->
     <?php
-    // DUMMY — 10 testimoni contoh. Ganti dengan testimoni pelanggan asli sebelum dipromosikan.
+    // Testimoni asli pelanggan (sumber: dokumen owner, 2026-11). Foto di assets/images/testimonials/.
     $testimonials = [
-      ['img' => 'photo-1493809842364-78817add7ffb', 'alt' => 'Rumah modern dengan gorden sheer Wintom',
-       'quote' => 'Hasilnya sangat rapi dan sesuai ekspektasi. Timnya profesional, mulai dari pengukuran hingga pemasangan tepat waktu.',
-       'location' => '— RUMAH TINGGAL, JAKARTA'],
-      ['img' => 'photo-1497366216548-37526070297c', 'alt' => 'Kantor dengan roller blind otomatis',
-       'quote' => 'Kualitas bagus, pemasangan cepat, layanan sangat baik. Roller blind motorized-nya bergerak sangat halus dan senyap.',
-       'location' => '— KANTOR, TANGERANG'],
-      ['img' => 'photo-1631049307264-da0ec9d70304', 'alt' => 'Kamar tidur utama dengan gorden blackout',
-       'quote' => 'Bahannya premium dan terlihat sangat elegan. Benar-benar 100% blackout untuk kamar tidur kami. Sangat puas!',
-       'location' => '— APARTEMEN, JAKARTA'],
-      ['img' => 'photo-1618221195710-dd6b41faaea6', 'alt' => 'Ruang keluarga dengan gorden ripple fold',
-       'quote' => 'Konsultasinya enak lewat WhatsApp, jadi kami tidak bingung memilih bahan. Waktu dipasang, ukurannya pas sekali di semua jendela.',
-       'location' => '— RUMAH TINGGAL, PIK'],
-      ['img' => 'photo-1600210492486-724fe5c67fb0', 'alt' => 'Ruang tamu dengan vitrase tipis',
-       'quote' => 'Vitrase-nya jatuh cantik dan cahaya masuk jadi lembut. Tamu yang datang sering bertanya beli di mana.',
-       'location' => '— RUMAH TINGGAL, JAKARTA BARAT'],
-      ['img' => 'photo-1583847268964-b28dc8f51f92', 'alt' => 'Kamar tidur dengan gorden tebal',
-       'quote' => 'Kamar jadi gelap dan tenang untuk tidur siang. Jahitannya rapi dan warnanya sama persis seperti sampel yang kami lihat di showroom.',
-       'location' => '— RUMAH TINGGAL, JAKARTA SELATAN'],
-      ['img' => 'photo-1616486338812-3dadae4b4ace', 'alt' => 'Ruang kerja dengan tirai otomatis',
-       'quote' => 'Tirai motorized untuk ruang meeting kami berfungsi mulus. Tim pemasang datang sesuai jadwal dan meninggalkan lokasi dalam keadaan bersih.',
-       'location' => '— KANTOR, JAKARTA PUSAT'],
-      ['img' => 'photo-1600585154340-be6161a56a0c', 'alt' => 'Villa dengan blind kayu',
-       'quote' => 'Kami pilih blind untuk jendela besar di villa. Hasilnya hangat dan natural, dan cara kerjanya mudah dipakai setiap hari.',
-       'location' => '— VILLA, BOGOR'],
-      ['img' => 'photo-1513694203232-719a280e022f', 'alt' => 'Ruang makan dengan gorden dua lapis',
-       'quote' => 'Gorden dua lapis di ruang makan terlihat mewah tapi tetap praktis. Pelayanannya ramah dan responsif dari awal sampai selesai.',
-       'location' => '— RUMAH TINGGAL, TANGERANG SELATAN'],
-      ['img' => 'photo-1507652313519-d4e9174996dd', 'alt' => 'Apartemen dengan gorden S-fold',
-       'quote' => 'Untuk apartemen kami butuh solusi cepat dan rapi. Dari ukur sampai pasang selesai dalam waktu singkat, dan hasilnya memuaskan.',
-       'location' => '— APARTEMEN, JAKARTA UTARA'],
+      ['img' => 'testimonials/testi-01', 'alt' => 'Gorden abu-abu dengan vitrase putih di Gold Coast, PIK 1',
+       'quote' => 'Suka banget sama hasil gordennya 😍 Warna abu-abunya pas sama interior ruangan, ditambah vitrase putih jadi makin elegan. Jahitan dan pemasangannya juga rapi, puas banget sama hasilnya!',
+       'location' => '— GOLD COAST, PIK 1'],
+      ['img' => 'testimonials/testi-02', 'alt' => 'Gorden ruang makan di Adriya Tower Apartemen, PIK',
+       'quote' => 'Pelayanannya bagus, dari awal konsultasi sampai pemasangan dibantu dengan baik. Harganya juga oke, masih worth it banget sama hasilnya. Gordennya rapi dan cocok sama ruangan makan kami. Puas deh pokoknya 😊👍',
+       'location' => '— ADRIYA TOWER APARTEMEN, PIK'],
+      ['img' => 'testimonials/testi-03', 'alt' => 'Roller blind kantor di Kuningan Village, PIK 2',
+       'quote' => 'Seneng banget hasilnya sesuai harapan. Roller blind buat kantor kami dipasang rapi, warnanya juga pas sama interior. Ruangan jadi lebih nyaman karena cahaya matahari nggak terlalu mengganggu. Makasih Wintom!',
+       'location' => '— KUNINGAN VILLAGE, PIK 2'],
+      ['img' => 'testimonials/testi-04', 'alt' => 'Gorden dan vitrase di Atlantik City, Cengkareng',
+       'quote' => 'Awalnya bingung mau pilih warna gorden yang cocok buat kamar, untung dibantu sama tim Wintom. Pas dipasang ternyata bagus banget! 😍 Vitasenya bikin kamar tetap terang, tapi privasi juga lebih terjaga. Suka sama hasilnya!',
+       'location' => '— ATLANTIK CITY, CENGKARENG'],
+      ['img' => 'testimonials/testi-05', 'alt' => 'Gorden dan vitrase di Greenbay Tower, Pluit',
+       'quote' => 'Awalnya sempet ragu mau pesan di sini, tapi salesnya ramah banget dan sabar bantu pilih bahan sama warna yang cocok. Pas udah dipasang ternyata hasilnya bagus banget, lebih dari ekspektasi 😍 Makasih Wintom!',
+       'location' => '— GREENBAY TOWER, PLUIT'],
+      ['img' => 'testimonials/testi-06', 'alt' => 'Gorden sekat tempat tidur pasien di Karawang',
+       'quote' => 'Puas banget sama hasilnya 😊 Gordennya rapi, warnanya juga bikin ruangan lebih nyaman dilihat. Cocok banget buat sekat tempat tidur pasien, jadi privasinya lebih terjaga. Makasih Wintom! 👍',
+       'location' => '— KARAWANG'],
+      ['img' => 'testimonials/testi-07', 'alt' => 'Blind jendela di Ciputat, Jakarta Selatan',
+       'quote' => 'Awalnya takut ruangan jadi terlalu gelap, ternyata hasilnya oke banget! 😊 Cahaya masih bisa masuk, tapi privasi tetap terjaga. Pemasangannya juga rapi dan pas sama jendelanya. Puas sama hasilnya!',
+       'location' => '— CIPUTAT, JAKARTA SELATAN'],
+      ['img' => 'testimonials/testi-08', 'alt' => 'Blind outdoor di Kuningan Village, PIK 2',
+       'quote' => 'Pas banget buat area outdoor tempat kita! 😍 Sekarang nggak terlalu panas kalau siang, tapi pemandangan luar masih tetap kelihatan. Hasil pemasangannya juga rapi dan sesuai harapan.',
+       'location' => '— KUNINGAN VILLAGE, PIK 2'],
+      ['img' => 'testimonials/testi-09', 'alt' => 'Skylight blind di Diamond Gold, PIK 1',
+       'quote' => 'Sempet bingung mau pakai penutup apa buat bagian atas, tapi ternyata skylight blind dari Wintom cocok banget 😍 Bikin area jadi lebih nyaman dan nggak terlalu silau, tampilannya juga tetap rapi. Puas sama hasilnya! 👍',
+       'location' => '— DIAMOND GOLD, PIK 1'],
+      ['img' => 'testimonials/testi-10', 'alt' => 'Roller blind kantor di De Park, BSD',
+       'quote' => 'Puas banget sama hasil pemasangan roller blind dari Wintom. Tampilannya rapi, pilihan warnanya pas dengan konsep kantor, dan cahaya matahari jadi lebih terkontrol. Dari konsultasi sampai pemasangan juga pelayanannya memuaskan. Hasilnya sesuai ekspektasi, recommended! 👍',
+       'location' => '— DE PARK, BSD'],
     ];
     $t_total = count($testimonials);
     ?>
     <div id="testi" role="region" aria-roledescription="carousel" aria-label="Kata pelanggan kami" class="flex flex-col gap-8">
 
-      <div data-t-track tabindex="0" aria-live="off"
+      <div data-c-track tabindex="0" aria-live="off"
            class="flex gap-6 lg:gap-8 overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth py-3 -my-3 focus:outline-none">
         <?php foreach ($testimonials as $i => $t): ?>
         <div role="group" aria-roledescription="slide" aria-label="<?= $i + 1 ?> dari <?= $t_total ?>"
              class="snap-start shrink-0 basis-full md:basis-[calc((100%-1.5rem*2)/3)] lg:basis-[calc((100%-2rem*2)/3)] min-w-0 bg-white border border-[#ece8e1] rounded-[2px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] flex flex-col items-start justify-between p-5 sm:p-[25px]">
           <div class="flex flex-col gap-[7.3px] w-full">
             <div class="bg-[#ece8e1] h-[200px] md:h-[176px] overflow-hidden rounded-[2px] w-full relative">
-              <img <?= img_attrs('https://images.unsplash.com/' . $t['img'], '(min-width:768px) 33vw, 100vw', [480, 800]) ?>
+              <img src="<?= BASE_URL ?>/assets/images/<?= $t['img'] ?>-800.webp" srcset="<?= BASE_URL ?>/assets/images/<?= $t['img'] ?>-480.webp 480w, <?= BASE_URL ?>/assets/images/<?= $t['img'] ?>-800.webp 800w" sizes="(min-width:768px) 33vw, 100vw"
                    alt="<?= htmlspecialchars($t['alt']) ?>" loading="lazy" draggable="false"
                    class="absolute inset-0 w-full h-full object-cover" />
             </div>
@@ -478,108 +462,20 @@ $home_videos = $db->query('SELECT * FROM content_videos WHERE is_active = 1 ORDE
 
       <!-- Kontrol: panah kiri/kanan + titik indikator posisi (dibuat oleh JS, satu titik per posisi geser) -->
       <div class="flex items-center justify-center gap-4">
-        <button type="button" data-t-prev aria-label="Testimoni sebelumnya"
+        <button type="button" data-c-prev aria-label="Testimoni sebelumnya"
                 class="size-11 shrink-0 flex items-center justify-center rounded-full border border-[#ece8e1] bg-white text-dark hover:border-brand hover:text-brand transition-colors">
           <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
-        <div data-t-dots class="flex items-center justify-center gap-2 flex-wrap max-w-[260px]" role="group" aria-label="Pilih testimoni"></div>
-        <button type="button" data-t-next aria-label="Testimoni berikutnya"
+        <div data-c-dots class="flex items-center justify-center gap-2 flex-wrap max-w-[260px]" role="group" aria-label="Pilih testimoni"></div>
+        <button type="button" data-c-next aria-label="Testimoni berikutnya"
                 class="size-11 shrink-0 flex items-center justify-center rounded-full border border-[#ece8e1] bg-white text-dark hover:border-brand hover:text-brand transition-colors">
           <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
       </div>
     </div>
 
-    <script>
-    (function () {
-      const root = document.getElementById('testi');
-      const track = root.querySelector('[data-t-track]');
-      const dotsBox = root.querySelector('[data-t-dots]');
-      const INTERVAL = 5000;   // jeda antar geser otomatis (ms)
-      const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-      let elapsed = 0, hover = false, focus = false, touching = false, visible = false, dots = [];
-
-      const maxScroll = () => track.scrollWidth - track.clientWidth;
-      const stepPx = () => {
-        const c = track.children[0], gap = parseFloat(getComputedStyle(track).columnGap) || 0;
-        return c.getBoundingClientRect().width + gap;
-      };
-      const positions = () => Math.max(1, Math.round(maxScroll() / stepPx()) + 1);   // 8 di desktop (3 kartu), 10 di HP
-      const current = () => Math.min(positions() - 1, Math.round(track.scrollLeft / stepPx()));
-
-      function buildDots() {
-        const n = positions();
-        dotsBox.replaceChildren();
-        dots = [];
-        for (let i = 0; i < n; i++) {
-          const d = document.createElement('button');
-          d.type = 'button';
-          d.setAttribute('aria-label', 'Ke testimoni ' + (i + 1));
-          d.className = 'size-2.5 rounded-full transition-all duration-300 bg-[#d9d2c5] hover:bg-[#b9ad9b]';
-          d.addEventListener('click', () => scrollToIndex(i));
-          dotsBox.appendChild(d);
-          dots.push(d);
-        }
-        paint();
-      }
-      function paint() {
-        const cur = current();
-        dots.forEach((d, i) => {
-          const on = i === cur;
-          d.classList.toggle('bg-brand', on);
-          d.classList.toggle('scale-125', on);
-          d.classList.toggle('bg-[#d9d2c5]', !on);
-          if (on) d.setAttribute('aria-current', 'true'); else d.removeAttribute('aria-current');
-        });
-      }
-      function scrollToIndex(i) {
-        track.scrollTo({ left: Math.min(maxScroll(), i * stepPx()), behavior: reduced ? 'auto' : 'smooth' });
-        elapsed = 0;
-      }
-      function go(dir) {
-        const at = track.scrollLeft, max = maxScroll();
-        let target = at + dir * stepPx();
-        if (dir > 0 && at >= max - 2) target = 0;            // ujung kanan -> kembali ke awal
-        else if (dir < 0 && at <= 2) target = max;           // ujung kiri -> loncat ke akhir
-        track.scrollTo({ left: Math.max(0, Math.min(max, target)), behavior: reduced ? 'auto' : 'smooth' });
-        elapsed = 0;
-      }
-
-      root.querySelector('[data-t-prev]').addEventListener('click', () => go(-1));
-      root.querySelector('[data-t-next]').addEventListener('click', () => go(1));
-      track.addEventListener('keydown', e => {
-        if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
-        else if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
-      });
-      // titik mengikuti posisi; geser manual (jari / trackpad) menyetel ulang hitungan autoplay
-      let settle = 0;
-      track.addEventListener('scroll', () => {
-        paint();
-        clearTimeout(settle); settle = setTimeout(() => { elapsed = 0; }, 150);
-      }, { passive: true });
-      window.addEventListener('resize', buildDots);
-      // jeda saat disentuh, diarahkan kursor, atau difokuskan
-      root.addEventListener('mouseenter', () => { hover = true; });
-      root.addEventListener('mouseleave', () => { hover = false; });
-      // hanya fokus keyboard yang menjeda (fokus bekas klik mouse pada tombol tidak boleh menghentikan autoplay)
-      root.addEventListener('focusin', e => { focus = !!(e.target.matches && e.target.matches(':focus-visible')); });
-      root.addEventListener('focusout', () => { focus = false; });
-      root.addEventListener('touchstart', () => { touching = true; }, { passive: true });
-      root.addEventListener('touchend', () => { setTimeout(() => { touching = false; }, 1500); }, { passive: true });
-      // autoplay hanya jalan saat section terlihat
-      if ('IntersectionObserver' in window) {
-        new IntersectionObserver(es => { visible = es[0].isIntersecting; }, { threshold: 0.3 }).observe(root);
-      } else { visible = true; }
-      if (!reduced) {
-        setInterval(() => {
-          if (!visible || hover || focus || touching || document.hidden) return;
-          elapsed += 100;
-          if (elapsed >= INTERVAL) go(1);
-        }, 100);
-      }
-      buildDots();
-    })();
-    </script>
+    <?php include __DIR__ . '/includes/carousel.php'; ?>
+    <script>wtCarousel(document.getElementById('testi'), { label: 'testimoni' });</script>
   </div>
 </section>
 
