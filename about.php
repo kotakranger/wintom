@@ -47,18 +47,18 @@ include_once __DIR__ . '/includes/header.php';
     </div>
     <!-- Foto perusahaan: satu card, 3 foto bergantian otomatis (fade) -->
     <?php
-    // DUMMY — ganti dengan foto perusahaan asli: simpan di assets/images/company/ lalu isi 'src' dengan path-nya (mis. '/assets/images/company/showroom.jpg').
+    // Foto asli perusahaan: assets/images/company/photo-N-{800,1200}.webp
     $company_photos = [
-        ['src' => 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6', 'alt' => 'Wintom Curtain — suasana showroom'],
-        ['src' => 'https://images.unsplash.com/photo-1505691938895-1758d7feb511', 'alt' => 'Wintom Curtain — koleksi gorden dan blinds'],
-        ['src' => 'https://images.unsplash.com/photo-1513694203232-719a280e022f', 'alt' => 'Wintom Curtain — hasil pemasangan'],
+        ['src' => 'company/photo-1', 'alt' => 'Wintom Concept Store di PIK'],
+        ['src' => 'company/photo-2', 'alt' => 'Hasil pemasangan gorden dan vitrase di kamar tidur'],
+        ['src' => 'company/photo-3', 'alt' => 'Hasil pemasangan roller blind di ruang kantor'],
     ];
     ?>
     <div id="company-photos" class="wt-in relative aspect-[4/3] rounded-[6px] overflow-hidden bg-border" style="--d:300ms"
          role="img" aria-label="Foto perusahaan Wintom Curtain">
       <div class="wt-zoom absolute inset-0">
         <?php foreach ($company_photos as $i => $ph): ?>
-        <img <?= img_attrs($ph['src'], '(min-width:1024px) 50vw, 100vw') ?>
+        <img src="<?= BASE_URL ?>/assets/images/<?= $ph['src'] ?>-1200.webp" srcset="<?= BASE_URL ?>/assets/images/<?= $ph['src'] ?>-800.webp 800w, <?= BASE_URL ?>/assets/images/<?= $ph['src'] ?>-1200.webp 1200w" sizes="(min-width:1024px) 50vw, 100vw"
              alt="<?= htmlspecialchars($ph['alt']) ?>" <?= $i === 0 ? '' : 'loading="lazy"' ?>
              class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 <?= $i === 0 ? 'opacity-100' : 'opacity-0' ?>" data-cp-slide />
         <?php endforeach; ?>
