@@ -1,16 +1,18 @@
 <?php
 // includes/contact-info.php — Kartu peta showroom + detail kontak (homepage #contact & about).
-$maps_q = urlencode('Ruko Soho Ebony, Pantai Indah Kapuk, Jakarta Utara');
+// Pin = kantor PT Wintom Intelligent Solusi (koordinat dari tautan Google Maps resmi)
+$maps_q = urlencode('-6.086118,106.7341294');
+$maps_link = 'https://maps.app.goo.gl/eyHMu1jgtsKgoCZUA';
 ?>
 <div class="h-full flex flex-col bg-white border border-border rounded-[16px] sm:rounded-[24px] shadow-sm overflow-hidden min-w-0">
   <!-- Di desktop peta mengisi sisa tinggi agar kartu sejajar dengan form di sebelahnya -->
   <div class="relative aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto lg:flex-1 lg:min-h-[280px] bg-border">
     <iframe
-      src="https://maps.google.com/maps?q=<?= $maps_q ?>&z=15&output=embed&hl=id"
+      src="https://maps.google.com/maps?q=<?= $maps_q ?>&z=17&output=embed&hl=id"
       class="absolute inset-0 w-full h-full" style="border:0;" allowfullscreen="" loading="lazy"
       referrerpolicy="no-referrer-when-downgrade"
       title="Lokasi Wintom Curtain Showroom"></iframe>
-    <a href="https://www.google.com/maps/search/?api=1&query=<?= $maps_q ?>" target="_blank" rel="noopener"
+    <a href="<?= $maps_link ?>" target="_blank" rel="noopener"
        class="absolute top-3 right-3 sm:top-4 sm:right-4 inline-flex items-center gap-2 bg-white text-dark font-jakarta font-medium text-[12px] sm:text-[13px] px-3.5 sm:px-4 py-2.5 rounded-full shadow-md hover:shadow-lg transition-shadow">
       <span class="text-brand"><svg class="size-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-7-5.686-7-11a7 7 0 1 1 14 0c0 5.314-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg></span> Buka di Google Maps
     </a>
